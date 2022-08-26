@@ -1,0 +1,135 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+
+library(Gviz)
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(Signac)
+library(tidyverse)
+library(EnsDb.Hsapiens.v86)
+```
+
+
+
+```{r}
+
+
+mcrpc_cpg <- read.table("/Users/ds/Desktop/projects/data/bs/chr22.mcrpc.cpg.txt", header = T)
+
+
+query <- mcrpc_cpg$Coord %>% str_split("\\.") %>% unlist() %>% matrix(ncol = 3, byrow = T) %>% data.frame() 
+
+colnames(query) <- c("Chr", "Start", "End")
+query$Chr <- gsub(pattern = "chr", replacement = "", x = query$Chr)
+
+```
+
+```{r}
+GOI <- "PCAT14"
+target <- EnsDb.Hsapiens.v86 %>% ensembldb::filter(~ symbol == GOI) %>% genes()
+
+target <- target %>% resize(width = width(target)+ 10000,fix = "center" )
+
+#target <- target[1]
+#target <- GRanges(seqnames = '22', ranges = IRanges(start = 23300000, end = 23800000))
+```
+
+```{r}
+dss <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+dss <- dss %>% dplyr::filter(chrom == "chr22") %>% dplyr::select(-Stat) %>% mutate(Diff = Diff * -100) %>% GRanges()
+
+
+dTrack <- DataTrack(dss, name = "DSS", background.title = "DarkOrchid4", fill = "DarkOrchid4")
+
+plotTracks(list(dTrack), from = start(target), to = end(target), type = c("histogram"), baseline = 0)
+
+```
+
+
+```{r}
+overlaps <-subsetByOverlaps(x = GRanges(query), ranges = target) 
+
+overlaps <- overlaps%>% data.frame() %>% mutate(Coord = paste0("chr", seqnames, ".", start, ".", end))
+row.names(overlaps) <- overlaps$Coord
+
+
+regions <- dplyr::filter(mcrpc_cpg, Coord %in% overlaps$Coord)
+row.names(regions) <- regions$Coord
+regions <- regions[,-1]
+
+colnames(regions) <- gsub(pattern= "\\.", replacement = "-", x = colnames(regions))
+regions <- t(regions) %>% data.frame()
+
+
+
+regions <- regions[cf$wgs_id,]
+
+
+coord <- regions %>% t() %>% row.names() %>% StringToGRanges(sep = c("\\.", "\\."))
+
+
+
+coord <- GRanges(coord, metadata = t(regions))
+
+dTrack <- DataTrack(coord, name = "CpG", background.title = "DarkOrchid4")
+
+
+```
+
+
+
+
+```{r}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene %>% exons(columns=c("GENEID", "EXONID", "TXNAME" ))
+
+
+
+txdb <- S4Vectors::expand(txdb, c("GENEID", "EXONID", "TXNAME"))
+
+
+gene <- txdb[txdb$GENEID == 101978785] %>% data.frame()
+
+colnames(gene) <- c("chromosome", "start", "end", "width", "strand", "gene", "exon", "transcript")
+
+hmr <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/hmr.bed", col_names  = c("chrom", "start", "end"))
+hmr
+hmr <- hmr %>% dplyr::filter(chrom == "chr22") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+
+metarbs <- read_tsv(file = "/Users/ds/Desktop/AR_chip_hg38.bed", col_names = c("chrom", "start", "end"))
+metarbs <- metarbs %>% dplyr::filter(chrom == "chr22") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+
+atac <- read_tsv(file = "/Users/ds/Desktop/projects/data/atac/ATAC_mCRPC_consensus.bed", col_names = c("chrom", "start", "end"))
+atac <- atac %>% dplyr::filter(chrom == "chr22") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+```
+
+
+```{r}
+#Plot
+grtrack <- GeneRegionTrack( genome = "hg38",range = gene, chromosome = "chr22" , name = "PCAT14", transcriptAnnotation = "transcript", background.panel = "lightyellow", background.title = "darkblue", fill = "darkblue", col = "darkblue")
+
+atrack <- AnnotationTrack(hmr, name = "HMR", background.title = "darkred",  background.panel ="lightgrey", fill = "darkred", col = "darkred")
+
+arbtrack <- AnnotationTrack(metarbs, name = "ARBS", background.title = "darkgreen" , background.panel = "lightgrey", fill = "darkgreen", col = "darkgreen")
+atactrack <- AnnotationTrack(atac, name = "ATAC", background.title = "black" , background.panel = "lightgrey", fill = "black", rotation = 90, col = "black")
+
+gtrack <- GenomeAxisTrack()
+itrack <- IdeogramTrack(genome = "hg38", chromosome = "chr22")
+```
+
+
+```{r}
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+#plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target), to = end(target), groups = factor(ifelse(cf$AR == 3, "AR activating mutation", "Wildtype")), type = c("smooth"), legend=TRUE, lwd = 2, sizes = c(0.5, 0.5, 5, 0.5, 0.5, 0.5, 1))
+plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target), to = end(target), type = "histogram", sizes = c(0.1, 0.1, 0.2, 0.05, 0.05, 0.05, 0.2))
+dev.off()
+
+
+
+
+```
+

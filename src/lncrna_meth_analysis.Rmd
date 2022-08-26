@@ -1,0 +1,301 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(EnsDb.Hsapiens.v75)
+library(edgeR)
+library(Seurat)
+library(WGCNA)
+library(flashClust)
+library(cowplot)
+library(dittoSeq)
+```
+
+
+```{r}
+arbs <- read_tsv(file = "/Users/ds/Desktop/AR_chip_hg38.bed", col_names = c("chr", "start", "end"))
+arbs <- GRanges(arbs)
+hmr <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/hmr.bed", col_names = c("chr", "start", "end"))
+hmr <- GRanges(hmr)
+atac <- read_tsv(file = "/Users/ds/Desktop/projects/data/atac/ATAC_mCRPC_consensus.bed", col_names = c("chr", "start", "end"))
+atac <- GRanges(atac)
+```
+
+
+```{r}
+valid <- read.table(file = "/Users/ds/Desktop/DNAm_datasets/Manual.Marker.modify.txt", header = T)
+
+#Filter prostate
+other_markers <- valid %>% dplyr::filter(is.na(Epithelia) & (!is.na(BCell) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(Neutrophil) | !is.na(pDC) | !is.na(PlasmaCell) | !is.na(TCell)   )) 
+  
+other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
+
+
+
+a <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "tumor" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1) 
+
+#Filter B cell lineage
+other_markers <- valid %>% dplyr::filter( (is.na(BCell) & is.na(PlasmaCell))   & (!is.na(Epithelia) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(Neutrophil) | !is.na(pDC) |  !is.na(TCell)   )) 
+
+other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
+
+
+b <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "B lineage" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+
+
+
+#Filter NK/T cell
+other_markers <- valid %>% dplyr::filter(is.na(TCell) & (!is.na(Epithelia) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(Neutrophil) | !is.na(pDC) | !is.na(PlasmaCell) | !is.na(BCell)   )) 
+
+other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
+
+
+c <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "NK/T" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+
+
+#Filter neutrophil cell
+other_markers <- valid %>% dplyr::filter(is.na(Neutrophil) & (!is.na(Epithelia) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(TCell) | !is.na(pDC) | !is.na(PlasmaCell) | !is.na(BCell)   )) 
+
+other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
+
+
+d <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "neutrophil" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+
+
+#Filter monocyte/macrophage cell
+other_markers <- valid %>% dplyr::filter(is.na(Macrophage) & (!is.na(Epithelia) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Neutrophil) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(TCell) | !is.na(pDC) | !is.na(PlasmaCell) | !is.na(BCell)   )) 
+
+other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
+
+
+e <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "monocyte/macrophage" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+
+
+#Filter erythroid cell
+f <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "erythroid" & p_val_adj < 0.1) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+
+
+filt_markers <- rbind(a,b,c,d,e,f)
+
+
+markers
+filt_markers 
+```
+
+```{r}
+
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_mCRPC.rds")
+
+bmet
+
+
+```
+
+
+
+```{r}
+
+bmet <- ScaleData(object = bmet, features = filt_markers$gene)
+
+pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
+
+DoHeatmap(object = bmet, features = filt_markers$gene, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
+dev.off()
+
+
+
+bmet
+notpca_lncrna <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% dplyr::filter(!gene %in% pca_lncrna & p_val_adj < 0.1) %>% dplyr::filter(pct.1 >= 0.1) %>% .$gene
+
+bmet$supercluster.for.LDSC.SEG
+
+
+```
+
+
+```{r}
+a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
+b <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %>% length()
+
+c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
+d <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
+
+
+p1 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 1)
+  
+p2 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 1)
+  
+
+
+
+
+```
+
+
+```{r}
+a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
+b <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %>% length()
+
+c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
+d <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
+
+p3 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 2)
+
+  
+p4 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs")+ scale_fill_brewer(palette = 2)
+  
+
+```
+
+
+```{r}
+
+
+ehmr <- read.csv(file = "/Users/ds/Desktop/DNAm_datasets/ehmr.csv", header = T)
+
+a <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "HMR") %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate specific")
+
+b <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Not prostate specific")
+
+#pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+
+rbind(a,b) %>% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5)
+#dev.off()
+
+
+```
+
+
+```{r}
+
+a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
+b <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %>% length()
+
+c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
+d <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
+
+p5 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 3)
+  
+p6 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 3)
+  
+
+plot <- plot_grid(p1, p2,p3, p4, p5, p6, ncol = 3, byrow = F)
+plot
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+markers %>% dplyr::filter(gene == "MALAT1")
+```
+
+
+
+```{r}
+
+nk.t <- subset(bmet, idents = 'NK/T')  
+
+nk.t$cluster.dominant.cell.type %>% head()
+Idents(nk.t) <- "cluster.dominant.cell.type"
+nk.t.markers <- FindAllMarkers(object = nk.t, only.pos = T, verbose = T)
+
+nk.t.lncrna <-  nk.t.markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(p_val_adj < 0.1 & !(gene %in% pca_lncrna) & pct.1 > 0.1) %>% slice(1:n())
+
+pdf("/Users/ds/Desktop/plot.pdf", height = 10)
+DotPlot(object = nk.t, features = nk.t.lncrna$gene[!duplicated(nk.t.lncrna$gene)], assay = "RNA") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+dev.off()
+
+nk.t$cluster.dominant.cell.type %>% table()
+
+nk.t <- FindVariableFeatures(nk.t, nfeatures = 2000) %>% 
+    ScaleData() %>% RunPCA()
+
+pc_load <- Loadings(nk.t, reduction = "pca") %>% t()
+
+SubGeneNames <- colnames(pc_load)
+
+
+```
+
+```{r}
+powers = c(1:20)
+
+sft=pickSoftThreshold(pc_load,dataIsExpr = TRUE,powerVector = powers,corFnc = bicor,corOptions = list(use = 'p'),networkType = "signed", verbose = 1)
+
+
+
+
+par(mfrow = c(1,2));
+cex1 = 0.9;
+
+# Scale-free topology fit index as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit, signed R^2",type="n", main = paste("Scale independence"));
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],labels=powers,cex=cex1,col="red");
+
+# Red line corresponds to using an R^2 cut-off
+abline(h=0.80,col="red")
+
+# Mean connectivity as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], sft$fitIndices[,5],xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",main = paste("Mean connectivity"))
+text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+```
+
+```{r}
+softPower = 9
+
+
+#calclute the adjacency matrix
+adj= adjacency(pc_load,type = "signed", power = softPower);
+
+#turn adjacency matrix into topological overlap to minimize the effects of noise and spurious associations
+TOM=TOMsimilarityFromExpr(pc_load,networkType = "signed", TOMType = "signed", power = softPower)
+
+
+colnames(TOM) <- SubGeneNames
+row.names(TOM) <- SubGeneNames
+
+
+
+dissTOM=1-TOM
+
+
+#hierarchical clustering of the genes based on the TOM dissimilarity measure
+geneTree = flashClust(as.dist(dissTOM),method="average")
+
+#plot the resulting clustering tree (dendrogram)
+plot(geneTree, xlab="", sub="",cex=0.3)
+
+
+
+# Set the minimum module size
+minModuleSize = 20
+
+# Module identification using dynamic tree cut
+
+dynamicMods = cutreeDynamic(dendro = geneTree, distM = dissTOM, method="hybrid", deepSplit = 2, pamRespectsDendro = FALSE, minClusterSize = minModuleSize);
+
+#the following command gives the module labels and the size of each module. Lable 0 is reserved for unassigned genes
+table(dynamicMods)
+
+#Plot the module assignment under the dendrogram; note: The grey color is reserved for unassigned genes
+dynamicColors = labels2colors(dynamicMods)
+table(dynamicColors)
+
+
+plotDendroAndColors(geneTree, dynamicColors, "Dynamic Tree Cut", dendroLabels = FALSE, hang = 0.03, addGuide = TRUE, guideHang = 0.05, main = "Gene dendrogram and module colors")
+
+
+
+#Cluster each module using the PC1
+MEList = moduleEigengenes(pc_load, colors = dynamicColors) 
+MEs = MEList$eigengenes
+plotEigengeneNetworks(MEs, "", marDendro = c(0,4,1,2), marHeatmap = c(3,4,1,2))
+gene_clusters <- data.frame(HVG = colnames(pc_load), Cluster = dynamicColors) %>% arrange(Cluster)
+
+View(gene_clusters)
+
+gene_clusters %>% dplyr::filter(HVG %in% nk.t.lncrna$gene)
+
+
+```
+

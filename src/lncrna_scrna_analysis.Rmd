@@ -1,0 +1,447 @@
+---
+title: "lncRNA analysis of mCRPC He et al Nature Medicine 2021"
+output: html_notebook
+---
+#Load libraries
+```{r}
+
+library(tidyverse)
+library(Seurat)
+library(Hmisc)
+library(ggrepel)
+library(EnhancedVolcano)
+library(msigdbr)
+library(EnsDb.Hsapiens.v86)
+library(Matrix)
+library(ggpubr)
+options(ggrepel.max.overlaps = Inf)
+
+```
+
+#Read in scRNAseq data
+```{r}
+#Read in count data for tumors only in csv - convert to seurat object
+anno <- read.table("/Users/ds/Desktop/scRNA_datasets/scp_metadata.tsv", sep = "\t", header = T)  
+
+anno <- anno[-1,]
+row.names(anno) <- anno$NAME
+
+tpm <- read.csv(file = "/Users/ds/Desktop/scRNA_datasets/scp_tpm.tsv", sep = "\t", header = TRUE)
+
+tpm <- tpm[!duplicated(tpm$GENE),]
+row.names(tpm) <- tpm$GENE
+tpm <- tpm[,-1]
+colnames(tpm) <- as.character(1:length(anno$NAME) -1)
+
+bmet <- CreateSeuratObject(tpm, meta.data = anno)
+
+
+bmet <- SetAssayData(object = bmet, slot = "data", new.data = Matrix(as.matrix(log1p(tpm)), sparse = T))
+meta <- read.csv(file = "/Users/ds/Desktop/scRNA_datasets/scp_tpm_celltypes.csv")
+
+
+bmet@meta.data <- cbind(bmet@meta.data, meta)
+tx <- read.csv(file = "/Users/ds/Desktop/scRNA_datasets/He_NatureMedicine_tx.csv")
+tx <- tx %>% dplyr::filter(has.scRNA == "True")
+
+
+tx <- inner_join(bmet@meta.data, tx) %>% dplyr::select(c(biopsy, prior.enzalutamide, prior.abiraterone, prior.taxane, prior.platinum, prior.sipuleucel.T))
+
+bmet@meta.data <- cbind(bmet@meta.data, tx)
+
+saveRDS(object = bmet, file = "/Users/ds/Desktop/scRNA_datasets/He_mCRPC.rds")
+
+```
+
+
+```{r}
+tpm
+
+anno
+
+
+
+meta <- meta %>%  mutate(celltype = ifelse(supercluster.for.LDSC.SEG == "NK/T", "NK_T.", ifelse(supercluster.for.LDSC.SEG == "monocyte/macrophage", "monocyte_macrophage.",ifelse(supercluster.for.LDSC.SEG == "B lineage", "B.",ifelse(supercluster.for.LDSC.SEG == "tumor", "tumor.", ifelse(supercluster.for.LDSC.SEG == "erythroid", "erythroid.", supercluster.for.LDSC.SEG)) ) ))) %>% group_by(celltype) %>% mutate(ID = paste0(celltype, 1:n())) 
+
+
+  colnames(tpm) <- meta$ID
+
+
+reference <- data.frame(Genes = row.names(tpm), tpm)
+colnames(reference) <- c("Genes", gsub(x = colnames(reference)[-1], pattern = ".[0-9]*$", replacement = ""))
+
+head(reference)
+
+write.table(reference, file = "/Users/ds/Desktop/He_bulk_reference.txt", quote = F, row.names = F, sep = "\t" )
+
+#%>% group_by(celltype) %>% mutate(id = paste0(id = paste0(celltype, ".", 1:n())))
+
+
+meta %>%  mutate(celltype = ifelse(supercluster.for.LDSC.SEG == "NK/T", "NK.T", ))
+meta$supercluster.for.LDSC.SEG %>% unique()
+
+ referencere
+meta$supercluster.for.LDSC.SEG %>% unique()
+colnames(reference)
+
+ gsub(x = colnames(reference)[-1], pattern = ".[0-9]*$", replacement = "") %>% head()
+
+```
+
+
+```{r}
+
+pca_lncrna <- dplyr::filter(filt_markers, cluster == "erythroid") %>% .$gene
+
+gep <- read.table(file = "/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_GEPs.txt", header = T)
+
+gep <- gep %>% dplyr::filter(GeneSymbol %in% pca_lncrna) %>% dplyr::select(-GeneSymbol) %>% log1p() 
+
+
+gep%>% gather(key = "Cell", value = "GEX") %>% ggplot(aes(y = reorder(Cell, GEX),x = GEX, fill = Cell))  + geom_boxplot(width = 0.5, alpha  = 0.5)
+
+
+```
+
+
+#Download lncRNAs hg38 from cellranger
+```{r}
+
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_mCRPC.rds")
+
+all_genes <- read_tsv(file = "/Users/ds/Desktop/projects/data/anno//hg38.genes.meta.tsv")
+
+linc <- all_genes %>% dplyr::filter(gene.biotype == "lncRNA")
+pcg <- all_genes %>% dplyr::filter(gene.biotype == "protein_coding")
+
+linc
+
+mat <- GetAssayData(object = bmet)
+
+
+
+id <- intersect(row.names(mat), linc$gene.name)
+
+
+
+
+dim(mat[id,])[1] / dim(linc)[1]
+
+
+DotPlot(object = bmet, features = "LINC00152")
+
+mat["PCAT14",]
+Idents(bmet) <- "supercluster.for.LDSC.SEG"
+
+
+```
+
+
+
+#LncRNA markers for cells
+```{r}
+
+bmet <- bmet[row.names(bmet) %in% linc$gene.name,]
+markers <- FindAllMarkers(object = bmet, only.pos = T, verbose = T)
+
+
+
+top <-markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(pct.1 >= 0.25) %>% dplyr::slice(1:5) %>% .$gene
+
+markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::filter(cluster == "tumor")
+
+names(top) <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(pct.1 >= 0.25) %>% dplyr::slice(1:5) %>% .$cluster
+
+top
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 15)
+DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+dev.off()
+
+markers %>% dplyr::filter(gene %in% linc$gene.name)
+
+top
+
+
+
+```
+
+#Plotting
+```{r}
+
+
+seurat_pipeline <- function(object, ndims, seed, resolution){
+  
+  #Data already normalized 
+    FindVariableFeatures(object = object, nfeatures = 2000) %>% 
+    ScaleData() %>%
+    RunPCA() %>% 
+    RunUMAP(dims = 1:ndims, reduction = "pca") %>% 
+    FindNeighbors(reduction = "pca", dims = 1:ndims) %>% 
+    FindClusters(resolution = resolution, algorithm = 1, random.seed =seed) %>% 
+    return()
+  
+}
+
+
+bmet <- seurat_pipeline(object = bmet, ndims = 40, seed = 123, 0.5)
+
+Idents(bmet) <- "supercluster.for.LDSC.SEG"
+top
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+FeaturePlot(object = bmet, features = top[seq(1, length(top), 5)], label = T, repel = T)
+dev.off()
+
+
+UMAPPlot(object = bmet, label = T, repel = T)
+```
+
+#Enza compare
+```{r}
+bmet$supercluster.for.LDSC.SEG %>% table()
+
+
+ob <- subset(bmet, idents =  "tumor" )
+
+
+ob$organ__ontology_label %>% table()
+deg <- FindMarkers(object = ob, group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T, test.use = "LR", latent.vars = c("organ__ontology_label"))
+
+sc_deg <- FindMarkers(object = bmet, group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T)
+
+sc_deg %>% arrange(-avg_log2FC) %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1) 
+
+up <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC > 1) %>% .$Gene
+
+
+down <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC < -1) %>% .$Gene
+
+
+deg[c(up),] %>% arrange(-avg_log2FC) 
+
+DotPlot(object = bmet, features = "MIR4435-2HG", group.by = "supercluster.for.LDSC.SEG")
+
+deg
+
+
+
+bmet["LINC01060",]
+```
+
+```{r}
+cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
+cf$sample_id <- gsub("\\.", "-", cf$Mixture)
+row.names(cf) <- cf$Mixture
+
+anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, RB1, tumor_purity_rna, tumor_purity_wgs, tumor_purity_hist)) 
+
+cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
+
+row.names(cf) <- cf$sample_id
+
+
+cf <- na.omit(cf)
+
+cf <- cf %>% mutate(RB1 = ifelse(RB1 == 0, 0, 1))
+
+cf
+
+```
+
+
+```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
+
+
+mcrpc_rna <- mcrpc_rna %>% dplyr::filter(Gene %in% c(up,down)) 
+genes <- mcrpc_rna$Gene
+
+mcrpc_rna <- mcrpc_rna %>% dplyr::select(-Gene) %>% t() %>% data.frame() 
+colnames(mcrpc_rna) <- genes
+
+
+mcrpc_rna <- mcrpc_rna %>% mutate(sample_id = gsub(pattern = "\\.", replacement = "-", x = row.names(.))) %>% merge(cf)  %>% na.omit()
+
+mcrpc_rna
+res <- do.call(rbind, lapply(genes, FUN= function(g){
+  
+  print(g)
+  #Fit linear regression model with covariate as bone met site 
+  model <- lm(formula = log1p(mcrpc_rna[,g]) ~ mcrpc_rna[,"enza"]) 
+  #Get coeff for Bone and pvalue
+  coef <- summary(model)$coefficients[, "Estimate"][2]
+  pval <- summary(model)$coefficients[, "Pr(>|t|)"][2]
+  
+  return(  data.frame(Gene  = g, Coef = coef, Pval = pval))
+
+ })) %>% data.frame()
+
+
+
+#FDR correction across celltypes
+res$Adj.Pvalue <-p.adjust(res$Pval, method = "BH")
+res$Sig <-  ifelse(res$Adj.Pvalue < 0.1, "*", "ns")
+
+
+#%>% na.omit() %>% ggplot(aes(x = enza, y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_boxplot() 
+
+#%>% ggplot(aes(x = log1p(RNA), y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, color = enza  )) + geom_point() + stat_cor() + geom_smooth(method = "lm")
+
+res
+
+```
+
+
+
+
+```{r}
+
+#Limma DE analysis 
+
+
+#Read in raw counts, convert to matrix with rows as gene symbols, columns as samples
+counts <- read.table("/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+
+
+counts <- counts[!duplicated(counts$Genename),]
+row.names(counts) <- counts$Genename
+counts <- counts[,-1] %>% as.matrix()
+colnames(counts) <- gsub("\\.", "-", colnames(counts))  
+
+counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+
+#Keep matching sample ids of RNA-seq and WGS for cmp annotation
+ids <- intersect(colnames(counts),row.names(cf))
+counts <- counts[,ids]
+cf <- cf[ids,]
+
+
+#Create dge object - create counts matrix and sample anno df with library sizes
+x <- DGEList(counts = counts)
+
+#Add cluster variable to designate group membership to sample df
+x$samples <- cbind(x$samples, dplyr::select(cf, c( RB1 )))
+
+#Remove genes with low expression across samples
+keep.exprs <- filterByExpr(x)
+x <- x[keep.exprs,, keep.lib.size = F]
+
+#Calculate effective library size using EdgeR TMM method
+x <- calcNormFactors(x, method = "TMM")
+
+#Create design matrix (w/o intercept) specifying group membership
+design <- model.matrix(~ 0 + as.factor(RB1), data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+
+design
+colnames(design) <- c("Del", "WT") #, "Liver", "LN", "Other")
+
+# #Create contrasts to calculate
+contr.matrix <- makeContrasts(Del - WT, levels = colnames(design))
+
+#Normalize counts to log CPM using voom
+v <- voom(x, design = design)
+
+#Fit LM according to design
+vfit <- lmFit(v, design)
+
+#Calculate contrasts i.e logFC for genes across groups
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+
+#Calculate t-stats and p vals using Emp bayes method
+efit <- eBayes(vfit)
+
+
+#Get list of all genes, arrange in decreasing order
+bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
+bulk_deg <- bulk_deg %>% arrange(-logFC)
+
+bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1) %>%   left_join(y = filt_markers, by = c("Genes" = "gene"))
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+
+ 
+
+f <- up$Genes                                          
+names(f) <- up$cluster
+f <- f[!is.na(names(f))]
+
+DotPlot(object = bmet, features =  f)
+
+res %>% ggplot(aes(x = ))
+bulk_deg %>% arrange(-adj.P.Val)
+
+anno
+
+mcrpc_rna
+
+bmet["AL691482.3",]
+
+a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
+b <- mcrpc_rna %>% dplyr::filter(Gene %in% "HCP5") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
+b
+
+bulk_deg %>% dplyr::filter(Genes %in% "HCP5")
+
+cf <- read.table(file = "/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_Fractions-Adjusted.txt", header = T)
+cf
+
+data.frame(RNA = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) %>% ggplot(aes(x = RNA, y = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_point() + geom_smooth(method = "lm") + stat_cor()
+
+data.frame(RNA = b, Mixture = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) %>% ggplot(aes(x = RNA, y = NK_T* 100)) + geom_point() + geom_smooth(method = "lm") + stat_cor()
+
+
+cf
+a
+f
+cor.test(a,b)
+
+querygenes$TGFB
+```
+
+
+
+```{r}
+plot <-  EnhancedVolcano(toptable = deg, x = "avg_log2FC", y = "p_val_adj", lab =row.names(deg), selectLab = c( up, down), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-01, legendPosition = "none", title = "Differential expression analysis of prostate cancer cells", subtitle = "Enzalutamide exposed v.s naive mCRPCs", FCcutoff = 1, labSize = 3)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+```
+
+
+```{r}
+
+
+all_gene_sets = msigdbr(species = "Homo sapiens")
+
+gs <- all_gene_sets %>%
+  dplyr::filter(gs_cat == "H")
+
+querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
+
+
+
+a <- bmet[c(up),] %>% GetAssayData() %>% colMeans()
+b <- bmet[querygenes$TGFB,] %>% GetAssayData() %>% colMeans()
+df <- data.frame(lncRNA = a, TGFB = b, Enza = bmet$prior.enzalutamide)
+
+
+plot <- df %>% ggplot( aes( x= lncRNA, y = TGFB)) + geom_point(aes(color  = Enza)) + geom_smooth(method = "lm") + stat_cor(method = "spearman") + scale_color_manual(values = c("darkred", "darkblue")) 
+plot
+plot <- ggplot(df, aes( x= Enza, y = TGFB, fill = Enza)) + geom_jitter(width = 0.1) + geom_boxplot(alpha = 0.2) + scale_fill_manual(values = c("darkred", "darkblue"))
+plot
+lm(TGFB ~ lncRNA, data = df) %>% summary()
+
+df
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+```
+
+
+
+
+
