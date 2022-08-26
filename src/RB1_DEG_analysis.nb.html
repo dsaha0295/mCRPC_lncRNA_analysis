@@ -1755,329 +1755,263 @@ pre code {
 
 
 <!-- rnb-text-begin -->
+<p>#Enza compare</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGlicmFyeShFbnNEYi5Ic2FwaWVucy52NzUpXG5saWJyYXJ5KGVkZ2VSKVxubGlicmFyeShTZXVyYXQpXG5saWJyYXJ5KFdHQ05BKVxubGlicmFyeShmbGFzaENsdXN0KVxubGlicmFyeShjb3dwbG90KVxubGlicmFyeShkaXR0b1NlcSlcbmBgYFxuYGBgIn0= -->
-<pre class="r"><code>```r
-library(EnsDb.Hsapiens.v75)
-library(edgeR)
-library(Seurat)
-library(WGCNA)
-library(flashClust)
-library(cowplot)
-library(dittoSeq)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYm1ldCRzdXBlcmNsdXN0ZXIuZm9yLkxEU0MuU0VHICU+JSB0YWJsZSgpXG5cblxub2IgPC0gc3Vic2V0KGJtZXQsIGlkZW50cyA9ICBcInR1bW9yXCIgKVxuXG5cbm9iJG9yZ2FuX19vbnRvbG9neV9sYWJlbCAlPiUgdGFibGUoKVxuZGVnIDwtIEZpbmRNYXJrZXJzKG9iamVjdCA9IG9iLCBncm91cC5ieSA9IFwicHJpb3IuZW56YWx1dGFtaWRlXCIsb25seS5wb3MgPSBGLCBpZGVudC4xID0gXCJUcnVlXCIsIHZlcmJvc2UgPSBULCB0ZXN0LnVzZSA9IFwiTFJcIiwgbGF0ZW50LnZhcnMgPSBjKFwib3JnYW5fX29udG9sb2d5X2xhYmVsXCIpKVxuXG5zY19kZWcgPC0gRmluZE1hcmtlcnMob2JqZWN0ID0gYm1ldCwgZ3JvdXAuYnkgPSBcInByaW9yLmVuemFsdXRhbWlkZVwiLG9ubHkucG9zID0gRiwgaWRlbnQuMSA9IFwiVHJ1ZVwiLCB2ZXJib3NlID0gVClcblxuc2NfZGVnICU+JSBhcnJhbmdlKC1hdmdfbG9nMkZDKSAlPiUgbXV0YXRlKEdlbmUgPSByb3cubmFtZXMoLikpICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBsaW5jJGdlbmUubmFtZSkgJT4lIGRwbHlyOjpmaWx0ZXIocF92YWxfYWRqIDwgMC4xKSBcblxudXAgPC0gc2NfZGVnICU+JSBhcnJhbmdlKC1hdmdfbG9nMkZDKSAgJT4lIG11dGF0ZShHZW5lID0gcm93Lm5hbWVzKC4pKSAlPiUgZHBseXI6OmZpbHRlcihHZW5lICVpbiUgbGluYyRnZW5lLm5hbWUpICU+JSBkcGx5cjo6ZmlsdGVyKHBfdmFsX2FkaiA8IDAuMSAmIGF2Z19sb2cyRkMgPiAxKSAlPiUgLiRHZW5lXG5cblxuZG93biA8LSBzY19kZWcgJT4lIGFycmFuZ2UoLWF2Z19sb2cyRkMpICAlPiUgbXV0YXRlKEdlbmUgPSByb3cubmFtZXMoLikpICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBsaW5jJGdlbmUubmFtZSkgJT4lIGRwbHlyOjpmaWx0ZXIocF92YWxfYWRqIDwgMC4xICYgYXZnX2xvZzJGQyA8IC0xKSAlPiUgLiRHZW5lXG5cblxuZGVnW2ModXApLF0gJT4lIGFycmFuZ2UoLWF2Z19sb2cyRkMpIFxuXG5Eb3RQbG90KG9iamVjdCA9IGJtZXQsIGZlYXR1cmVzID0gXCJNSVI0NDM1LTJIR1wiLCBncm91cC5ieSA9IFwic3VwZXJjbHVzdGVyLmZvci5MRFNDLlNFR1wiKVxuXG5kZWdcblxuXG5cbmJtZXRbXCJMSU5DMDEwNjBcIixdXG5gYGAifQ== -->
+<pre class="r"><code>bmet$supercluster.for.LDSC.SEG %&gt;% table()
 
 
-&lt;!-- rnb-text-begin --&gt;
+ob &lt;- subset(bmet, idents =  &quot;tumor&quot; )
 
 
+ob$organ__ontology_label %&gt;% table()
+deg &lt;- FindMarkers(object = ob, group.by = &quot;prior.enzalutamide&quot;,only.pos = F, ident.1 = &quot;True&quot;, verbose = T, test.use = &quot;LR&quot;, latent.vars = c(&quot;organ__ontology_label&quot;))
+
+sc_deg &lt;- FindMarkers(object = bmet, group.by = &quot;prior.enzalutamide&quot;,only.pos = F, ident.1 = &quot;True&quot;, verbose = T)
+
+sc_deg %&gt;% arrange(-avg_log2FC) %&gt;% mutate(Gene = row.names(.)) %&gt;% dplyr::filter(Gene %in% linc$gene.name) %&gt;% dplyr::filter(p_val_adj &lt; 0.1) 
+
+up &lt;- sc_deg %&gt;% arrange(-avg_log2FC)  %&gt;% mutate(Gene = row.names(.)) %&gt;% dplyr::filter(Gene %in% linc$gene.name) %&gt;% dplyr::filter(p_val_adj &lt; 0.1 &amp; avg_log2FC &gt; 1) %&gt;% .$Gene
 
 
-&lt;!-- rnb-text-end --&gt;
+down &lt;- sc_deg %&gt;% arrange(-avg_log2FC)  %&gt;% mutate(Gene = row.names(.)) %&gt;% dplyr::filter(Gene %in% linc$gene.name) %&gt;% dplyr::filter(p_val_adj &lt; 0.1 &amp; avg_log2FC &lt; -1) %&gt;% .$Gene
 
 
-&lt;!-- rnb-chunk-begin --&gt;
+deg[c(up),] %&gt;% arrange(-avg_log2FC) 
 
+DotPlot(object = bmet, features = &quot;MIR4435-2HG&quot;, group.by = &quot;supercluster.for.LDSC.SEG&quot;)
 
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYXJicyA8LSByZWFkX3RzdihmaWxlID0gXFwvVXNlcnMvZHMvRGVza3RvcC9BUl9jaGlwX2hnMzguYmVkXFwsIGNvbF9uYW1lcyA9IGMoXFxjaHJcXCwgXFxzdGFydFxcLCBcXGVuZFxcKSlcbmFyYnMgPC0gR1JhbmdlcyhhcmJzKVxuaG1yIDwtIHJlYWRfdHN2KGZpbGUgPSBcXC9Vc2Vycy9kcy9EZXNrdG9wL0ROQW1fZGF0YXNldHMvaG1yLmJlZFxcLCBjb2xfbmFtZXMgPSBjKFxcY2hyXFwsIFxcc3RhcnRcXCwgXFxlbmRcXCkpXG5obXIgPC0gR1JhbmdlcyhobXIpXG5hdGFjIDwtIHJlYWRfdHN2KGZpbGUgPSBcXC9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvYXRhYy9BVEFDX21DUlBDX2NvbnNlbnN1cy5iZWRcXCwgY29sX25hbWVzID0gYyhcXGNoclxcLCBcXHN0YXJ0XFwsIFxcZW5kXFwpKVxuYXRhYyA8LSBHUmFuZ2VzKGF0YWMpXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-arbs &lt;- read_tsv(file = \/Users/ds/Desktop/AR_chip_hg38.bed\, col_names = c(\chr\, \start\, \end\))
-arbs &lt;- GRanges(arbs)
-hmr &lt;- read_tsv(file = \/Users/ds/Desktop/DNAm_datasets/hmr.bed\, col_names = c(\chr\, \start\, \end\))
-hmr &lt;- GRanges(hmr)
-atac &lt;- read_tsv(file = \/Users/ds/Desktop/projects/data/atac/ATAC_mCRPC_consensus.bed\, col_names = c(\chr\, \start\, \end\))
-atac &lt;- GRanges(atac)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
+deg
 
 
 
+bmet[&quot;LINC01060&quot;,]</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY2YgPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL0JNRV9hbmFseXNpcy9yZXN1bHRzL0NJQkVSU09SVHhfSm9iMzNfQWRqdXN0ZWQudHh0XCIsIHNlcCA9IFwiXFx0XCIsIGhlYWRlciA9IFQpXG5jZiRzYW1wbGVfaWQgPC0gZ3N1YihcIlxcXFwuXCIsIFwiLVwiLCBjZiRNaXh0dXJlKVxucm93Lm5hbWVzKGNmKSA8LSBjZiRNaXh0dXJlXG5cbmFubm8gPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvYW5uby8yMDIwMDlfZGVlcFJOQXNlcV9zYW1wbGVfZnVsbC50eHRcIiwgaGVhZGVyID1UKVxuXG5cblxuYW5ubyA8LSBhbm5vICU+JSBkcGx5cjo6c2VsZWN0KGMoc2FtcGxlX2lkLCB3Z3NfaWQsIGJpb3BzeV9zaXRlLCBkaXNlYXNlX3R5cGVfU0lHX0dFWCwgSURfcGF0aWVudCwgUkIxLCB0dW1vcl9wdXJpdHlfcm5hLCB0dW1vcl9wdXJpdHlfd2dzLCB0dW1vcl9wdXJpdHlfaGlzdCkpIFxuXG5jZiA8LSBpbm5lcl9qb2luKHggPSBjZiwgeSA9IGFubm8sIGJ5ICA9IGMoXCJzYW1wbGVfaWRcIiA9IFwic2FtcGxlX2lkXCIpKVxuXG5yb3cubmFtZXMoY2YpIDwtIGNmJHNhbXBsZV9pZFxuXG5cbmNmIDwtIG5hLm9taXQoY2YpXG5cbmNmIDwtIGNmICU+JSBtdXRhdGUoUkIxID0gaWZlbHNlKFJCMSA9PSAwLCAwLCAxKSlcblxuY2ZcblxuYGBgIn0= -->
+<pre class="r"><code>cf &lt;- read.table(&quot;/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt&quot;, sep = &quot;\t&quot;, header = T)
+cf$sample_id &lt;- gsub(&quot;\\.&quot;, &quot;-&quot;, cf$Mixture)
+row.names(cf) &lt;- cf$Mixture
+
+anno &lt;- read.table(&quot;/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt&quot;, header =T)
 
 
-&lt;!-- rnb-text-end --&gt;
+
+anno &lt;- anno %&gt;% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, RB1, tumor_purity_rna, tumor_purity_wgs, tumor_purity_hist)) 
+
+cf &lt;- inner_join(x = cf, y = anno, by  = c(&quot;sample_id&quot; = &quot;sample_id&quot;))
+
+row.names(cf) &lt;- cf$sample_id
 
 
-&lt;!-- rnb-chunk-begin --&gt;
+cf &lt;- na.omit(cf)
 
+cf &lt;- cf %&gt;% mutate(RB1 = ifelse(RB1 == 0, 0, 1))
 
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYSA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKVxuYiA8LSBzdWJzZXRCeU92ZXJsYXBzKHJhbmdlcyA9IGFyYnMsIHggPUdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIHBjYV9sbmNybmEsXSkgKSAlPiUgbGVuZ3RoKClcblxuYyA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKVxuZCA8LSBzdWJzZXRCeU92ZXJsYXBzKHJhbmdlcyA9IGFyYnMsIHggPUdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIG5vdHBjYV9sbmNybmEsXSkgKSAlPiUgbGVuZ3RoKClcblxuXG5wMSA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYyhcXE5vIE92ZXJsYXAgd2l0aCBBUkJTXFwsIFxcT3ZlcmxhcCB3aXRoIEFSQlNcXCApLCBDb3VudCA9IGMoYS1iLGIpKSAlPiUgZ2dwbG90KGFlcyh4ID0gXFxcXCwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSBcXGlkZW50aXR5XFwsIHdpZHRoID0gMSkgKyBjb29yZF9wb2xhcihcXHlcXCwgc3RhcnQgPSAwKSArdGhlbWVfdm9pZCgpICsgZ2d0aXRsZShcXFByb3N0YXRlLXNwZWNpZmljXFxuIGxuY1JOQXNcXCkgKyBzY2FsZV9maWxsX2JyZXdlcihwYWxldHRlID0gMSlcbiAgXG5wMiA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYyhcXE5vIE92ZXJsYXAgd2l0aCBBUkJTXFwsIFxcT3ZlcmxhcCB3aXRoIEFSQlNcXCksIENvdW50ID0gYyhjLWQsZCkpICU+JSBnZ3Bsb3QoYWVzKHggPSBcXFxcLCB5ID0gQ291bnQsIGZpbGwgPSBDYXRlZ29yeSkpICsgZ2VvbV9iYXIoc3RhdCA9IFxcaWRlbnRpdHlcXCwgd2lkdGggPSAxKSArIGNvb3JkX3BvbGFyKFxceVxcLCBzdGFydCA9IDApICsgdGhlbWVfdm9pZCgpICsgZ2d0aXRsZShcXG5vdCBQcm9zdGF0ZS1zcGVjaWZpY1xcbiBsbmNSTkFzXFwpICsgc2NhbGVfZmlsbF9icmV3ZXIocGFsZXR0ZSA9IDEpXG4gIFxuXG5cblxuXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-a &lt;- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %&gt;% length()
-b &lt;- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %&gt;% length()
-
-c &lt;- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %&gt;% length()
-d &lt;- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %&gt;% length()
-
-
-p1 &lt;- data.frame(Category = c(\No Overlap with ARBS\, \Overlap with ARBS\ ), Count = c(a-b,b)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) +theme_void() + ggtitle(\Prostate-specific\n lncRNAs\) + scale_fill_brewer(palette = 1)
-  
-p2 &lt;- data.frame(Category = c(\No Overlap with ARBS\, \Overlap with ARBS\), Count = c(c-d,d)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) + theme_void() + ggtitle(\not Prostate-specific\n lncRNAs\) + scale_fill_brewer(palette = 1)
-  
+cf
 </code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubWNycGNfcm5hIDwtIHJlYWQudGFibGUoZmlsZSA9IFwiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvYnVsa1JOQV9tQ1JQQ19DUE1fZ2VuZS50eHRcIiwgaGVhZGVyID0gVClcblxuXG5tY3JwY19ybmEgPC0gbWNycGNfcm5hICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBjKHVwLGRvd24pKSBcbmdlbmVzIDwtIG1jcnBjX3JuYSRHZW5lXG5cbm1jcnBjX3JuYSA8LSBtY3JwY19ybmEgJT4lIGRwbHlyOjpzZWxlY3QoLUdlbmUpICU+JSB0KCkgJT4lIGRhdGEuZnJhbWUoKSBcbmNvbG5hbWVzKG1jcnBjX3JuYSkgPC0gZ2VuZXNcblxuXG5tY3JwY19ybmEgPC0gbWNycGNfcm5hICU+JSBtdXRhdGUoc2FtcGxlX2lkID0gZ3N1YihwYXR0ZXJuID0gXCJcXFxcLlwiLCByZXBsYWNlbWVudCA9IFwiLVwiLCB4ID0gcm93Lm5hbWVzKC4pKSkgJT4lIG1lcmdlKGNmKSAgJT4lIG5hLm9taXQoKVxuXG5tY3JwY19ybmFcbnJlcyA8LSBkby5jYWxsKHJiaW5kLCBsYXBwbHkoZ2VuZXMsIEZVTj0gZnVuY3Rpb24oZyl7XG4gIFxuICBwcmludChnKVxuICAjRml0IGxpbmVhciByZWdyZXNzaW9uIG1vZGVsIHdpdGggY292YXJpYXRlIGFzIGJvbmUgbWV0IHNpdGUgXG4gIG1vZGVsIDwtIGxtKGZvcm11bGEgPSBsb2cxcChtY3JwY19ybmFbLGddKSB+IG1jcnBjX3JuYVssXCJlbnphXCJdKSBcbiAgI0dldCBjb2VmZiBmb3IgQm9uZSBhbmQgcHZhbHVlXG4gIGNvZWYgPC0gc3VtbWFyeShtb2RlbCkkY29lZmZpY2llbnRzWywgXCJFc3RpbWF0ZVwiXVsyXVxuICBwdmFsIDwtIHN1bW1hcnkobW9kZWwpJGNvZWZmaWNpZW50c1ssIFwiUHIoPnx0fClcIl1bMl1cbiAgXG4gIHJldHVybiggIGRhdGEuZnJhbWUoR2VuZSAgPSBnLCBDb2VmID0gY29lZiwgUHZhbCA9IHB2YWwpKVxuXG4gfSkpICU+JSBkYXRhLmZyYW1lKClcblxuXG5cbiNGRFIgY29ycmVjdGlvbiBhY3Jvc3MgY2VsbHR5cGVzXG5yZXMkQWRqLlB2YWx1ZSA8LXAuYWRqdXN0KHJlcyRQdmFsLCBtZXRob2QgPSBcIkJIXCIpXG5yZXMkU2lnIDwtICBpZmVsc2UocmVzJEFkai5QdmFsdWUgPCAwLjEsIFwiKlwiLCBcIm5zXCIpXG5cblxuIyU+JSBuYS5vbWl0KCkgJT4lIGdncGxvdChhZXMoeCA9IGVuemEsIHkgPSBNb25vMSArIE1vbm8yICsgTW9ubzMgKyBUQU0gKyBUSU0gKyBtREMgKyBNb25vY3l0ZSArIENENCArIENEOCArIFRyZWdBICsgVHJlZ1IgKyBDVEwxICsgQ1RMMiArIE5LICsgTktUICsgIFRoMTE3KSkgKyBnZW9tX2JveHBsb3QoKSBcblxuIyU+JSBnZ3Bsb3QoYWVzKHggPSBsb2cxcChSTkEpLCB5ID0gTW9ubzEgKyBNb25vMiArIE1vbm8zICsgVEFNICsgVElNICsgbURDICsgTW9ub2N5dGUgKyBDRDQgKyBDRDggKyBUcmVnQSArIFRyZWdSICsgQ1RMMSArIENUTDIgKyBOSyArIE5LVCArICBUaDExNywgY29sb3IgPSBlbnphICApKSArIGdlb21fcG9pbnQoKSArIHN0YXRfY29yKCkgKyBnZW9tX3Ntb290aChtZXRob2QgPSBcImxtXCIpXG5cbnJlc1xuXG5gYGAifQ== -->
+<pre class="r"><code>mcrpc_rna &lt;- read.table(file = &quot;/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt&quot;, header = T)
 
 
-&lt;!-- rnb-text-end --&gt;
+mcrpc_rna &lt;- mcrpc_rna %&gt;% dplyr::filter(Gene %in% c(up,down)) 
+genes &lt;- mcrpc_rna$Gene
+
+mcrpc_rna &lt;- mcrpc_rna %&gt;% dplyr::select(-Gene) %&gt;% t() %&gt;% data.frame() 
+colnames(mcrpc_rna) &lt;- genes
 
 
-&lt;!-- rnb-chunk-begin --&gt;
+mcrpc_rna &lt;- mcrpc_rna %&gt;% mutate(sample_id = gsub(pattern = &quot;\\.&quot;, replacement = &quot;-&quot;, x = row.names(.))) %&gt;% merge(cf)  %&gt;% na.omit()
 
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYSA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKVxuYiA8LSBzdWJzZXRCeU92ZXJsYXBzKHJhbmdlcyA9IGhtciwgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgcGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKVxuXG5jIDwtIEdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIG5vdHBjYV9sbmNybmEsXSkgJT4lIGxlbmd0aCgpXG5kIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gaG1yLCB4ID1HUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICkgJT4lIGxlbmd0aCgpXG5cbnAzIDwtIGRhdGEuZnJhbWUoQ2F0ZWdvcnkgPSBjKFxcTm8gT3ZlcmxhcCB3aXRoIEhNUnNcXCwgXFxPdmVybGFwIHdpdGggSE1Sc1xcICksIENvdW50ID0gYyhhLWIsYikpICU+JSBnZ3Bsb3QoYWVzKHggPSBcXFxcLCB5ID0gQ291bnQsIGZpbGwgPSBDYXRlZ29yeSkpICsgZ2VvbV9iYXIoc3RhdCA9IFxcaWRlbnRpdHlcXCwgd2lkdGggPSAxKSArIGNvb3JkX3BvbGFyKFxceVxcLCBzdGFydCA9IDApICt0aGVtZV92b2lkKCkgKyBnZ3RpdGxlKFxcUHJvc3RhdGUtc3BlY2lmaWNcXG4gbG5jUk5Bc1xcKSArIHNjYWxlX2ZpbGxfYnJld2VyKHBhbGV0dGUgPSAyKVxuXG4gIFxucDQgPC0gZGF0YS5mcmFtZShDYXRlZ29yeSA9IGMoXFxObyBPdmVybGFwIHdpdGggSE1Sc1xcLCBcXE92ZXJsYXAgd2l0aCBITVJzXFwpLCBDb3VudCA9IGMoYy1kLGQpKSAlPiUgZ2dwbG90KGFlcyh4ID0gXFxcXCwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSBcXGlkZW50aXR5XFwsIHdpZHRoID0gMSkgKyBjb29yZF9wb2xhcihcXHlcXCwgc3RhcnQgPSAwKSArIHRoZW1lX3ZvaWQoKSArIGdndGl0bGUoXFxub3QgUHJvc3RhdGUtc3BlY2lmaWNcXG4gbG5jUk5Bc1xcKSsgc2NhbGVfZmlsbF9icmV3ZXIocGFsZXR0ZSA9IDIpXG4gIFxuXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-a &lt;- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %&gt;% length()
-b &lt;- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %&gt;% length()
-
-c &lt;- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %&gt;% length()
-d &lt;- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %&gt;% length()
-
-p3 &lt;- data.frame(Category = c(\No Overlap with HMRs\, \Overlap with HMRs\ ), Count = c(a-b,b)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) +theme_void() + ggtitle(\Prostate-specific\n lncRNAs\) + scale_fill_brewer(palette = 2)
-
+mcrpc_rna
+res &lt;- do.call(rbind, lapply(genes, FUN= function(g){
   
-p4 &lt;- data.frame(Category = c(\No Overlap with HMRs\, \Overlap with HMRs\), Count = c(c-d,d)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) + theme_void() + ggtitle(\not Prostate-specific\n lncRNAs\)+ scale_fill_brewer(palette = 2)
+  print(g)
+  #Fit linear regression model with covariate as bone met site 
+  model &lt;- lm(formula = log1p(mcrpc_rna[,g]) ~ mcrpc_rna[,&quot;enza&quot;]) 
+  #Get coeff for Bone and pvalue
+  coef &lt;- summary(model)$coefficients[, &quot;Estimate&quot;][2]
+  pval &lt;- summary(model)$coefficients[, &quot;Pr(&gt;|t|)&quot;][2]
   
+  return(  data.frame(Gene  = g, Coef = coef, Pval = pval))
+
+ })) %&gt;% data.frame()
+
+
+
+#FDR correction across celltypes
+res$Adj.Pvalue &lt;-p.adjust(res$Pval, method = &quot;BH&quot;)
+res$Sig &lt;-  ifelse(res$Adj.Pvalue &lt; 0.1, &quot;*&quot;, &quot;ns&quot;)
+
+
+#%&gt;% na.omit() %&gt;% ggplot(aes(x = enza, y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_boxplot() 
+
+#%&gt;% ggplot(aes(x = log1p(RNA), y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, color = enza  )) + geom_point() + stat_cor() + geom_smooth(method = &quot;lm&quot;)
+
+res
 </code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-
-&lt;!-- rnb-text-end --&gt;
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jTGltbWEgREUgYW5hbHlzaXMgXG5cblxuI1JlYWQgaW4gcmF3IGNvdW50cywgY29udmVydCB0byBtYXRyaXggd2l0aCByb3dzIGFzIGdlbmUgc3ltYm9scywgY29sdW1ucyBhcyBzYW1wbGVzXG5jb3VudHMgPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvcm5hL21DUlBDX1JOQV9jb3VudHNfZ2VuZW5hbWUudHh0XCIsIGhlYWRlciA9IFQpXG5cblxuY291bnRzIDwtIGNvdW50c1shZHVwbGljYXRlZChjb3VudHMkR2VuZW5hbWUpLF1cbnJvdy5uYW1lcyhjb3VudHMpIDwtIGNvdW50cyRHZW5lbmFtZVxuY291bnRzIDwtIGNvdW50c1ssLTFdICU+JSBhcy5tYXRyaXgoKVxuY29sbmFtZXMoY291bnRzKSA8LSBnc3ViKFwiXFxcXC5cIiwgXCItXCIsIGNvbG5hbWVzKGNvdW50cykpICBcblxuY291bnRzIDwtIGNvdW50c1tyb3cubmFtZXMoY291bnRzKSAlaW4lIGxpbmMkZ2VuZS5uYW1lLF0jU3Vic2V0IGxuY3JuYSBpbiBoZzM4IFxuXG4jS2VlcCBtYXRjaGluZyBzYW1wbGUgaWRzIG9mIFJOQS1zZXEgYW5kIFdHUyBmb3IgY21wIGFubm90YXRpb25cbmlkcyA8LSBpbnRlcnNlY3QoY29sbmFtZXMoY291bnRzKSxyb3cubmFtZXMoY2YpKVxuY291bnRzIDwtIGNvdW50c1ssaWRzXVxuY2YgPC0gY2ZbaWRzLF1cblxuXG4jQ3JlYXRlIGRnZSBvYmplY3QgLSBjcmVhdGUgY291bnRzIG1hdHJpeCBhbmQgc2FtcGxlIGFubm8gZGYgd2l0aCBsaWJyYXJ5IHNpemVzXG54IDwtIERHRUxpc3QoY291bnRzID0gY291bnRzKVxuXG4jQWRkIGNsdXN0ZXIgdmFyaWFibGUgdG8gZGVzaWduYXRlIGdyb3VwIG1lbWJlcnNoaXAgdG8gc2FtcGxlIGRmXG54JHNhbXBsZXMgPC0gY2JpbmQoeCRzYW1wbGVzLCBkcGx5cjo6c2VsZWN0KGNmLCBjKCBSQjEgKSkpXG5cbiNSZW1vdmUgZ2VuZXMgd2l0aCBsb3cgZXhwcmVzc2lvbiBhY3Jvc3Mgc2FtcGxlc1xua2VlcC5leHBycyA8LSBmaWx0ZXJCeUV4cHIoeClcbnggPC0geFtrZWVwLmV4cHJzLCwga2VlcC5saWIuc2l6ZSA9IEZdXG5cbiNDYWxjdWxhdGUgZWZmZWN0aXZlIGxpYnJhcnkgc2l6ZSB1c2luZyBFZGdlUiBUTU0gbWV0aG9kXG54IDwtIGNhbGNOb3JtRmFjdG9ycyh4LCBtZXRob2QgPSBcIlRNTVwiKVxuXG4jQ3JlYXRlIGRlc2lnbiBtYXRyaXggKHcvbyBpbnRlcmNlcHQpIHNwZWNpZnlpbmcgZ3JvdXAgbWVtYmVyc2hpcFxuZGVzaWduIDwtIG1vZGVsLm1hdHJpeCh+IDAgKyBhcy5mYWN0b3IoUkIxKSwgZGF0YSA9IGNmKSAjKyBiaW9wc3lfc2l0ZSwgZGF0YSA9IGNmKSAjKyBkaXNlYXNlX3R5cGVfU0lHX0dFWCwgZGF0YSA9IGNmKVxuXG5kZXNpZ25cbmNvbG5hbWVzKGRlc2lnbikgPC0gYyhcIkRlbFwiLCBcIldUXCIpICMsIFwiTGl2ZXJcIiwgXCJMTlwiLCBcIk90aGVyXCIpXG5cbiMgI0NyZWF0ZSBjb250cmFzdHMgdG8gY2FsY3VsYXRlXG5jb250ci5tYXRyaXggPC0gbWFrZUNvbnRyYXN0cyhEZWwgLSBXVCwgbGV2ZWxzID0gY29sbmFtZXMoZGVzaWduKSlcblxuI05vcm1hbGl6ZSBjb3VudHMgdG8gbG9nIENQTSB1c2luZyB2b29tXG52IDwtIHZvb20oeCwgZGVzaWduID0gZGVzaWduKVxuXG4jRml0IExNIGFjY29yZGluZyB0byBkZXNpZ25cbnZmaXQgPC0gbG1GaXQodiwgZGVzaWduKVxuXG4jQ2FsY3VsYXRlIGNvbnRyYXN0cyBpLmUgbG9nRkMgZm9yIGdlbmVzIGFjcm9zcyBncm91cHNcbnZmaXQgPC0gY29udHJhc3RzLmZpdCh2Zml0LCBjb250cmFzdHM9Y29udHIubWF0cml4KVxuXG4jQ2FsY3VsYXRlIHQtc3RhdHMgYW5kIHAgdmFscyB1c2luZyBFbXAgYmF5ZXMgbWV0aG9kXG5lZml0IDwtIGVCYXllcyh2Zml0KVxuXG5cbiNHZXQgbGlzdCBvZiBhbGwgZ2VuZXMsIGFycmFuZ2UgaW4gZGVjcmVhc2luZyBvcmRlclxuYnVsa19kZWcgPC0gdG9wVGFibGUoZWZpdCwgbnVtYmVyID0gSW5mLCBjb2VmID0gMSkgJT4lIGRhdGEuZnJhbWUoR2VuZXMgPSByb3cubmFtZXMoLikpICAlPiUgYXJyYW5nZSgtbG9nRkMpIFxuYnVsa19kZWcgPC0gYnVsa19kZWcgJT4lIGFycmFuZ2UoLWxvZ0ZDKVxuXG5idWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSAgIGxlZnRfam9pbih5ID0gZmlsdF9tYXJrZXJzLCBieSA9IGMoXCJHZW5lc1wiID0gXCJnZW5lXCIpKVxudXAgPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoYWRqLlAuVmFsIDwgMC4yNSAmIGxvZ0ZDID4gMSkgJT4lIGxlZnRfam9pbiggeSA9IGZpbHRfbWFya2VycywgYnkgPSBjKFwiR2VuZXNcIiA9IFwiZ2VuZVwiKSlcbmRvd24gPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoYWRqLlAuVmFsIDwgMC4yNSAmIGxvZ0ZDIDwgLTEpICAlPiUgYXJyYW5nZShsb2dGQykgJT4lIGxlZnRfam9pbiggeSA9IGZpbHRfbWFya2VycywgYnkgPSBjKFwiR2VuZXNcIiA9IFwiZ2VuZVwiKSlcblxuIFxuXG5mIDwtIHVwJEdlbmVzICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG5uYW1lcyhmKSA8LSB1cCRjbHVzdGVyXG5mIDwtIGZbIWlzLm5hKG5hbWVzKGYpKV1cblxuRG90UGxvdChvYmplY3QgPSBibWV0LCBmZWF0dXJlcyA9ICBmKVxuXG5yZXMgJT4lIGdncGxvdChhZXMoeCA9ICkpXG5idWxrX2RlZyAlPiUgYXJyYW5nZSgtYWRqLlAuVmFsKVxuXG5hbm5vXG5cbm1jcnBjX3JuYVxuXG5ibWV0W1wiQUw2OTE0ODIuM1wiLF1cblxuYSA8LSBtY3JwY19ybmEgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZSAlaW4lIHF1ZXJ5Z2VuZXMkVEdGQikgJT4lIGRwbHlyOjpzZWxlY3QoLUdlbmUpICU+JSBsb2cxcCgpICU+JSBjb2xNZWFucygpXG5iIDwtIG1jcnBjX3JuYSAlPiUgZHBseXI6OmZpbHRlcihHZW5lICVpbiUgXCJIQ1A1XCIpICU+JSBkcGx5cjo6c2VsZWN0KC1HZW5lKSAlPiUgbG9nMXAoKSAlPiUgY29sTWVhbnMoKVxuYlxuXG5idWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihHZW5lcyAlaW4lIFwiSENQNVwiKVxuXG5jZiA8LSByZWFkLnRhYmxlKGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL0NJQkVSU09SVHhfSm9iNDBfb3V0cHV0L0NJQkVSU09SVHhHRVBfSm9iNDBfRnJhY3Rpb25zLUFkanVzdGVkLnR4dFwiLCBoZWFkZXIgPSBUKVxuY2ZcblxuZGF0YS5mcmFtZShSTkEgPSBiLCBzYW1wbGVfaWQgPSBnc3ViKHBhdHRlcm4gPSBcIlxcXFwuXCIsIHJlcGxhY2VtZW50ID0gXCItXCIsIHggPSBuYW1lcyhiKSkpICAlPiUgbWVyZ2UoY2YpICU+JSBnZ3Bsb3QoYWVzKHggPSBSTkEsIHkgPSBDRDQgKyBDRDggKyBUcmVnQSArIFRyZWdSICsgQ1RMMSArIENUTDIgKyBOSyArIE5LVCArICBUaDExNykpICsgZ2VvbV9wb2ludCgpICsgZ2VvbV9zbW9vdGgobWV0aG9kID0gXCJsbVwiKSArIHN0YXRfY29yKClcblxuZGF0YS5mcmFtZShSTkEgPSBiLCBNaXh0dXJlID0gZ3N1YihwYXR0ZXJuID0gXCJcXFxcLlwiLCByZXBsYWNlbWVudCA9IFwiLVwiLCB4ID0gbmFtZXMoYikpKSAgJT4lIG1lcmdlKGNmKSAlPiUgZ2dwbG90KGFlcyh4ID0gUk5BLCB5ID0gTktfVCogMTAwKSkgKyBnZW9tX3BvaW50KCkgKyBnZW9tX3Ntb290aChtZXRob2QgPSBcImxtXCIpICsgc3RhdF9jb3IoKVxuXG5cbmNmXG5hXG5mXG5jb3IudGVzdChhLGIpXG5cbnF1ZXJ5Z2VuZXMkVEdGQlxuYGBgIn0= -->
+<pre class="r"><code>
+#Limma DE analysis 
 
 
-&lt;!-- rnb-chunk-begin --&gt;
+#Read in raw counts, convert to matrix with rows as gene symbols, columns as samples
+counts &lt;- read.table(&quot;/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt&quot;, header = T)
 
 
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG5cbmVobXIgPC0gcmVhZC5jc3YoZmlsZSA9IFxcL1VzZXJzL2RzL0Rlc2t0b3AvRE5BbV9kYXRhc2V0cy9laG1yLmNzdlxcLCBoZWFkZXIgPSBUKVxuXG5hIDwtIGVobXIgJT4lIGRwbHlyOjpmaWx0ZXIoc3ltYm9sICVpbiUgcGNhX2xuY3JuYSAmIHR5cGUgPT0gXFxITVJcXCkgJT4lIGFycmFuZ2UoY29yKSAlPiUgZ3JvdXBfYnkoc3ltYm9sKSAlPiUgZHBseXI6OnNsaWNlKDEpICU+JSBtdXRhdGUoR3JvdXAgPSBcXFByb3N0YXRlIHNwZWNpZmljXFwpXG5cbmIgPC0gZWhtciAlPiUgZHBseXI6OmZpbHRlcihzeW1ib2wgJWluJSBub3RwY2FfbG5jcm5hICYgdHlwZSA9PSBcXEhNUlxcKSU+JSBhcnJhbmdlKGNvcikgJT4lIGdyb3VwX2J5KHN5bWJvbCkgJT4lIGRwbHlyOjpzbGljZSgxKSAlPiUgbXV0YXRlKEdyb3VwID0gXFxOb3QgcHJvc3RhdGUgc3BlY2lmaWNcXClcblxuI3BkZihcXC9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmXFwsIHdpZHRoID0gMTApXG5cbnJiaW5kKGEsYikgJT4lIGdncGxvdChhZXMoeCA9IGNvciwgZmlsbCA9IEdyb3VwKSkgKyBnZW9tX2RlbnNpdHkoYWxwaGEgPSAwLjUpXG4jZGV2Lm9mZigpXG5cblxuYGBgXG5gYGAifQ== --&gt;
+counts &lt;- counts[!duplicated(counts$Genename),]
+row.names(counts) &lt;- counts$Genename
+counts &lt;- counts[,-1] %&gt;% as.matrix()
+colnames(counts) &lt;- gsub(&quot;\\.&quot;, &quot;-&quot;, colnames(counts))  
 
-```r
-```r
+counts &lt;- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+
+#Keep matching sample ids of RNA-seq and WGS for cmp annotation
+ids &lt;- intersect(colnames(counts),row.names(cf))
+counts &lt;- counts[,ids]
+cf &lt;- cf[ids,]
 
 
-ehmr &lt;- read.csv(file = \/Users/ds/Desktop/DNAm_datasets/ehmr.csv\, header = T)
+#Create dge object - create counts matrix and sample anno df with library sizes
+x &lt;- DGEList(counts = counts)
 
-a &lt;- ehmr %&gt;% dplyr::filter(symbol %in% pca_lncrna &amp; type == \HMR\) %&gt;% arrange(cor) %&gt;% group_by(symbol) %&gt;% dplyr::slice(1) %&gt;% mutate(Group = \Prostate specific\)
+#Add cluster variable to designate group membership to sample df
+x$samples &lt;- cbind(x$samples, dplyr::select(cf, c( RB1 )))
 
-b &lt;- ehmr %&gt;% dplyr::filter(symbol %in% notpca_lncrna &amp; type == \HMR\)%&gt;% arrange(cor) %&gt;% group_by(symbol) %&gt;% dplyr::slice(1) %&gt;% mutate(Group = \Not prostate specific\)
+#Remove genes with low expression across samples
+keep.exprs &lt;- filterByExpr(x)
+x &lt;- x[keep.exprs,, keep.lib.size = F]
 
-#pdf(\/Users/ds/Desktop/plot.pdf\, width = 10)
+#Calculate effective library size using EdgeR TMM method
+x &lt;- calcNormFactors(x, method = &quot;TMM&quot;)
 
-rbind(a,b) %&gt;% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5)
-#dev.off()
+#Create design matrix (w/o intercept) specifying group membership
+design &lt;- model.matrix(~ 0 + as.factor(RB1), data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+
+design
+colnames(design) &lt;- c(&quot;Del&quot;, &quot;WT&quot;) #, &quot;Liver&quot;, &quot;LN&quot;, &quot;Other&quot;)
+
+# #Create contrasts to calculate
+contr.matrix &lt;- makeContrasts(Del - WT, levels = colnames(design))
+
+#Normalize counts to log CPM using voom
+v &lt;- voom(x, design = design)
+
+#Fit LM according to design
+vfit &lt;- lmFit(v, design)
+
+#Calculate contrasts i.e logFC for genes across groups
+vfit &lt;- contrasts.fit(vfit, contrasts=contr.matrix)
+
+#Calculate t-stats and p vals using Emp bayes method
+efit &lt;- eBayes(vfit)
+
+
+#Get list of all genes, arrange in decreasing order
+bulk_deg &lt;- topTable(efit, number = Inf, coef = 1) %&gt;% data.frame(Genes = row.names(.))  %&gt;% arrange(-logFC) 
+bulk_deg &lt;- bulk_deg %&gt;% arrange(-logFC)
+
+bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; abs(logFC) &gt; 1) %&gt;%   left_join(y = filt_markers, by = c(&quot;Genes&quot; = &quot;gene&quot;))
+up &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; logFC &gt; 1) %&gt;% left_join( y = filt_markers, by = c(&quot;Genes&quot; = &quot;gene&quot;))
+down &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; logFC &lt; -1)  %&gt;% arrange(logFC) %&gt;% left_join( y = filt_markers, by = c(&quot;Genes&quot; = &quot;gene&quot;))
+
+ 
+
+f &lt;- up$Genes                                          
+names(f) &lt;- up$cluster
+f &lt;- f[!is.na(names(f))]
+
+DotPlot(object = bmet, features =  f)
+
+res %&gt;% ggplot(aes(x = ))
+bulk_deg %&gt;% arrange(-adj.P.Val)
+
+anno
+
+mcrpc_rna
+
+bmet[&quot;AL691482.3&quot;,]
+
+a &lt;- mcrpc_rna %&gt;% dplyr::filter(Gene %in% querygenes$TGFB) %&gt;% dplyr::select(-Gene) %&gt;% log1p() %&gt;% colMeans()
+b &lt;- mcrpc_rna %&gt;% dplyr::filter(Gene %in% &quot;HCP5&quot;) %&gt;% dplyr::select(-Gene) %&gt;% log1p() %&gt;% colMeans()
+b
+
+bulk_deg %&gt;% dplyr::filter(Genes %in% &quot;HCP5&quot;)
+
+cf &lt;- read.table(file = &quot;/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_Fractions-Adjusted.txt&quot;, header = T)
+cf
+
+data.frame(RNA = b, sample_id = gsub(pattern = &quot;\\.&quot;, replacement = &quot;-&quot;, x = names(b)))  %&gt;% merge(cf) %&gt;% ggplot(aes(x = RNA, y = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_point() + geom_smooth(method = &quot;lm&quot;) + stat_cor()
+
+data.frame(RNA = b, Mixture = gsub(pattern = &quot;\\.&quot;, replacement = &quot;-&quot;, x = names(b)))  %&gt;% merge(cf) %&gt;% ggplot(aes(x = RNA, y = NK_T* 100)) + geom_point() + geom_smooth(method = &quot;lm&quot;) + stat_cor()
+
+
+cf
+a
+f
+cor.test(a,b)
+
+querygenes$TGFB</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGxvdCA8LSAgRW5oYW5jZWRWb2xjYW5vKHRvcHRhYmxlID0gZGVnLCB4ID0gXCJhdmdfbG9nMkZDXCIsIHkgPSBcInBfdmFsX2FkalwiLCBsYWIgPXJvdy5uYW1lcyhkZWcpLCBzZWxlY3RMYWIgPSBjKCB1cCwgZG93biksIHBvaW50U2l6ZSA9IDEgLCBtYXgub3ZlcmxhcHNcdD0gSW5mLCBkcmF3Q29ubmVjdG9ycyA9IFQsIHBDdXRvZmYgPSAxZS0wMSwgbGVnZW5kUG9zaXRpb24gPSBcIm5vbmVcIiwgdGl0bGUgPSBcIkRpZmZlcmVudGlhbCBleHByZXNzaW9uIGFuYWx5c2lzIG9mIHByb3N0YXRlIGNhbmNlciBjZWxsc1wiLCBzdWJ0aXRsZSA9IFwiRW56YWx1dGFtaWRlIGV4cG9zZWQgdi5zIG5haXZlIG1DUlBDc1wiLCBGQ2N1dG9mZiA9IDEsIGxhYlNpemUgPSAzKVxuZ2dzYXZlKGZpbGVuYW1lID0gXCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZlwiLCBwbG90ID0gcGxvdCwgd2lkdGggPSAxMClcblxuXG5gYGAifQ== -->
+<pre class="r"><code>plot &lt;-  EnhancedVolcano(toptable = deg, x = &quot;avg_log2FC&quot;, y = &quot;p_val_adj&quot;, lab =row.names(deg), selectLab = c( up, down), pointSize = 1 , max.overlaps = Inf, drawConnectors = T, pCutoff = 1e-01, legendPosition = &quot;none&quot;, title = &quot;Differential expression analysis of prostate cancer cells&quot;, subtitle = &quot;Enzalutamide exposed v.s naive mCRPCs&quot;, FCcutoff = 1, labSize = 3)
+ggsave(filename = &quot;/Users/ds/Desktop/plot.pdf&quot;, plot = plot, width = 10)
 </code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5cbmFsbF9nZW5lX3NldHMgPSBtc2lnZGJyKHNwZWNpZXMgPSBcIkhvbW8gc2FwaWVuc1wiKVxuXG5ncyA8LSBhbGxfZ2VuZV9zZXRzICU+JVxuICBkcGx5cjo6ZmlsdGVyKGdzX2NhdCA9PSBcIkhcIilcblxucXVlcnlnZW5lcyA8LSBsaXN0KFRHRkIgPSBnc1tncmVwbChwYXR0ZXJuID0gXCJUR0ZcIiwgeCA9IGdzJGdzX25hbWUpLFwiZ2VuZV9zeW1ib2xcIiwgZHJvcCA9IFRdKVxuXG5cblxuYSA8LSBibWV0W2ModXApLF0gJT4lIEdldEFzc2F5RGF0YSgpICU+JSBjb2xNZWFucygpXG5iIDwtIGJtZXRbcXVlcnlnZW5lcyRUR0ZCLF0gJT4lIEdldEFzc2F5RGF0YSgpICU+JSBjb2xNZWFucygpXG5kZiA8LSBkYXRhLmZyYW1lKGxuY1JOQSA9IGEsIFRHRkIgPSBiLCBFbnphID0gYm1ldCRwcmlvci5lbnphbHV0YW1pZGUpXG5cblxucGxvdCA8LSBkZiAlPiUgZ2dwbG90KCBhZXMoIHg9IGxuY1JOQSwgeSA9IFRHRkIpKSArIGdlb21fcG9pbnQoYWVzKGNvbG9yICA9IEVuemEpKSArIGdlb21fc21vb3RoKG1ldGhvZCA9IFwibG1cIikgKyBzdGF0X2NvcihtZXRob2QgPSBcInNwZWFybWFuXCIpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoXCJkYXJrcmVkXCIsIFwiZGFya2JsdWVcIikpIFxucGxvdFxucGxvdCA8LSBnZ3Bsb3QoZGYsIGFlcyggeD0gRW56YSwgeSA9IFRHRkIsIGZpbGwgPSBFbnphKSkgKyBnZW9tX2ppdHRlcih3aWR0aCA9IDAuMSkgKyBnZW9tX2JveHBsb3QoYWxwaGEgPSAwLjIpICsgc2NhbGVfZmlsbF9tYW51YWwodmFsdWVzID0gYyhcImRhcmtyZWRcIiwgXCJkYXJrYmx1ZVwiKSlcbnBsb3RcbmxtKFRHRkIgfiBsbmNSTkEsIGRhdGEgPSBkZikgJT4lIHN1bW1hcnkoKVxuXG5kZlxuZ2dzYXZlKGZpbGVuYW1lID0gXCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZlwiLCBwbG90ID0gcGxvdCwgd2lkdGggPSAxMClcblxuYGBgIn0= -->
+<pre class="r"><code>
 
-&lt;!-- rnb-chunk-end --&gt;
+all_gene_sets = msigdbr(species = &quot;Homo sapiens&quot;)
+
+gs &lt;- all_gene_sets %&gt;%
+  dplyr::filter(gs_cat == &quot;H&quot;)
+
+querygenes &lt;- list(TGFB = gs[grepl(pattern = &quot;TGF&quot;, x = gs$gs_name),&quot;gene_symbol&quot;, drop = T])
 
 
-&lt;!-- rnb-text-begin --&gt;
+
+a &lt;- bmet[c(up),] %&gt;% GetAssayData() %&gt;% colMeans()
+b &lt;- bmet[querygenes$TGFB,] %&gt;% GetAssayData() %&gt;% colMeans()
+df &lt;- data.frame(lncRNA = a, TGFB = b, Enza = bmet$prior.enzalutamide)
 
 
-
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG5hIDwtIEdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIHBjYV9sbmNybmEsXSkgJT4lIGxlbmd0aCgpXG5iIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gYXRhYywgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgcGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKVxuXG5jIDwtIEdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIG5vdHBjYV9sbmNybmEsXSkgJT4lIGxlbmd0aCgpXG5kIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gYXRhYywgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgbm90cGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKVxuXG5wNSA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYyhcXE5vIE92ZXJsYXAgd2l0aCBBVEFDIHBlYWtzXFwsIFxcT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3NcXCApLCBDb3VudCA9IGMoYS1iLGIpKSAlPiUgZ2dwbG90KGFlcyh4ID0gXFxcXCwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSBcXGlkZW50aXR5XFwsIHdpZHRoID0gMSkgKyBjb29yZF9wb2xhcihcXHlcXCwgc3RhcnQgPSAwKSArdGhlbWVfdm9pZCgpICsgZ2d0aXRsZShcXFByb3N0YXRlLXNwZWNpZmljXFxuIGxuY1JOQXNcXCkgKyBzY2FsZV9maWxsX2JyZXdlcihwYWxldHRlID0gMylcbiAgXG5wNiA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYyhcXE5vIE92ZXJsYXAgd2l0aCBBVEFDIHBlYWtzXFwsIFxcT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3NcXCksIENvdW50ID0gYyhjLWQsZCkpICU+JSBnZ3Bsb3QoYWVzKHggPSBcXFxcLCB5ID0gQ291bnQsIGZpbGwgPSBDYXRlZ29yeSkpICsgZ2VvbV9iYXIoc3RhdCA9IFxcaWRlbnRpdHlcXCwgd2lkdGggPSAxKSArIGNvb3JkX3BvbGFyKFxceVxcLCBzdGFydCA9IDApICsgdGhlbWVfdm9pZCgpICsgZ2d0aXRsZShcXG5vdCBQcm9zdGF0ZS1zcGVjaWZpY1xcbiBsbmNSTkFzXFwpICsgc2NhbGVfZmlsbF9icmV3ZXIocGFsZXR0ZSA9IDMpXG4gIFxuXG5wbG90IDwtIHBsb3RfZ3JpZChwMSwgcDIscDMsIHA0LCBwNSwgcDYsIG5jb2wgPSAzLCBieXJvdyA9IEYpXG5wbG90XG5nZ3NhdmUoZmlsZW5hbWUgPSBcXC9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmXFwsIHBsb3QgPSBwbG90LCB3aWR0aCA9IDEwKVxuXG5cbm1hcmtlcnMgJT4lIGRwbHlyOjpmaWx0ZXIoZ2VuZSA9PSBcXE1BTEFUMVxcKVxuYGBgXG5gYGAifQ== --&gt;
-
-```r
-```r
-
-a &lt;- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %&gt;% length()
-b &lt;- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %&gt;% length()
-
-c &lt;- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %&gt;% length()
-d &lt;- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %&gt;% length()
-
-p5 &lt;- data.frame(Category = c(\No Overlap with ATAC peaks\, \Overlap with ATAC peaks\ ), Count = c(a-b,b)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) +theme_void() + ggtitle(\Prostate-specific\n lncRNAs\) + scale_fill_brewer(palette = 3)
-  
-p6 &lt;- data.frame(Category = c(\No Overlap with ATAC peaks\, \Overlap with ATAC peaks\), Count = c(c-d,d)) %&gt;% ggplot(aes(x = \\, y = Count, fill = Category)) + geom_bar(stat = \identity\, width = 1) + coord_polar(\y\, start = 0) + theme_void() + ggtitle(\not Prostate-specific\n lncRNAs\) + scale_fill_brewer(palette = 3)
-  
-
-plot &lt;- plot_grid(p1, p2,p3, p4, p5, p6, ncol = 3, byrow = F)
+plot &lt;- df %&gt;% ggplot( aes( x= lncRNA, y = TGFB)) + geom_point(aes(color  = Enza)) + geom_smooth(method = &quot;lm&quot;) + stat_cor(method = &quot;spearman&quot;) + scale_color_manual(values = c(&quot;darkred&quot;, &quot;darkblue&quot;)) 
 plot
-ggsave(filename = \/Users/ds/Desktop/plot.pdf\, plot = plot, width = 10)
+plot &lt;- ggplot(df, aes( x= Enza, y = TGFB, fill = Enza)) + geom_jitter(width = 0.1) + geom_boxplot(alpha = 0.2) + scale_fill_manual(values = c(&quot;darkred&quot;, &quot;darkblue&quot;))
+plot
+lm(TGFB ~ lncRNA, data = df) %&gt;% summary()
 
-
-markers %&gt;% dplyr::filter(gene == \MALAT1\)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuXG5uay50IDwtIHN1YnNldChibWV0LCBpZGVudHMgPSAnTksvVCcpICBcblxubmsudCRjbHVzdGVyLmRvbWluYW50LmNlbGwudHlwZSAlPiUgaGVhZCgpXG5JZGVudHMobmsudCkgPC0gXFxjbHVzdGVyLmRvbWluYW50LmNlbGwudHlwZVxcXG5uay50Lm1hcmtlcnMgPC0gRmluZEFsbE1hcmtlcnMob2JqZWN0ID0gbmsudCwgb25seS5wb3MgPSBULCB2ZXJib3NlID0gVClcblxubmsudC5sbmNybmEgPC0gIG5rLnQubWFya2VycyAlPiUgZHBseXI6OmZpbHRlcihnZW5lICVpbiUgbGluYyRnZW5lLm5hbWUpICU+JSBhcnJhbmdlKC1hdmdfbG9nMkZDKSAlPiUgZ3JvdXBfYnkoY2x1c3RlcikgJT4lIGRwbHlyOjpmaWx0ZXIocF92YWxfYWRqIDwgMC4xICYgIShnZW5lICVpbiUgcGNhX2xuY3JuYSkgJiBwY3QuMSA+IDAuMSkgJT4lIHNsaWNlKDE6bigpKVxuXG5wZGYoXFwvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZlxcLCBoZWlnaHQgPSAxMClcbkRvdFBsb3Qob2JqZWN0ID0gbmsudCwgZmVhdHVyZXMgPSBuay50LmxuY3JuYSRnZW5lWyFkdXBsaWNhdGVkKG5rLnQubG5jcm5hJGdlbmUpXSwgYXNzYXkgPSBcXFJOQVxcKSArIHRoZW1lKGF4aXMudGV4dC54ID0gZWxlbWVudF90ZXh0KGFuZ2xlID0gOTAsIHZqdXN0ID0gMC41LCBoanVzdD0xKSkgKyBjb29yZF9mbGlwKClcbmRldi5vZmYoKVxuXG5uay50JGNsdXN0ZXIuZG9taW5hbnQuY2VsbC50eXBlICU+JSB0YWJsZSgpXG5cbm5rLnQgPC0gRmluZFZhcmlhYmxlRmVhdHVyZXMobmsudCwgbmZlYXR1cmVzID0gMjAwMCkgJT4lIFxuICAgIFNjYWxlRGF0YSgpICU+JSBSdW5QQ0EoKVxuXG5wY19sb2FkIDwtIExvYWRpbmdzKG5rLnQsIHJlZHVjdGlvbiA9IFxccGNhXFwpICU+JSB0KClcblxuU3ViR2VuZU5hbWVzIDwtIGNvbG5hbWVzKHBjX2xvYWQpXG5cblxuYGBgXG5gYGAifQ== --&gt;
-
-```r
-```r
-
-nk.t &lt;- subset(bmet, idents = &#39;NK/T&#39;)  
-
-nk.t$cluster.dominant.cell.type %&gt;% head()
-Idents(nk.t) &lt;- \cluster.dominant.cell.type\
-nk.t.markers &lt;- FindAllMarkers(object = nk.t, only.pos = T, verbose = T)
-
-nk.t.lncrna &lt;-  nk.t.markers %&gt;% dplyr::filter(gene %in% linc$gene.name) %&gt;% arrange(-avg_log2FC) %&gt;% group_by(cluster) %&gt;% dplyr::filter(p_val_adj &lt; 0.1 &amp; !(gene %in% pca_lncrna) &amp; pct.1 &gt; 0.1) %&gt;% slice(1:n())
-
-pdf(\/Users/ds/Desktop/plot.pdf\, height = 10)
-DotPlot(object = nk.t, features = nk.t.lncrna$gene[!duplicated(nk.t.lncrna$gene)], assay = \RNA\) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
-dev.off()
-
-nk.t$cluster.dominant.cell.type %&gt;% table()
-
-nk.t &lt;- FindVariableFeatures(nk.t, nfeatures = 2000) %&gt;% 
-    ScaleData() %&gt;% RunPCA()
-
-pc_load &lt;- Loadings(nk.t, reduction = \pca\) %&gt;% t()
-
-SubGeneNames &lt;- colnames(pc_load)
+df
+ggsave(filename = &quot;/Users/ds/Desktop/plot.pdf&quot;, plot = plot, width = 10)
 </code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxucG93ZXJzID0gYygxOjIwKVxuXG5zZnQ9cGlja1NvZnRUaHJlc2hvbGQocGNfbG9hZCxkYXRhSXNFeHByID0gVFJVRSxwb3dlclZlY3RvciA9IHBvd2Vycyxjb3JGbmMgPSBiaWNvcixjb3JPcHRpb25zID0gbGlzdCh1c2UgPSAncCcpLG5ldHdvcmtUeXBlID0gXFxzaWduZWRcXCwgdmVyYm9zZSA9IDEpXG5cblxuXG5cbnBhcihtZnJvdyA9IGMoMSwyKSk7XG5jZXgxID0gMC45O1xuXG4jIFNjYWxlLWZyZWUgdG9wb2xvZ3kgZml0IGluZGV4IGFzIGEgZnVuY3Rpb24gb2YgdGhlIHNvZnQtdGhyZXNob2xkaW5nIHBvd2VyXG5wbG90KHNmdCRmaXRJbmRpY2VzWywxXSwgLXNpZ24oc2Z0JGZpdEluZGljZXNbLDNdKSpzZnQkZml0SW5kaWNlc1ssMl0seGxhYj1cXFNvZnQgVGhyZXNob2xkIChwb3dlcilcXCx5bGFiPVxcU2NhbGUgRnJlZSBUb3BvbG9neSBNb2RlbCBGaXRcbmBgYCJ9 --&gt;
-
-```r
-```r
-powers = c(1:20)
-
-sft=pickSoftThreshold(pc_load,dataIsExpr = TRUE,powerVector = powers,corFnc = bicor,corOptions = list(use = &#39;p&#39;),networkType = \signed\, verbose = 1)
-
-
-
-
-par(mfrow = c(1,2));
-cex1 = 0.9;
-
-# Scale-free topology fit index as a function of the soft-thresholding power
-plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],xlab=\Soft Threshold (power)\,ylab=\Scale Free Topology Model Fit</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuc29mdFBvd2VyID0gOVxuXG5cbiNjYWxjbHV0ZSB0aGUgYWRqYWNlbmN5IG1hdHJpeFxuYWRqPSBhZGphY2VuY3kocGNfbG9hZCx0eXBlID0gXFxzaWduZWRcXCwgcG93ZXIgPSBzb2Z0UG93ZXIpO1xuXG4jdHVybiBhZGphY2VuY3kgbWF0cml4IGludG8gdG9wb2xvZ2ljYWwgb3ZlcmxhcCB0byBtaW5pbWl6ZSB0aGUgZWZmZWN0cyBvZiBub2lzZSBhbmQgc3B1cmlvdXMgYXNzb2NpYXRpb25zXG5UT009VE9Nc2ltaWxhcml0eUZyb21FeHByKHBjX2xvYWQsbmV0d29ya1R5cGUgPSBcXHNpZ25lZFxcLCBUT01UeXBlID0gXFxzaWduZWRcXCwgcG93ZXIgPSBzb2Z0UG93ZXIpXG5cblxuY29sbmFtZXMoVE9NKSA8LSBTdWJHZW5lTmFtZXNcbnJvdy5uYW1lcyhUT00pIDwtIFN1YkdlbmVOYW1lc1xuXG5cblxuZGlzc1RPTT0xLVRPTVxuXG5cbiNoaWVyYXJjaGljYWwgY2x1c3RlcmluZyBvZiB0aGUgZ2VuZXMgYmFzZWQgb24gdGhlIFRPTSBkaXNzaW1pbGFyaXR5IG1lYXN1cmVcbmdlbmVUcmVlID0gZmxhc2hDbHVzdChhcy5kaXN0KGRpc3NUT00pLG1ldGhvZD1cXGF2ZXJhZ2VcXClcblxuI3Bsb3QgdGhlIHJlc3VsdGluZyBjbHVzdGVyaW5nIHRyZWUgKGRlbmRyb2dyYW0pXG5wbG90KGdlbmVUcmVlLCB4bGFiPVxcXFwsIHN1Yj1cXFxcLGNleD0wLjMpXG5cblxuXG4jIFNldCB0aGUgbWluaW11bSBtb2R1bGUgc2l6ZVxubWluTW9kdWxlU2l6ZSA9IDIwXG5cbiMgTW9kdWxlIGlkZW50aWZpY2F0aW9uIHVzaW5nIGR5bmFtaWMgdHJlZSBjdXRcblxuZHluYW1pY01vZHMgPSBjdXRyZWVEeW5hbWljKGRlbmRybyA9IGdlbmVUcmVlLCBkaXN0TSA9IGRpc3NUT00sIG1ldGhvZD1cXGh5YnJpZFxcLCBkZWVwU3BsaXQgPSAyLCBwYW1SZXNwZWN0c0RlbmRybyA9IEZBTFNFLCBtaW5DbHVzdGVyU2l6ZSA9IG1pbk1vZHVsZVNpemUpO1xuXG4jdGhlIGZvbGxvd2luZyBjb21tYW5kIGdpdmVzIHRoZSBtb2R1bGUgbGFiZWxzIGFuZCB0aGUgc2l6ZSBvZiBlYWNoIG1vZHVsZS4gTGFibGUgMCBpcyByZXNlcnZlZCBmb3IgdW5hc3NpZ25lZCBnZW5lc1xudGFibGUoZHluYW1pY01vZHMpXG5cbiNQbG90IHRoZSBtb2R1bGUgYXNzaWdubWVudCB1bmRlciB0aGUgZGVuZHJvZ3JhbTsgbm90ZTogVGhlIGdyZXkgY29sb3IgaXMgcmVzZXJ2ZWQgZm9yIHVuYXNzaWduZWQgZ2VuZXNcbmR5bmFtaWNDb2xvcnMgPSBsYWJlbHMyY29sb3JzKGR5bmFtaWNNb2RzKVxudGFibGUoZHluYW1pY0NvbG9ycylcblxuXG5wbG90RGVuZHJvQW5kQ29sb3JzKGdlbmVUcmVlLCBkeW5hbWljQ29sb3JzLCBcXER5bmFtaWMgVHJlZSBDdXRcXCwgZGVuZHJvTGFiZWxzID0gRkFMU0UsIGhhbmcgPSAwLjAzLCBhZGRHdWlkZSA9IFRSVUUsIGd1aWRlSGFuZyA9IDAuMDUsIG1haW4gPSBcXEdlbmUgZGVuZHJvZ3JhbSBhbmQgbW9kdWxlIGNvbG9yc1xcKVxuXG5cblxuI0NsdXN0ZXIgZWFjaCBtb2R1bGUgdXNpbmcgdGhlIFBDMVxuTUVMaXN0ID0gbW9kdWxlRWlnZW5nZW5lcyhwY19sb2FkLCBjb2xvcnMgPSBkeW5hbWljQ29sb3JzKSBcbk1FcyA9IE1FTGlzdCRlaWdlbmdlbmVzXG5wbG90RWlnZW5nZW5lTmV0d29ya3MoTUVzLCBcXFxcLCBtYXJEZW5kcm8gPSBjKDAsNCwxLDIpLCBtYXJIZWF0bWFwID0gYygzLDQsMSwyKSlcbmdlbmVfY2x1c3RlcnMgPC0gZGF0YS5mcmFtZShIVkcgPSBjb2xuYW1lcyhwY19sb2FkKSwgQ2x1c3RlciA9IGR5bmFtaWNDb2xvcnMpICU+JSBhcnJhbmdlKENsdXN0ZXIpXG5cblZpZXcoZ2VuZV9jbHVzdGVycylcblxuZ2VuZV9jbHVzdGVycyAlPiUgZHBseXI6OmZpbHRlcihIVkcgJWluJSBuay50LmxuY3JuYSRnZW5lKVxuXG5cbmBgYFxuYGBgIn0= -->
-<pre class="r"><code>```r
-softPower = 9
-
-
-#calclute the adjacency matrix
-adj= adjacency(pc_load,type = \signed\, power = softPower);
-
-#turn adjacency matrix into topological overlap to minimize the effects of noise and spurious associations
-TOM=TOMsimilarityFromExpr(pc_load,networkType = \signed\, TOMType = \signed\, power = softPower)
-
-
-colnames(TOM) &lt;- SubGeneNames
-row.names(TOM) &lt;- SubGeneNames
-
-
-
-dissTOM=1-TOM
-
-
-#hierarchical clustering of the genes based on the TOM dissimilarity measure
-geneTree = flashClust(as.dist(dissTOM),method=\average\)
-
-#plot the resulting clustering tree (dendrogram)
-plot(geneTree, xlab=\\, sub=\\,cex=0.3)
-
-
-
-# Set the minimum module size
-minModuleSize = 20
-
-# Module identification using dynamic tree cut
-
-dynamicMods = cutreeDynamic(dendro = geneTree, distM = dissTOM, method=\hybrid\, deepSplit = 2, pamRespectsDendro = FALSE, minClusterSize = minModuleSize);
-
-#the following command gives the module labels and the size of each module. Lable 0 is reserved for unassigned genes
-table(dynamicMods)
-
-#Plot the module assignment under the dendrogram; note: The grey color is reserved for unassigned genes
-dynamicColors = labels2colors(dynamicMods)
-table(dynamicColors)
-
-
-plotDendroAndColors(geneTree, dynamicColors, \Dynamic Tree Cut\, dendroLabels = FALSE, hang = 0.03, addGuide = TRUE, guideHang = 0.05, main = \Gene dendrogram and module colors\)
-
-
-
-#Cluster each module using the PC1
-MEList = moduleEigengenes(pc_load, colors = dynamicColors) 
-MEs = MEList$eigengenes
-plotEigengeneNetworks(MEs, \\, marDendro = c(0,4,1,2), marHeatmap = c(3,4,1,2))
-gene_clusters &lt;- data.frame(HVG = colnames(pc_load), Cluster = dynamicColors) %&gt;% arrange(Cluster)
-
-View(gene_clusters)
-
-gene_clusters %&gt;% dplyr::filter(HVG %in% nk.t.lncrna$gene)
-</code></pre>
-<p>```</p>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUiBOb3RlYm9vayIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKYGBge3J9CmxpYnJhcnkoRW5zRGIuSHNhcGllbnMudjc1KQpsaWJyYXJ5KGVkZ2VSKQpsaWJyYXJ5KFNldXJhdCkKbGlicmFyeShXR0NOQSkKbGlicmFyeShmbGFzaENsdXN0KQpsaWJyYXJ5KGNvd3Bsb3QpCmxpYnJhcnkoZGl0dG9TZXEpCmBgYAoKCmBgYHtyfQphcmJzIDwtIHJlYWRfdHN2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvQVJfY2hpcF9oZzM4LmJlZCIsIGNvbF9uYW1lcyA9IGMoImNociIsICJzdGFydCIsICJlbmQiKSkKYXJicyA8LSBHUmFuZ2VzKGFyYnMpCmhtciA8LSByZWFkX3RzdihmaWxlID0gIi9Vc2Vycy9kcy9EZXNrdG9wL0ROQW1fZGF0YXNldHMvaG1yLmJlZCIsIGNvbF9uYW1lcyA9IGMoImNociIsICJzdGFydCIsICJlbmQiKSkKaG1yIDwtIEdSYW5nZXMoaG1yKQphdGFjIDwtIHJlYWRfdHN2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9hdGFjL0FUQUNfbUNSUENfY29uc2Vuc3VzLmJlZCIsIGNvbF9uYW1lcyA9IGMoImNociIsICJzdGFydCIsICJlbmQiKSkKYXRhYyA8LSBHUmFuZ2VzKGF0YWMpCmBgYAoKCgpgYGB7cn0KYSA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKQpiIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gYXJicywgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgcGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKQoKYyA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKQpkIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gYXJicywgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgbm90cGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKQoKCnAxIDwtIGRhdGEuZnJhbWUoQ2F0ZWdvcnkgPSBjKCJObyBPdmVybGFwIHdpdGggQVJCUyIsICJPdmVybGFwIHdpdGggQVJCUyIgKSwgQ291bnQgPSBjKGEtYixiKSkgJT4lIGdncGxvdChhZXMoeCA9ICIiLCB5ID0gQ291bnQsIGZpbGwgPSBDYXRlZ29yeSkpICsgZ2VvbV9iYXIoc3RhdCA9ICJpZGVudGl0eSIsIHdpZHRoID0gMSkgKyBjb29yZF9wb2xhcigieSIsIHN0YXJ0ID0gMCkgK3RoZW1lX3ZvaWQoKSArIGdndGl0bGUoIlByb3N0YXRlLXNwZWNpZmljXG4gbG5jUk5BcyIpICsgc2NhbGVfZmlsbF9icmV3ZXIocGFsZXR0ZSA9IDEpCiAgCnAyIDwtIGRhdGEuZnJhbWUoQ2F0ZWdvcnkgPSBjKCJObyBPdmVybGFwIHdpdGggQVJCUyIsICJPdmVybGFwIHdpdGggQVJCUyIpLCBDb3VudCA9IGMoYy1kLGQpKSAlPiUgZ2dwbG90KGFlcyh4ID0gIiIsIHkgPSBDb3VudCwgZmlsbCA9IENhdGVnb3J5KSkgKyBnZW9tX2JhcihzdGF0ID0gImlkZW50aXR5Iiwgd2lkdGggPSAxKSArIGNvb3JkX3BvbGFyKCJ5Iiwgc3RhcnQgPSAwKSArIHRoZW1lX3ZvaWQoKSArIGdndGl0bGUoIm5vdCBQcm9zdGF0ZS1zcGVjaWZpY1xuIGxuY1JOQXMiKSArIHNjYWxlX2ZpbGxfYnJld2VyKHBhbGV0dGUgPSAxKQogIAoKCgoKYGBgCgoKYGBge3J9CmEgPC0gR1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgcGNhX2xuY3JuYSxdKSAlPiUgbGVuZ3RoKCkKYiA8LSBzdWJzZXRCeU92ZXJsYXBzKHJhbmdlcyA9IGhtciwgeCA9R1JhbmdlcyhsaW5jW2xpbmMkZ2VuZS5uYW1lICVpbiUgcGNhX2xuY3JuYSxdKSApICU+JSBsZW5ndGgoKQoKYyA8LSBHUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICU+JSBsZW5ndGgoKQpkIDwtIHN1YnNldEJ5T3ZlcmxhcHMocmFuZ2VzID0gaG1yLCB4ID1HUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICkgJT4lIGxlbmd0aCgpCgpwMyA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYygiTm8gT3ZlcmxhcCB3aXRoIEhNUnMiLCAiT3ZlcmxhcCB3aXRoIEhNUnMiICksIENvdW50ID0gYyhhLWIsYikpICU+JSBnZ3Bsb3QoYWVzKHggPSAiIiwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSAiaWRlbnRpdHkiLCB3aWR0aCA9IDEpICsgY29vcmRfcG9sYXIoInkiLCBzdGFydCA9IDApICt0aGVtZV92b2lkKCkgKyBnZ3RpdGxlKCJQcm9zdGF0ZS1zcGVjaWZpY1xuIGxuY1JOQXMiKSArIHNjYWxlX2ZpbGxfYnJld2VyKHBhbGV0dGUgPSAyKQoKICAKcDQgPC0gZGF0YS5mcmFtZShDYXRlZ29yeSA9IGMoIk5vIE92ZXJsYXAgd2l0aCBITVJzIiwgIk92ZXJsYXAgd2l0aCBITVJzIiksIENvdW50ID0gYyhjLWQsZCkpICU+JSBnZ3Bsb3QoYWVzKHggPSAiIiwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSAiaWRlbnRpdHkiLCB3aWR0aCA9IDEpICsgY29vcmRfcG9sYXIoInkiLCBzdGFydCA9IDApICsgdGhlbWVfdm9pZCgpICsgZ2d0aXRsZSgibm90IFByb3N0YXRlLXNwZWNpZmljXG4gbG5jUk5BcyIpKyBzY2FsZV9maWxsX2JyZXdlcihwYWxldHRlID0gMikKICAKCmBgYAoKCmBgYHtyfQoKCmVobXIgPC0gcmVhZC5jc3YoZmlsZSA9ICIvVXNlcnMvZHMvRGVza3RvcC9ETkFtX2RhdGFzZXRzL2VobXIuY3N2IiwgaGVhZGVyID0gVCkKCmEgPC0gZWhtciAlPiUgZHBseXI6OmZpbHRlcihzeW1ib2wgJWluJSBwY2FfbG5jcm5hICYgdHlwZSA9PSAiSE1SIikgJT4lIGFycmFuZ2UoY29yKSAlPiUgZ3JvdXBfYnkoc3ltYm9sKSAlPiUgZHBseXI6OnNsaWNlKDEpICU+JSBtdXRhdGUoR3JvdXAgPSAiUHJvc3RhdGUgc3BlY2lmaWMiKQoKYiA8LSBlaG1yICU+JSBkcGx5cjo6ZmlsdGVyKHN5bWJvbCAlaW4lIG5vdHBjYV9sbmNybmEgJiB0eXBlID09ICJITVIiKSU+JSBhcnJhbmdlKGNvcikgJT4lIGdyb3VwX2J5KHN5bWJvbCkgJT4lIGRwbHlyOjpzbGljZSgxKSAlPiUgbXV0YXRlKEdyb3VwID0gIk5vdCBwcm9zdGF0ZSBzcGVjaWZpYyIpCgojcGRmKCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZiIsIHdpZHRoID0gMTApCgpyYmluZChhLGIpICU+JSBnZ3Bsb3QoYWVzKHggPSBjb3IsIGZpbGwgPSBHcm91cCkpICsgZ2VvbV9kZW5zaXR5KGFscGhhID0gMC41KQojZGV2Lm9mZigpCgoKYGBgCgoKYGBge3J9CgphIDwtIEdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIHBjYV9sbmNybmEsXSkgJT4lIGxlbmd0aCgpCmIgPC0gc3Vic2V0QnlPdmVybGFwcyhyYW5nZXMgPSBhdGFjLCB4ID1HUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBwY2FfbG5jcm5hLF0pICkgJT4lIGxlbmd0aCgpCgpjIDwtIEdSYW5nZXMobGluY1tsaW5jJGdlbmUubmFtZSAlaW4lIG5vdHBjYV9sbmNybmEsXSkgJT4lIGxlbmd0aCgpCmQgPC0gc3Vic2V0QnlPdmVybGFwcyhyYW5nZXMgPSBhdGFjLCB4ID1HUmFuZ2VzKGxpbmNbbGluYyRnZW5lLm5hbWUgJWluJSBub3RwY2FfbG5jcm5hLF0pICkgJT4lIGxlbmd0aCgpCgpwNSA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYygiTm8gT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3MiLCAiT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3MiICksIENvdW50ID0gYyhhLWIsYikpICU+JSBnZ3Bsb3QoYWVzKHggPSAiIiwgeSA9IENvdW50LCBmaWxsID0gQ2F0ZWdvcnkpKSArIGdlb21fYmFyKHN0YXQgPSAiaWRlbnRpdHkiLCB3aWR0aCA9IDEpICsgY29vcmRfcG9sYXIoInkiLCBzdGFydCA9IDApICt0aGVtZV92b2lkKCkgKyBnZ3RpdGxlKCJQcm9zdGF0ZS1zcGVjaWZpY1xuIGxuY1JOQXMiKSArIHNjYWxlX2ZpbGxfYnJld2VyKHBhbGV0dGUgPSAzKQogIApwNiA8LSBkYXRhLmZyYW1lKENhdGVnb3J5ID0gYygiTm8gT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3MiLCAiT3ZlcmxhcCB3aXRoIEFUQUMgcGVha3MiKSwgQ291bnQgPSBjKGMtZCxkKSkgJT4lIGdncGxvdChhZXMoeCA9ICIiLCB5ID0gQ291bnQsIGZpbGwgPSBDYXRlZ29yeSkpICsgZ2VvbV9iYXIoc3RhdCA9ICJpZGVudGl0eSIsIHdpZHRoID0gMSkgKyBjb29yZF9wb2xhcigieSIsIHN0YXJ0ID0gMCkgKyB0aGVtZV92b2lkKCkgKyBnZ3RpdGxlKCJub3QgUHJvc3RhdGUtc3BlY2lmaWNcbiBsbmNSTkFzIikgKyBzY2FsZV9maWxsX2JyZXdlcihwYWxldHRlID0gMykKICAKCnBsb3QgPC0gcGxvdF9ncmlkKHAxLCBwMixwMywgcDQsIHA1LCBwNiwgbmNvbCA9IDMsIGJ5cm93ID0gRikKcGxvdApnZ3NhdmUoZmlsZW5hbWUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGYiLCBwbG90ID0gcGxvdCwgd2lkdGggPSAxMCkKCgptYXJrZXJzICU+JSBkcGx5cjo6ZmlsdGVyKGdlbmUgPT0gIk1BTEFUMSIpCmBgYAoKCgpgYGB7cn0KCm5rLnQgPC0gc3Vic2V0KGJtZXQsIGlkZW50cyA9ICdOSy9UJykgIAoKbmsudCRjbHVzdGVyLmRvbWluYW50LmNlbGwudHlwZSAlPiUgaGVhZCgpCklkZW50cyhuay50KSA8LSAiY2x1c3Rlci5kb21pbmFudC5jZWxsLnR5cGUiCm5rLnQubWFya2VycyA8LSBGaW5kQWxsTWFya2VycyhvYmplY3QgPSBuay50LCBvbmx5LnBvcyA9IFQsIHZlcmJvc2UgPSBUKQoKbmsudC5sbmNybmEgPC0gIG5rLnQubWFya2VycyAlPiUgZHBseXI6OmZpbHRlcihnZW5lICVpbiUgbGluYyRnZW5lLm5hbWUpICU+JSBhcnJhbmdlKC1hdmdfbG9nMkZDKSAlPiUgZ3JvdXBfYnkoY2x1c3RlcikgJT4lIGRwbHlyOjpmaWx0ZXIocF92YWxfYWRqIDwgMC4xICYgIShnZW5lICVpbiUgcGNhX2xuY3JuYSkgJiBwY3QuMSA+IDAuMSkgJT4lIHNsaWNlKDE6bigpKQoKcGRmKCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZiIsIGhlaWdodCA9IDEwKQpEb3RQbG90KG9iamVjdCA9IG5rLnQsIGZlYXR1cmVzID0gbmsudC5sbmNybmEkZ2VuZVshZHVwbGljYXRlZChuay50LmxuY3JuYSRnZW5lKV0sIGFzc2F5ID0gIlJOQSIpICsgdGhlbWUoYXhpcy50ZXh0LnggPSBlbGVtZW50X3RleHQoYW5nbGUgPSA5MCwgdmp1c3QgPSAwLjUsIGhqdXN0PTEpKSArIGNvb3JkX2ZsaXAoKQpkZXYub2ZmKCkKCm5rLnQkY2x1c3Rlci5kb21pbmFudC5jZWxsLnR5cGUgJT4lIHRhYmxlKCkKCm5rLnQgPC0gRmluZFZhcmlhYmxlRmVhdHVyZXMobmsudCwgbmZlYXR1cmVzID0gMjAwMCkgJT4lIAogICAgU2NhbGVEYXRhKCkgJT4lIFJ1blBDQSgpCgpwY19sb2FkIDwtIExvYWRpbmdzKG5rLnQsIHJlZHVjdGlvbiA9ICJwY2EiKSAlPiUgdCgpCgpTdWJHZW5lTmFtZXMgPC0gY29sbmFtZXMocGNfbG9hZCkKCgpgYGAKCmBgYHtyfQpwb3dlcnMgPSBjKDE6MjApCgpzZnQ9cGlja1NvZnRUaHJlc2hvbGQocGNfbG9hZCxkYXRhSXNFeHByID0gVFJVRSxwb3dlclZlY3RvciA9IHBvd2Vycyxjb3JGbmMgPSBiaWNvcixjb3JPcHRpb25zID0gbGlzdCh1c2UgPSAncCcpLG5ldHdvcmtUeXBlID0gInNpZ25lZCIsIHZlcmJvc2UgPSAxKQoKCgoKcGFyKG1mcm93ID0gYygxLDIpKTsKY2V4MSA9IDAuOTsKCiMgU2NhbGUtZnJlZSB0b3BvbG9neSBmaXQgaW5kZXggYXMgYSBmdW5jdGlvbiBvZiB0aGUgc29mdC10aHJlc2hvbGRpbmcgcG93ZXIKcGxvdChzZnQkZml0SW5kaWNlc1ssMV0sIC1zaWduKHNmdCRmaXRJbmRpY2VzWywzXSkqc2Z0JGZpdEluZGljZXNbLDJdLHhsYWI9IlNvZnQgVGhyZXNob2xkIChwb3dlcikiLHlsYWI9IlNjYWxlIEZyZWUgVG9wb2xvZ3kgTW9kZWwgRml0LCBzaWduZWQgUl4yIix0eXBlPSJuIiwgbWFpbiA9IHBhc3RlKCJTY2FsZSBpbmRlcGVuZGVuY2UiKSk7CnRleHQoc2Z0JGZpdEluZGljZXNbLDFdLCAtc2lnbihzZnQkZml0SW5kaWNlc1ssM10pKnNmdCRmaXRJbmRpY2VzWywyXSxsYWJlbHM9cG93ZXJzLGNleD1jZXgxLGNvbD0icmVkIik7CgojIFJlZCBsaW5lIGNvcnJlc3BvbmRzIHRvIHVzaW5nIGFuIFJeMiBjdXQtb2ZmCmFibGluZShoPTAuODAsY29sPSJyZWQiKQoKIyBNZWFuIGNvbm5lY3Rpdml0eSBhcyBhIGZ1bmN0aW9uIG9mIHRoZSBzb2Z0LXRocmVzaG9sZGluZyBwb3dlcgpwbG90KHNmdCRmaXRJbmRpY2VzWywxXSwgc2Z0JGZpdEluZGljZXNbLDVdLHhsYWI9IlNvZnQgVGhyZXNob2xkIChwb3dlcikiLHlsYWI9Ik1lYW4gQ29ubmVjdGl2aXR5IiwgdHlwZT0ibiIsbWFpbiA9IHBhc3RlKCJNZWFuIGNvbm5lY3Rpdml0eSIpKQp0ZXh0KHNmdCRmaXRJbmRpY2VzWywxXSwgc2Z0JGZpdEluZGljZXNbLDVdLCBsYWJlbHM9cG93ZXJzLCBjZXg9Y2V4MSxjb2w9InJlZCIpCmBgYAoKYGBge3J9CnNvZnRQb3dlciA9IDkKCgojY2FsY2x1dGUgdGhlIGFkamFjZW5jeSBtYXRyaXgKYWRqPSBhZGphY2VuY3kocGNfbG9hZCx0eXBlID0gInNpZ25lZCIsIHBvd2VyID0gc29mdFBvd2VyKTsKCiN0dXJuIGFkamFjZW5jeSBtYXRyaXggaW50byB0b3BvbG9naWNhbCBvdmVybGFwIHRvIG1pbmltaXplIHRoZSBlZmZlY3RzIG9mIG5vaXNlIGFuZCBzcHVyaW91cyBhc3NvY2lhdGlvbnMKVE9NPVRPTXNpbWlsYXJpdHlGcm9tRXhwcihwY19sb2FkLG5ldHdvcmtUeXBlID0gInNpZ25lZCIsIFRPTVR5cGUgPSAic2lnbmVkIiwgcG93ZXIgPSBzb2Z0UG93ZXIpCgoKY29sbmFtZXMoVE9NKSA8LSBTdWJHZW5lTmFtZXMKcm93Lm5hbWVzKFRPTSkgPC0gU3ViR2VuZU5hbWVzCgoKCmRpc3NUT009MS1UT00KCgojaGllcmFyY2hpY2FsIGNsdXN0ZXJpbmcgb2YgdGhlIGdlbmVzIGJhc2VkIG9uIHRoZSBUT00gZGlzc2ltaWxhcml0eSBtZWFzdXJlCmdlbmVUcmVlID0gZmxhc2hDbHVzdChhcy5kaXN0KGRpc3NUT00pLG1ldGhvZD0iYXZlcmFnZSIpCgojcGxvdCB0aGUgcmVzdWx0aW5nIGNsdXN0ZXJpbmcgdHJlZSAoZGVuZHJvZ3JhbSkKcGxvdChnZW5lVHJlZSwgeGxhYj0iIiwgc3ViPSIiLGNleD0wLjMpCgoKCiMgU2V0IHRoZSBtaW5pbXVtIG1vZHVsZSBzaXplCm1pbk1vZHVsZVNpemUgPSAyMAoKIyBNb2R1bGUgaWRlbnRpZmljYXRpb24gdXNpbmcgZHluYW1pYyB0cmVlIGN1dAoKZHluYW1pY01vZHMgPSBjdXRyZWVEeW5hbWljKGRlbmRybyA9IGdlbmVUcmVlLCBkaXN0TSA9IGRpc3NUT00sIG1ldGhvZD0iaHlicmlkIiwgZGVlcFNwbGl0ID0gMiwgcGFtUmVzcGVjdHNEZW5kcm8gPSBGQUxTRSwgbWluQ2x1c3RlclNpemUgPSBtaW5Nb2R1bGVTaXplKTsKCiN0aGUgZm9sbG93aW5nIGNvbW1hbmQgZ2l2ZXMgdGhlIG1vZHVsZSBsYWJlbHMgYW5kIHRoZSBzaXplIG9mIGVhY2ggbW9kdWxlLiBMYWJsZSAwIGlzIHJlc2VydmVkIGZvciB1bmFzc2lnbmVkIGdlbmVzCnRhYmxlKGR5bmFtaWNNb2RzKQoKI1Bsb3QgdGhlIG1vZHVsZSBhc3NpZ25tZW50IHVuZGVyIHRoZSBkZW5kcm9ncmFtOyBub3RlOiBUaGUgZ3JleSBjb2xvciBpcyByZXNlcnZlZCBmb3IgdW5hc3NpZ25lZCBnZW5lcwpkeW5hbWljQ29sb3JzID0gbGFiZWxzMmNvbG9ycyhkeW5hbWljTW9kcykKdGFibGUoZHluYW1pY0NvbG9ycykKCgpwbG90RGVuZHJvQW5kQ29sb3JzKGdlbmVUcmVlLCBkeW5hbWljQ29sb3JzLCAiRHluYW1pYyBUcmVlIEN1dCIsIGRlbmRyb0xhYmVscyA9IEZBTFNFLCBoYW5nID0gMC4wMywgYWRkR3VpZGUgPSBUUlVFLCBndWlkZUhhbmcgPSAwLjA1LCBtYWluID0gIkdlbmUgZGVuZHJvZ3JhbSBhbmQgbW9kdWxlIGNvbG9ycyIpCgoKCiNDbHVzdGVyIGVhY2ggbW9kdWxlIHVzaW5nIHRoZSBQQzEKTUVMaXN0ID0gbW9kdWxlRWlnZW5nZW5lcyhwY19sb2FkLCBjb2xvcnMgPSBkeW5hbWljQ29sb3JzKSAKTUVzID0gTUVMaXN0JGVpZ2VuZ2VuZXMKcGxvdEVpZ2VuZ2VuZU5ldHdvcmtzKE1FcywgIiIsIG1hckRlbmRybyA9IGMoMCw0LDEsMiksIG1hckhlYXRtYXAgPSBjKDMsNCwxLDIpKQpnZW5lX2NsdXN0ZXJzIDwtIGRhdGEuZnJhbWUoSFZHID0gY29sbmFtZXMocGNfbG9hZCksIENsdXN0ZXIgPSBkeW5hbWljQ29sb3JzKSAlPiUgYXJyYW5nZShDbHVzdGVyKQoKVmlldyhnZW5lX2NsdXN0ZXJzKQoKZ2VuZV9jbHVzdGVycyAlPiUgZHBseXI6OmZpbHRlcihIVkcgJWluJSBuay50LmxuY3JuYSRnZW5lKQoKCmBgYAoK</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUiBOb3RlYm9vayIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKI0VuemEgY29tcGFyZQpgYGB7cn0KYm1ldCRzdXBlcmNsdXN0ZXIuZm9yLkxEU0MuU0VHICU+JSB0YWJsZSgpCgoKb2IgPC0gc3Vic2V0KGJtZXQsIGlkZW50cyA9ICAidHVtb3IiICkKCgpvYiRvcmdhbl9fb250b2xvZ3lfbGFiZWwgJT4lIHRhYmxlKCkKZGVnIDwtIEZpbmRNYXJrZXJzKG9iamVjdCA9IG9iLCBncm91cC5ieSA9ICJwcmlvci5lbnphbHV0YW1pZGUiLG9ubHkucG9zID0gRiwgaWRlbnQuMSA9ICJUcnVlIiwgdmVyYm9zZSA9IFQsIHRlc3QudXNlID0gIkxSIiwgbGF0ZW50LnZhcnMgPSBjKCJvcmdhbl9fb250b2xvZ3lfbGFiZWwiKSkKCnNjX2RlZyA8LSBGaW5kTWFya2VycyhvYmplY3QgPSBibWV0LCBncm91cC5ieSA9ICJwcmlvci5lbnphbHV0YW1pZGUiLG9ubHkucG9zID0gRiwgaWRlbnQuMSA9ICJUcnVlIiwgdmVyYm9zZSA9IFQpCgpzY19kZWcgJT4lIGFycmFuZ2UoLWF2Z19sb2cyRkMpICU+JSBtdXRhdGUoR2VuZSA9IHJvdy5uYW1lcyguKSkgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZSAlaW4lIGxpbmMkZ2VuZS5uYW1lKSAlPiUgZHBseXI6OmZpbHRlcihwX3ZhbF9hZGogPCAwLjEpIAoKdXAgPC0gc2NfZGVnICU+JSBhcnJhbmdlKC1hdmdfbG9nMkZDKSAgJT4lIG11dGF0ZShHZW5lID0gcm93Lm5hbWVzKC4pKSAlPiUgZHBseXI6OmZpbHRlcihHZW5lICVpbiUgbGluYyRnZW5lLm5hbWUpICU+JSBkcGx5cjo6ZmlsdGVyKHBfdmFsX2FkaiA8IDAuMSAmIGF2Z19sb2cyRkMgPiAxKSAlPiUgLiRHZW5lCgoKZG93biA8LSBzY19kZWcgJT4lIGFycmFuZ2UoLWF2Z19sb2cyRkMpICAlPiUgbXV0YXRlKEdlbmUgPSByb3cubmFtZXMoLikpICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBsaW5jJGdlbmUubmFtZSkgJT4lIGRwbHlyOjpmaWx0ZXIocF92YWxfYWRqIDwgMC4xICYgYXZnX2xvZzJGQyA8IC0xKSAlPiUgLiRHZW5lCgoKZGVnW2ModXApLF0gJT4lIGFycmFuZ2UoLWF2Z19sb2cyRkMpIAoKRG90UGxvdChvYmplY3QgPSBibWV0LCBmZWF0dXJlcyA9ICJNSVI0NDM1LTJIRyIsIGdyb3VwLmJ5ID0gInN1cGVyY2x1c3Rlci5mb3IuTERTQy5TRUciKQoKZGVnCgoKCmJtZXRbIkxJTkMwMTA2MCIsXQpgYGAKCgoKCmBgYHtyfQpjZiA8LSByZWFkLnRhYmxlKCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9CTUVfYW5hbHlzaXMvcmVzdWx0cy9DSUJFUlNPUlR4X0pvYjMzX0FkanVzdGVkLnR4dCIsIHNlcCA9ICJcdCIsIGhlYWRlciA9IFQpCmNmJHNhbXBsZV9pZCA8LSBnc3ViKCJcXC4iLCAiLSIsIGNmJE1peHR1cmUpCnJvdy5uYW1lcyhjZikgPC0gY2YkTWl4dHVyZQoKYW5ubyA8LSByZWFkLnRhYmxlKCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vMjAyMDA5X2RlZXBSTkFzZXFfc2FtcGxlX2Z1bGwudHh0IiwgaGVhZGVyID1UKQoKCgphbm5vIDwtIGFubm8gJT4lIGRwbHlyOjpzZWxlY3QoYyhzYW1wbGVfaWQsIHdnc19pZCwgYmlvcHN5X3NpdGUsIGRpc2Vhc2VfdHlwZV9TSUdfR0VYLCBJRF9wYXRpZW50LCBSQjEsIHR1bW9yX3B1cml0eV9ybmEsIHR1bW9yX3B1cml0eV93Z3MsIHR1bW9yX3B1cml0eV9oaXN0KSkgCgpjZiA8LSBpbm5lcl9qb2luKHggPSBjZiwgeSA9IGFubm8sIGJ5ICA9IGMoInNhbXBsZV9pZCIgPSAic2FtcGxlX2lkIikpCgpyb3cubmFtZXMoY2YpIDwtIGNmJHNhbXBsZV9pZAoKCmNmIDwtIG5hLm9taXQoY2YpCgpjZiA8LSBjZiAlPiUgbXV0YXRlKFJCMSA9IGlmZWxzZShSQjEgPT0gMCwgMCwgMSkpCgpjZgoKYGBgCgoKYGBge3J9Cm1jcnBjX3JuYSA8LSByZWFkLnRhYmxlKGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvYnVsa1JOQV9tQ1JQQ19DUE1fZ2VuZS50eHQiLCBoZWFkZXIgPSBUKQoKCm1jcnBjX3JuYSA8LSBtY3JwY19ybmEgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZSAlaW4lIGModXAsZG93bikpIApnZW5lcyA8LSBtY3JwY19ybmEkR2VuZQoKbWNycGNfcm5hIDwtIG1jcnBjX3JuYSAlPiUgZHBseXI6OnNlbGVjdCgtR2VuZSkgJT4lIHQoKSAlPiUgZGF0YS5mcmFtZSgpIApjb2xuYW1lcyhtY3JwY19ybmEpIDwtIGdlbmVzCgoKbWNycGNfcm5hIDwtIG1jcnBjX3JuYSAlPiUgbXV0YXRlKHNhbXBsZV9pZCA9IGdzdWIocGF0dGVybiA9ICJcXC4iLCByZXBsYWNlbWVudCA9ICItIiwgeCA9IHJvdy5uYW1lcyguKSkpICU+JSBtZXJnZShjZikgICU+JSBuYS5vbWl0KCkKCm1jcnBjX3JuYQpyZXMgPC0gZG8uY2FsbChyYmluZCwgbGFwcGx5KGdlbmVzLCBGVU49IGZ1bmN0aW9uKGcpewogIAogIHByaW50KGcpCiAgI0ZpdCBsaW5lYXIgcmVncmVzc2lvbiBtb2RlbCB3aXRoIGNvdmFyaWF0ZSBhcyBib25lIG1ldCBzaXRlIAogIG1vZGVsIDwtIGxtKGZvcm11bGEgPSBsb2cxcChtY3JwY19ybmFbLGddKSB+IG1jcnBjX3JuYVssImVuemEiXSkgCiAgI0dldCBjb2VmZiBmb3IgQm9uZSBhbmQgcHZhbHVlCiAgY29lZiA8LSBzdW1tYXJ5KG1vZGVsKSRjb2VmZmljaWVudHNbLCAiRXN0aW1hdGUiXVsyXQogIHB2YWwgPC0gc3VtbWFyeShtb2RlbCkkY29lZmZpY2llbnRzWywgIlByKD58dHwpIl1bMl0KICAKICByZXR1cm4oICBkYXRhLmZyYW1lKEdlbmUgID0gZywgQ29lZiA9IGNvZWYsIFB2YWwgPSBwdmFsKSkKCiB9KSkgJT4lIGRhdGEuZnJhbWUoKQoKCgojRkRSIGNvcnJlY3Rpb24gYWNyb3NzIGNlbGx0eXBlcwpyZXMkQWRqLlB2YWx1ZSA8LXAuYWRqdXN0KHJlcyRQdmFsLCBtZXRob2QgPSAiQkgiKQpyZXMkU2lnIDwtICBpZmVsc2UocmVzJEFkai5QdmFsdWUgPCAwLjEsICIqIiwgIm5zIikKCgojJT4lIG5hLm9taXQoKSAlPiUgZ2dwbG90KGFlcyh4ID0gZW56YSwgeSA9IE1vbm8xICsgTW9ubzIgKyBNb25vMyArIFRBTSArIFRJTSArIG1EQyArIE1vbm9jeXRlICsgQ0Q0ICsgQ0Q4ICsgVHJlZ0EgKyBUcmVnUiArIENUTDEgKyBDVEwyICsgTksgKyBOS1QgKyAgVGgxMTcpKSArIGdlb21fYm94cGxvdCgpIAoKIyU+JSBnZ3Bsb3QoYWVzKHggPSBsb2cxcChSTkEpLCB5ID0gTW9ubzEgKyBNb25vMiArIE1vbm8zICsgVEFNICsgVElNICsgbURDICsgTW9ub2N5dGUgKyBDRDQgKyBDRDggKyBUcmVnQSArIFRyZWdSICsgQ1RMMSArIENUTDIgKyBOSyArIE5LVCArICBUaDExNywgY29sb3IgPSBlbnphICApKSArIGdlb21fcG9pbnQoKSArIHN0YXRfY29yKCkgKyBnZW9tX3Ntb290aChtZXRob2QgPSAibG0iKQoKcmVzCgpgYGAKCgoKCmBgYHtyfQoKI0xpbW1hIERFIGFuYWx5c2lzIAoKCiNSZWFkIGluIHJhdyBjb3VudHMsIGNvbnZlcnQgdG8gbWF0cml4IHdpdGggcm93cyBhcyBnZW5lIHN5bWJvbHMsIGNvbHVtbnMgYXMgc2FtcGxlcwpjb3VudHMgPC0gcmVhZC50YWJsZSgiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvbUNSUENfUk5BX2NvdW50c19nZW5lbmFtZS50eHQiLCBoZWFkZXIgPSBUKQoKCmNvdW50cyA8LSBjb3VudHNbIWR1cGxpY2F0ZWQoY291bnRzJEdlbmVuYW1lKSxdCnJvdy5uYW1lcyhjb3VudHMpIDwtIGNvdW50cyRHZW5lbmFtZQpjb3VudHMgPC0gY291bnRzWywtMV0gJT4lIGFzLm1hdHJpeCgpCmNvbG5hbWVzKGNvdW50cykgPC0gZ3N1YigiXFwuIiwgIi0iLCBjb2xuYW1lcyhjb3VudHMpKSAgCgpjb3VudHMgPC0gY291bnRzW3Jvdy5uYW1lcyhjb3VudHMpICVpbiUgbGluYyRnZW5lLm5hbWUsXSNTdWJzZXQgbG5jcm5hIGluIGhnMzggCgojS2VlcCBtYXRjaGluZyBzYW1wbGUgaWRzIG9mIFJOQS1zZXEgYW5kIFdHUyBmb3IgY21wIGFubm90YXRpb24KaWRzIDwtIGludGVyc2VjdChjb2xuYW1lcyhjb3VudHMpLHJvdy5uYW1lcyhjZikpCmNvdW50cyA8LSBjb3VudHNbLGlkc10KY2YgPC0gY2ZbaWRzLF0KCgojQ3JlYXRlIGRnZSBvYmplY3QgLSBjcmVhdGUgY291bnRzIG1hdHJpeCBhbmQgc2FtcGxlIGFubm8gZGYgd2l0aCBsaWJyYXJ5IHNpemVzCnggPC0gREdFTGlzdChjb3VudHMgPSBjb3VudHMpCgojQWRkIGNsdXN0ZXIgdmFyaWFibGUgdG8gZGVzaWduYXRlIGdyb3VwIG1lbWJlcnNoaXAgdG8gc2FtcGxlIGRmCngkc2FtcGxlcyA8LSBjYmluZCh4JHNhbXBsZXMsIGRwbHlyOjpzZWxlY3QoY2YsIGMoIFJCMSApKSkKCiNSZW1vdmUgZ2VuZXMgd2l0aCBsb3cgZXhwcmVzc2lvbiBhY3Jvc3Mgc2FtcGxlcwprZWVwLmV4cHJzIDwtIGZpbHRlckJ5RXhwcih4KQp4IDwtIHhba2VlcC5leHBycywsIGtlZXAubGliLnNpemUgPSBGXQoKI0NhbGN1bGF0ZSBlZmZlY3RpdmUgbGlicmFyeSBzaXplIHVzaW5nIEVkZ2VSIFRNTSBtZXRob2QKeCA8LSBjYWxjTm9ybUZhY3RvcnMoeCwgbWV0aG9kID0gIlRNTSIpCgojQ3JlYXRlIGRlc2lnbiBtYXRyaXggKHcvbyBpbnRlcmNlcHQpIHNwZWNpZnlpbmcgZ3JvdXAgbWVtYmVyc2hpcApkZXNpZ24gPC0gbW9kZWwubWF0cml4KH4gMCArIGFzLmZhY3RvcihSQjEpLCBkYXRhID0gY2YpICMrIGJpb3BzeV9zaXRlLCBkYXRhID0gY2YpICMrIGRpc2Vhc2VfdHlwZV9TSUdfR0VYLCBkYXRhID0gY2YpCgpkZXNpZ24KY29sbmFtZXMoZGVzaWduKSA8LSBjKCJEZWwiLCAiV1QiKSAjLCAiTGl2ZXIiLCAiTE4iLCAiT3RoZXIiKQoKIyAjQ3JlYXRlIGNvbnRyYXN0cyB0byBjYWxjdWxhdGUKY29udHIubWF0cml4IDwtIG1ha2VDb250cmFzdHMoRGVsIC0gV1QsIGxldmVscyA9IGNvbG5hbWVzKGRlc2lnbikpCgojTm9ybWFsaXplIGNvdW50cyB0byBsb2cgQ1BNIHVzaW5nIHZvb20KdiA8LSB2b29tKHgsIGRlc2lnbiA9IGRlc2lnbikKCiNGaXQgTE0gYWNjb3JkaW5nIHRvIGRlc2lnbgp2Zml0IDwtIGxtRml0KHYsIGRlc2lnbikKCiNDYWxjdWxhdGUgY29udHJhc3RzIGkuZSBsb2dGQyBmb3IgZ2VuZXMgYWNyb3NzIGdyb3Vwcwp2Zml0IDwtIGNvbnRyYXN0cy5maXQodmZpdCwgY29udHJhc3RzPWNvbnRyLm1hdHJpeCkKCiNDYWxjdWxhdGUgdC1zdGF0cyBhbmQgcCB2YWxzIHVzaW5nIEVtcCBiYXllcyBtZXRob2QKZWZpdCA8LSBlQmF5ZXModmZpdCkKCgojR2V0IGxpc3Qgb2YgYWxsIGdlbmVzLCBhcnJhbmdlIGluIGRlY3JlYXNpbmcgb3JkZXIKYnVsa19kZWcgPC0gdG9wVGFibGUoZWZpdCwgbnVtYmVyID0gSW5mLCBjb2VmID0gMSkgJT4lIGRhdGEuZnJhbWUoR2VuZXMgPSByb3cubmFtZXMoLikpICAlPiUgYXJyYW5nZSgtbG9nRkMpIApidWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgYXJyYW5nZSgtbG9nRkMpCgpidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSAgIGxlZnRfam9pbih5ID0gZmlsdF9tYXJrZXJzLCBieSA9IGMoIkdlbmVzIiA9ICJnZW5lIikpCnVwIDwtIGJ1bGtfZGVnICU+JSBkcGx5cjo6ZmlsdGVyKGFkai5QLlZhbCA8IDAuMjUgJiBsb2dGQyA+IDEpICU+JSBsZWZ0X2pvaW4oIHkgPSBmaWx0X21hcmtlcnMsIGJ5ID0gYygiR2VuZXMiID0gImdlbmUiKSkKZG93biA8LSBidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgbG9nRkMgPCAtMSkgICU+JSBhcnJhbmdlKGxvZ0ZDKSAlPiUgbGVmdF9qb2luKCB5ID0gZmlsdF9tYXJrZXJzLCBieSA9IGMoIkdlbmVzIiA9ICJnZW5lIikpCgogCgpmIDwtIHVwJEdlbmVzICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgCm5hbWVzKGYpIDwtIHVwJGNsdXN0ZXIKZiA8LSBmWyFpcy5uYShuYW1lcyhmKSldCgpEb3RQbG90KG9iamVjdCA9IGJtZXQsIGZlYXR1cmVzID0gIGYpCgpyZXMgJT4lIGdncGxvdChhZXMoeCA9ICkpCmJ1bGtfZGVnICU+JSBhcnJhbmdlKC1hZGouUC5WYWwpCgphbm5vCgptY3JwY19ybmEKCmJtZXRbIkFMNjkxNDgyLjMiLF0KCmEgPC0gbWNycGNfcm5hICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBxdWVyeWdlbmVzJFRHRkIpICU+JSBkcGx5cjo6c2VsZWN0KC1HZW5lKSAlPiUgbG9nMXAoKSAlPiUgY29sTWVhbnMoKQpiIDwtIG1jcnBjX3JuYSAlPiUgZHBseXI6OmZpbHRlcihHZW5lICVpbiUgIkhDUDUiKSAlPiUgZHBseXI6OnNlbGVjdCgtR2VuZSkgJT4lIGxvZzFwKCkgJT4lIGNvbE1lYW5zKCkKYgoKYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZXMgJWluJSAiSENQNSIpCgpjZiA8LSByZWFkLnRhYmxlKGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvQ0lCRVJTT1JUeF9Kb2I0MF9vdXRwdXQvQ0lCRVJTT1JUeEdFUF9Kb2I0MF9GcmFjdGlvbnMtQWRqdXN0ZWQudHh0IiwgaGVhZGVyID0gVCkKY2YKCmRhdGEuZnJhbWUoUk5BID0gYiwgc2FtcGxlX2lkID0gZ3N1YihwYXR0ZXJuID0gIlxcLiIsIHJlcGxhY2VtZW50ID0gIi0iLCB4ID0gbmFtZXMoYikpKSAgJT4lIG1lcmdlKGNmKSAlPiUgZ2dwbG90KGFlcyh4ID0gUk5BLCB5ID0gQ0Q0ICsgQ0Q4ICsgVHJlZ0EgKyBUcmVnUiArIENUTDEgKyBDVEwyICsgTksgKyBOS1QgKyAgVGgxMTcpKSArIGdlb21fcG9pbnQoKSArIGdlb21fc21vb3RoKG1ldGhvZCA9ICJsbSIpICsgc3RhdF9jb3IoKQoKZGF0YS5mcmFtZShSTkEgPSBiLCBNaXh0dXJlID0gZ3N1YihwYXR0ZXJuID0gIlxcLiIsIHJlcGxhY2VtZW50ID0gIi0iLCB4ID0gbmFtZXMoYikpKSAgJT4lIG1lcmdlKGNmKSAlPiUgZ2dwbG90KGFlcyh4ID0gUk5BLCB5ID0gTktfVCogMTAwKSkgKyBnZW9tX3BvaW50KCkgKyBnZW9tX3Ntb290aChtZXRob2QgPSAibG0iKSArIHN0YXRfY29yKCkKCgpjZgphCmYKY29yLnRlc3QoYSxiKQoKcXVlcnlnZW5lcyRUR0ZCCmBgYAoKCgpgYGB7cn0KcGxvdCA8LSAgRW5oYW5jZWRWb2xjYW5vKHRvcHRhYmxlID0gZGVnLCB4ID0gImF2Z19sb2cyRkMiLCB5ID0gInBfdmFsX2FkaiIsIGxhYiA9cm93Lm5hbWVzKGRlZyksIHNlbGVjdExhYiA9IGMoIHVwLCBkb3duKSwgcG9pbnRTaXplID0gMSAsIG1heC5vdmVybGFwcwk9IEluZiwgZHJhd0Nvbm5lY3RvcnMgPSBULCBwQ3V0b2ZmID0gMWUtMDEsIGxlZ2VuZFBvc2l0aW9uID0gIm5vbmUiLCB0aXRsZSA9ICJEaWZmZXJlbnRpYWwgZXhwcmVzc2lvbiBhbmFseXNpcyBvZiBwcm9zdGF0ZSBjYW5jZXIgY2VsbHMiLCBzdWJ0aXRsZSA9ICJFbnphbHV0YW1pZGUgZXhwb3NlZCB2LnMgbmFpdmUgbUNSUENzIiwgRkNjdXRvZmYgPSAxLCBsYWJTaXplID0gMykKZ2dzYXZlKGZpbGVuYW1lID0gIi9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmIiwgcGxvdCA9IHBsb3QsIHdpZHRoID0gMTApCgoKYGBgCgoKYGBge3J9CgoKYWxsX2dlbmVfc2V0cyA9IG1zaWdkYnIoc3BlY2llcyA9ICJIb21vIHNhcGllbnMiKQoKZ3MgPC0gYWxsX2dlbmVfc2V0cyAlPiUKICBkcGx5cjo6ZmlsdGVyKGdzX2NhdCA9PSAiSCIpCgpxdWVyeWdlbmVzIDwtIGxpc3QoVEdGQiA9IGdzW2dyZXBsKHBhdHRlcm4gPSAiVEdGIiwgeCA9IGdzJGdzX25hbWUpLCJnZW5lX3N5bWJvbCIsIGRyb3AgPSBUXSkKCgoKYSA8LSBibWV0W2ModXApLF0gJT4lIEdldEFzc2F5RGF0YSgpICU+JSBjb2xNZWFucygpCmIgPC0gYm1ldFtxdWVyeWdlbmVzJFRHRkIsXSAlPiUgR2V0QXNzYXlEYXRhKCkgJT4lIGNvbE1lYW5zKCkKZGYgPC0gZGF0YS5mcmFtZShsbmNSTkEgPSBhLCBUR0ZCID0gYiwgRW56YSA9IGJtZXQkcHJpb3IuZW56YWx1dGFtaWRlKQoKCnBsb3QgPC0gZGYgJT4lIGdncGxvdCggYWVzKCB4PSBsbmNSTkEsIHkgPSBUR0ZCKSkgKyBnZW9tX3BvaW50KGFlcyhjb2xvciAgPSBFbnphKSkgKyBnZW9tX3Ntb290aChtZXRob2QgPSAibG0iKSArIHN0YXRfY29yKG1ldGhvZCA9ICJzcGVhcm1hbiIpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoImRhcmtyZWQiLCAiZGFya2JsdWUiKSkgCnBsb3QKcGxvdCA8LSBnZ3Bsb3QoZGYsIGFlcyggeD0gRW56YSwgeSA9IFRHRkIsIGZpbGwgPSBFbnphKSkgKyBnZW9tX2ppdHRlcih3aWR0aCA9IDAuMSkgKyBnZW9tX2JveHBsb3QoYWxwaGEgPSAwLjIpICsgc2NhbGVfZmlsbF9tYW51YWwodmFsdWVzID0gYygiZGFya3JlZCIsICJkYXJrYmx1ZSIpKQpwbG90CmxtKFRHRkIgfiBsbmNSTkEsIGRhdGEgPSBkZikgJT4lIHN1bW1hcnkoKQoKZGYKZ2dzYXZlKGZpbGVuYW1lID0gIi9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmIiwgcGxvdCA9IHBsb3QsIHdpZHRoID0gMTApCgpgYGAKCg==</div>
 
 
 
@@ -2124,7 +2058,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("lncrna_meth_analysis.Rmd");
+  window.initializeSourceEmbed("RB1_DEG_analysis.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>
