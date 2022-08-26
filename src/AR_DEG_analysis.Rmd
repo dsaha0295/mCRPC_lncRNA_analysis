@@ -1,0 +1,194 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+anno
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR)) 
+cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
+cf$sample_id <- gsub("\\.", "-", cf$Mixture)
+row.names(cf) <- cf$Mixture
+
+cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
+
+cf
+
+row.names(cf) <- cf$sample_id
+
+
+
+cf <- na.omit(cf)
+```
+
+
+```{r}
+anno <- cf[!duplicated(cf$wgs_id),]
+row.names(anno) <- anno$wgs_id
+anno <- anno %>% dplyr::select(AR) %>% mutate(AR = as.factor(AR))
+
+saveRDS(object = anno, file = "/Users/ds/Desktop/DNAm_datasets/AR_mCRPC_WGBS_anno.rds")
+a
+
+group1 <- row.names(anno)[anno$AR == 3]
+
+
+anno[row.names(anno) %in% group1,, drop = F]
+
+
+```
+
+
+#DE testing of bone vs ln mets
+```{r}
+#Limma DE analysis 
+
+
+#Read in raw counts, convert to matrix with rows as gene symbols, columns as samples
+counts <- read.table("/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+
+
+counts <- counts[!duplicated(counts$Genename),]
+row.names(counts) <- counts$Genename
+counts <- counts[,-1] %>% as.matrix()
+colnames(counts) <- gsub("\\.", "-", colnames(counts))  
+
+counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+linc
+
+#Keep matching sample ids of RNA-seq and WGS for cmp annotation
+ids <- intersect(colnames(counts),row.names(cf))
+counts <- counts[,ids]
+cf <- cf[ids,]
+
+
+```
+
+```{r}
+
+
+#Create dge object - create counts matrix and sample anno df with library sizes
+x <- DGEList(counts = counts)
+
+#Add cluster variable to designate group membership to sample df
+x$samples <- cbind(x$samples, dplyr::select(cf, c( biopsy_site, disease_type_SIG_GEX, AR )))
+
+#Remove genes with low expression across samples
+keep.exprs <- filterByExpr(x)
+x <- x[keep.exprs,, keep.lib.size = F]
+
+#Calculate effective library size using EdgeR TMM method
+x <- calcNormFactors(x, method = "TMM")
+
+```
+
+```{r}
+#Create design matrix (w/o intercept) specifying group membership
+design <- model.matrix(~ 0 + as.factor(AR), data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+
+design
+colnames(design) <- c("WT", "MT") #, "Liver", "LN", "Other")
+
+# #Create contrasts to calculate
+contr.matrix <- makeContrasts(MT - WT, levels = colnames(design))
+
+
+#Normalize counts to log CPM using voom
+v <- voom(x, design = design)
+
+#Fit LM according to design
+vfit <- lmFit(v, design)
+
+#Calculate contrasts i.e logFC for genes across groups
+vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
+
+#Calculate t-stats and p vals using Emp bayes method
+efit <- eBayes(vfit)
+
+
+#Get list of all genes, arrange in decreasing order
+bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
+bulk_deg <- bulk_deg %>% arrange(-logFC)
+
+bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1)
+
+
+```
+
+
+```{r}
+
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+
+ 
+
+
+
+```
+
+
+
+```{r}
+plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up[1:10], down[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)
+
+plot
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+
+```
+
+
+
+```{r}
+dss <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+
+dss <- GRanges(dss)
+
+
+
+dss <- data.frame(linc, dss[nearest(x =  GRanges(linc), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% c(up) & Diff < -0.05, "A", ifelse(gene.name %in% c(down) & Diff > 0.05, "B", "Other")   ))
+
+
+dss %>% dplyr::filter(Sig == "A")
+
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("COLCA1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "NKILA")), color = "black", force =200) + scale_alpha_manual(values = c(1,1,0.5)) + scale_color_manual(values = c("darkblue", "darkred", "darkgrey")) + ylab("logFC AR activating v.s wildtype") + xlab("Methylation difference AR activating - wildtype")
+plot
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+
+
+bulk_deg %>% dplyr::filter(Genes %in% c(up, down))  %>% mutate(Group = ifelse(Genes %in% up, "Up", "Down"))  %>% left_join(y = filt_markers, by = c("Genes" = "gene")) %>% group_by(Group, cluster) %>% mutate(Count = n()) %>%  ggplot( aes(fill=cluster, y=Count, x=Group)) + geom_bar(position="dodge", stat="identity")
+
+
+```
+
+
+
+
+
+```{r}
+
+
+f <- up$Genes                                          
+names(f) <- up$cluster
+f <- f[!is.na(names(f))]
+
+f
+
+f <- f[!duplicated(f)]
+DotPlot(object = bmet, features =  f)
+
+```
+
+
+
+
+
