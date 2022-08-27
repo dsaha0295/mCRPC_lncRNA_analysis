@@ -15,11 +15,11 @@ library(dittoSeq)
 
 #Download ARBS/HMR/ATAC datasets
 ```{r}
-arbs <- read_tsv(file = "/Users/ds/Desktop/AR_chip_hg38.bed", col_names = c("chr", "start", "end"))
+arbs <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/AR_chip_hg38.bed", col_names = c("chr", "start", "end"))
 arbs <- GRanges(arbs)
-hmr <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/hmr.bed", col_names = c("chr", "start", "end"))
+hmr <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/hmr.bed", col_names = c("chr", "start", "end"))
 hmr <- GRanges(hmr)
-atac <- read_tsv(file = "/Users/ds/Desktop/projects/data/atac/ATAC_mCRPC_consensus.bed", col_names = c("chr", "start", "end"))
+atac <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/ATAC_mCRPC_consensus.bed", col_names = c("chr", "start", "end"))
 atac <- GRanges(atac)
 ```
 
@@ -33,9 +33,9 @@ c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
 
-p1 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 1)
+p1 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'plasma', end = 0.5)
   
-p2 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 1)
+p2 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'plasma', end = 0.5)
   
 
 
@@ -46,10 +46,10 @@ b <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% pca_lncr
 c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
-p3 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 2)
+p3 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'viridis', end = 0.5)
 
   
-p4 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs")+ scale_fill_brewer(palette = 2)
+p4 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs")+ scale_fill_viridis_d(option = 'viridis', end = 0.5)
   
 a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
 b <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %>% length()
@@ -57,9 +57,9 @@ b <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% pca_lnc
 c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
-p5 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 3)
+p5 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
   
-p6 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_brewer(palette = 3)
+p6 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
   
 
 plot <- plot_grid(p1, p2,p3, p4, p5, p6, ncol = 3, byrow = F)
@@ -67,25 +67,24 @@ plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
-markers %>% dplyr::filter(gene == "MALAT1")
 
 ```
 
 
-eHMR analysis
+#eHMR analysis
 ```{r}
 
 
-ehmr <- read.csv(file = "/Users/ds/Desktop/DNAm_datasets/ehmr.csv", header = T)
+ehmr <- read.csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv", header = T)
 
 a <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "HMR") %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate specific")
 
 b <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Not prostate specific")
 
-#pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 
-rbind(a,b) %>% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5)
-#dev.off()
+rbind(a,b) %>% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5) + xlab("Correlation") + scale_fill_viridis_d(option = 'plasma', end  = 0.5)
+dev.off()
 
 
 ```

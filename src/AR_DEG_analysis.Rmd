@@ -3,7 +3,7 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-
+#Create list of samples with AR activating mutations and WT mutations from deep RNA-seq data
 ```{r}
 anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
 
@@ -16,34 +16,27 @@ row.names(cf) <- cf$Mixture
 
 cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
 
-cf
+
 
 row.names(cf) <- cf$sample_id
 
 
-
-cf <- na.omit(cf)
+cf <- na.omit(cf)#Omit samples without WGS data
 ```
 
 
+#Subset WGBS samples for DMR analysis
 ```{r}
 anno <- cf[!duplicated(cf$wgs_id),]
 row.names(anno) <- anno$wgs_id
 anno <- anno %>% dplyr::select(AR) %>% mutate(AR = as.factor(AR))
 
 saveRDS(object = anno, file = "/Users/ds/Desktop/DNAm_datasets/AR_mCRPC_WGBS_anno.rds")
-a
-
-group1 <- row.names(anno)[anno$AR == 3]
-
-
-anno[row.names(anno) %in% group1,, drop = F]
-
 
 ```
 
 
-#DE testing of bone vs ln mets
+#DE testing of AR activating vs WT samples 
 ```{r}
 #Limma DE analysis 
 
@@ -58,7 +51,7 @@ counts <- counts[,-1] %>% as.matrix()
 colnames(counts) <- gsub("\\.", "-", colnames(counts))  
 
 counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
-linc
+
 
 #Keep matching sample ids of RNA-seq and WGS for cmp annotation
 ids <- intersect(colnames(counts),row.names(cf))
@@ -88,10 +81,10 @@ x <- calcNormFactors(x, method = "TMM")
 
 ```{r}
 #Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ 0 + as.factor(AR), data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+design <- model.matrix(~ 0 + as.factor(AR), data = cf) 
 
-design
-colnames(design) <- c("WT", "MT") #, "Liver", "LN", "Other")
+
+colnames(design) <- c("WT", "MT") 
 
 # #Create contrasts to calculate
 contr.matrix <- makeContrasts(MT - WT, levels = colnames(design))
@@ -114,79 +107,111 @@ efit <- eBayes(vfit)
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
 bulk_deg <- bulk_deg %>% arrange(-logFC)
 
-bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1)
+#bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1)
 
 
 ```
 
-
+#Plot DEG results
 ```{r}
-
+#Map up and down regulated genes to clusters
 up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
 
- 
-
-
-
-```
-
-
-
-```{r}
-plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up[1:10], down[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)
-
-plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
-
-
-
-```
-
-
-
-```{r}
-dss <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-
-dss <- GRanges(dss)
-
-
-
-dss <- data.frame(linc, dss[nearest(x =  GRanges(linc), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% c(up) & Diff < -0.05, "A", ifelse(gene.name %in% c(down) & Diff > 0.05, "B", "Other")   ))
-
-
-dss %>% dplyr::filter(Sig == "A")
-
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("COLCA1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "NKILA")), color = "black", force =200) + scale_alpha_manual(values = c(1,1,0.5)) + scale_color_manual(values = c("darkblue", "darkred", "darkgrey")) + ylab("logFC AR activating v.s wildtype") + xlab("Methylation difference AR activating - wildtype")
-plot
-
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
-
-
-
-
-bulk_deg %>% dplyr::filter(Genes %in% c(up, down))  %>% mutate(Group = ifelse(Genes %in% up, "Up", "Down"))  %>% left_join(y = filt_markers, by = c("Genes" = "gene")) %>% group_by(Group, cluster) %>% mutate(Count = n()) %>%  ggplot( aes(fill=cluster, y=Count, x=Group)) + geom_bar(position="dodge", stat="identity")
-
-
-```
-
-
-
-
-
-```{r}
 
 
 f <- up$Genes                                          
 names(f) <- up$cluster
 f <- f[!is.na(names(f))]
 
-f
 
 f <- f[!duplicated(f)]
-DotPlot(object = bmet, features =  f)
+p1 <- DotPlot(object = bmet, features =  f)
+
+f <- down$Genes                                          
+names(f) <- down$cluster
+f <- f[!is.na(names(f))]
+
+
+f <- f[!duplicated(f)]
+p2 <- DotPlot(object = bmet, features =  f)
+
+
+plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
+plot
+
+pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 15)
+plot
+dev.off()
+```
+
+#Extra plots misc
+```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
+
+ggplot(cf, aes(x = as.factor(AR), y = CD4 + CD8 + CTL1 + CTL2 + NK + NKT +Th117 + TregA + TregR, fill = as.factor(AR) )) + geom_boxplot()
+
+a <- mcrpc_rna %>% dplyr::filter(Gene %in% "COLCA1") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
+
+
+a <- data.frame(RNA = a, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(a)))  %>% merge(cf) 
+a <- mutate(a, Tcount = CD4 + CD8 + CTL1 + CTL2 + NK + NKT +Th117 + TregA + TregR)
+
+lm(data= a, formula = RNA ~ as.factor(AR) + Tumor) %>% summary()
+
+#%>% ggplot(aes(x = RNA, y = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_point() + geom_smooth(method = "lm") + stat_cor()
+
 
 ```
+
+
+#Volcano plots
+```{r}
+plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)  + scale_color_viridis_d(option = "plasma")
+
+plot
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+
+```
+
+
+
+```{r}
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+dss
+dss <- GRanges(dss)
+regions <- GRanges(linc)
+
+
+regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
+linc
+dss
+regions
+dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
+
+
+up
+
+dss
+dss %>% dplyr::filter(Sig == "B") 
+
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("COLCA1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "NKILA")), color = "black", force =10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC AR activating v.s wildtype") + xlab("Methylation difference AR activating - wildtype") + scale_color_viridis_d(option = "plasma", end = 0.5)
+plot
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+DotPlot(object = bmet, features = "RAMP2-AS1")
+
+dss
+
+bulk_deg %>% dplyr::filter(Genes %in% c(up, down))  %>% mutate(Group = ifelse(Genes %in% up, "Up", "Down"))  %>% left_join(y = filt_markers, by = c("Genes" = "gene")) %>% group_by(Group, cluster) %>% mutate(Count = n()) %>%  ggplot( aes(fill=cluster, y=Count, x=Group)) + geom_bar(position="dodge", stat="identity")
+
+```
+
+
+
 
 
 

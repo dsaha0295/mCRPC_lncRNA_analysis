@@ -58,7 +58,7 @@ saveRDS(object = bmet, file = "/Users/ds/Desktop/scRNA_datasets/He_mCRPC.rds")
 #Download lncRNAs hg38 from cellranger
 ```{r}
 
-bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_mCRPC.rds")
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
 
 all_genes <- read_tsv(file = "/Users/ds/Desktop/projects/data/anno//hg38.genes.meta.tsv")
 
@@ -92,26 +92,23 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 #LncRNA markers for cells
 ```{r}
 
-bmet <- bmet[row.names(bmet) %in% linc$gene.name,]
+bmet <- bmet[row.names(bmet) %in% linc$gene.name,]#Subset lincRNAs for downstream analysis
 markers <- FindAllMarkers(object = bmet, only.pos = T, verbose = T)
 
 
 
-top <-markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(pct.1 >= 0.25) %>% dplyr::slice(1:5) %>% .$gene
+top <-filt_markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:5) %>% .$gene
 
-markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::filter(cluster == "tumor")
 
-names(top) <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(pct.1 >= 0.25) %>% dplyr::slice(1:5) %>% .$cluster
 
-top
+names(top) <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:5) %>% .$cluster
+
+
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 15)
 DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
 dev.off()
 
-markers %>% dplyr::filter(gene %in% linc$gene.name)
-
-top
 
 
 
@@ -182,6 +179,11 @@ filt_markers
 #Plot markers
 ```{r}
 
+pca_lncrna <- filt_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
+
+notpca_lncrna <- filt_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
+
+
 bmet <- ScaleData(object = bmet, features = filt_markers$gene)
 
 pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
@@ -190,11 +192,11 @@ DoHeatmap(object = bmet, features = filt_markers$gene, assay = "RNA", slot = "sc
 dev.off()
 
 
-
+dim(filt_markers)
 bmet
-notpca_lncrna <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% dplyr::filter(!gene %in% pca_lncrna & p_val_adj < 0.1) %>% dplyr::filter(pct.1 >= 0.1) %>% .$gene
 
 bmet$supercluster.for.LDSC.SEG
+filt_markers %>% dplyr::filter(cluster == "tumor") %>% .$gene %>% paste0(collapse = " ")
 
 
 ```
@@ -255,16 +257,30 @@ write.table(reference, file = "/Users/ds/Desktop/He_bulk_reference.txt", quote =
 
 #Plot GEP estimates - see if similar to scRNA data
 ```{r}
-
-pca_lncrna <- dplyr::filter(filt_markers, cluster == "erythroid") %>% .$gene
-
 gep <- read.table(file = "/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_GEPs.txt", header = T)
 
-gep <- gep %>% dplyr::filter(GeneSymbol %in% pca_lncrna) %>% dplyr::select(-GeneSymbol) %>% log1p() 
 
 
-gep%>% gather(key = "Cell", value = "GEX") %>% ggplot(aes(y = reorder(Cell, GEX),x = GEX, fill = Cell))  + geom_boxplot(width = 0.5, alpha  = 0.5)
+res <- do.call(rbind, lapply(unique(filt_markers$cluster), FUN = function(c){
+  
+  cell_spec_lncrna <- dplyr::filter(filt_markers, cluster == c) %>% .$gene
 
+
+  query <- gep %>% dplyr::filter(GeneSymbol %in% cell_spec_lncrna) %>% dplyr::select(-GeneSymbol) %>% log1p() 
+
+
+
+  query <- query%>% gather(key = "Cell", value = "GEX") %>% mutate(ID = paste0(c, " specific lncRNA"))
+
+  return(query)
+}))
+
+gep %>% dplyr::filter(GeneSymbol %in% filt_markers$gene)
+
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 15)
+ggplot(res, aes(y = reorder(Cell, GEX),x = GEX, fill = Cell))%>% facet(facet.by = "ID")  + geom_boxplot(width = 0.5, alpha  = 0.5) + scale_fill_viridis_d(option = "plasma") + ylab("Cell types")
+dev.off()
 
 ```
 

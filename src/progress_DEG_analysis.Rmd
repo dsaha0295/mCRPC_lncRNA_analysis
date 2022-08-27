@@ -67,7 +67,7 @@ nrml_rna <- nrml_rna %>% mutate(id = row.names(.), batch = "Normal") %>% merge(d
 ```
 
 
-
+#Download TCGA PRAD sample list
 ```{r}
 mrna_query <- GDCquery(project = "TCGA-PRAD",
                       data.category = "Transcriptome Profiling",
@@ -82,7 +82,7 @@ mrna_query$results[[1]] <- mrna_query$results[[1]] %>% dplyr::filter(sample_type
 
 
 ```{r}
-full_path <- "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/"
+full_path <- "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/"
 
 prad_rna <- do.call(cbind, lapply(list.files(path = full_path), FUN = function(f){
   print(paste0("processing: ",list.files(path = paste0(full_path, f))))
@@ -95,22 +95,23 @@ prad_rna <- do.call(cbind, lapply(list.files(path = full_path), FUN = function(f
 #prad_rna <- cpm(prad_rna, log = T, prior.count = 1) %>% data.frame()
 colnames(prad_rna) <- list.files(path = full_path)
 
-symbols <- read_tsv(file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/0007888f-8d96-4c01-8251-7fef6cc71596/88215dd0-5841-44f1-9393-eefd8238cbb3.rna_seq.augmented_star_gene_counts.tsv", skip = 6, col_names = F)[,2]
+symbols <- read_tsv(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/0007888f-8d96-4c01-8251-7fef6cc71596/88215dd0-5841-44f1-9393-eefd8238cbb3.rna_seq.augmented_star_gene_counts.tsv", skip = 6, col_names = F)[,2]
 
 prad_rna$Gene <- symbols$X2
 
 
 #write.table(x = prad_rna, file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_rna_cpm.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 
-write.table(x = prad_rna, file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+write.table(x = prad_rna, file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 ```
 
 
+#Format PRAD count data
 ```{r}
 
 #prad_rna <- read.table(file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_rna_cpm.txt", header = T)
 
-prad_rna <- read.table(file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", header = T)
+prad_rna <- read.table(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", header = T)
 ids <- intersect(prad_rna$Gene, linc$gene.name)
 
 prad_rna <- dplyr::filter(prad_rna, Gene %in% ids) #Subset lncRNAs for DEG
@@ -131,11 +132,12 @@ prad_rna <- t(prad_rna) %>% data.frame()
 
 prad_rna <- prad_rna %>% mutate(id = row.names(.), batch = "PRAD") %>% merge(dplyr::select(mrna_query$results[[1]] , c(id, cases.submitter_id) ))
                     
-anno_prad <- read.csv(file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_supp.csv", header = T)
+anno_prad <- read.csv(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_supp.csv", header = T)
 anno_prad <- anno_prad %>% dplyr::select(avgRNA_purity, PATIENT_ID)
 
 
 prad_rna <- inner_join(prad_rna, anno_prad, by = c("cases.submitter_id" = "PATIENT_ID")) %>% mutate(Purity = avgRNA_purity * 100, cases = cases.submitter_id)
+
 
 
 ```
@@ -143,14 +145,14 @@ prad_rna <- inner_join(prad_rna, anno_prad, by = c("cases.submitter_id" = "PATIE
 
 
 
-
+#Format mCRPC count data
 ```{r}
 anno_mcrpc <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
 
 
 
 
-anno_mcrpc <- anno_mcrpc %>% dplyr::select(c(sample_id, wgs_id, biopsy_site,tumor_purity_wgs, tumor_purity_rna , tumor_purity_hist, disease_type_SIG_GEX, ID_patient, enza, AR_enhancer, TMPRSS2_ERG))
+anno_mcrpc <- anno_mcrpc %>% dplyr::select(c(sample_id, wgs_id, biopsy_site,tumor_purity_wgs, tumor_purity_rna , tumor_purity_hist))
 
 
 anno_mcrpc <- anno_mcrpc %>% mutate(cases =  sample_id, Purity = tumor_purity_rna)
@@ -209,9 +211,8 @@ x <- calcNormFactors(x, method = "TMM")
 
 ```{r}
 #Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ 0 + batch + Purity, data = rna) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+design <- model.matrix(~ 0 + batch + Purity, data = rna) 
 
-design
 colnames(design) <- c("mCRPC", "PRAD", "Purity")
 
 # #Create contrasts to calculate
