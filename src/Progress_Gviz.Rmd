@@ -19,9 +19,11 @@ query$Chr <- gsub(pattern = "chr", replacement = "", x = query$Chr)
 ```
 
 ```{r}
-GOI <- "MALAT1"
+GOI <- "FTX"
+chr <- "chrX"
+
 target <- EnsDb.Hsapiens.v86 %>% ensembldb::filter(~ symbol == GOI) %>% genes()
-target <- resize(x = target, width = width(target) + 10000, fix = "center")
+#target <- resize(x = target, width = width(target) + 10000, fix = "center")
 target <- target[1]
 ```
 
@@ -29,11 +31,11 @@ target <- target[1]
 ```{r}
 
 
-dss <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-dss <- dss %>% dplyr::filter(chrom == "chr11") %>% dplyr::select(-Stat) %>% mutate(Diff = Diff * -100) %>% GRanges()
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+dss <- dss %>% dplyr::filter(chrom == chr) %>% dplyr::select(-Stat) %>% mutate(Diff = Diff * -100) %>% GRanges()
 
 
-dTrack <- DataTrack(dss, name = "DSS", background.title = "DarkOrchid4", fill = "DarkOrchid4")
+dTrack <- DataTrack(dss, name = "DSS", background.title = viridis::plasma(10)[8], fill = viridis::plasma(10)[8])
 
 plotTracks(list(dTrack), from = start(target), to = end(target), type = c("histogram"), baseline = 0)
 
@@ -41,7 +43,7 @@ plotTracks(list(dTrack), from = start(target), to = end(target), type = c("histo
 
 
 ```{r}
-target
+
 
 overlaps <-subsetByOverlaps(x = GRanges(query), ranges = target) 
 
@@ -88,7 +90,6 @@ plotTracks(list(dTrack), from = start(target), to = end(target), groups = factor
 
 
 ```{r}
-
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene %>% exons(columns=c("GENEID", "EXONID", "TXNAME" ))
 
 
@@ -96,22 +97,23 @@ txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene %>% exons(columns=c("GENEID", "EXONID"
 txdb <- S4Vectors::expand(txdb, c("GENEID", "EXONID", "TXNAME"))
 # seqlevelsStyle(target) <- "UCSC"
 # gene <- subsetByOverlaps(x = txdb, ranges = target) %>% data.frame()
+```
 
-gene <- txdb[txdb$GENEID == 378938] %>% data.frame()
 
+```{r}
+gene <- txdb[txdb$GENEID ==  100302692] %>% data.frame()
 colnames(gene) <- c("chromosome", "start", "end", "width", "strand", "gene", "exon", "transcript")
 
 
 
-hmr <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/hmr.bed", col_names  = c("chrom", "start", "end"))
-hmr
-hmr <- hmr %>% dplyr::filter(chrom == "chr11") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+hmr <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/hmr.bed", col_names  = c("chrom", "start", "end"))
+hmr <- hmr %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
 
-metarbs <- read_tsv(file = "/Users/ds/Desktop/AR_chip_hg38.bed", col_names = c("chrom", "start", "end"))
-metarbs <- metarbs %>% dplyr::filter(chrom == "chr11") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+metarbs <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/AR_chip_hg38.bed", col_names = c("chrom", "start", "end"))
+metarbs <- metarbs %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
 
-atac <- read_tsv(file = "/Users/ds/Desktop/projects/data/atac/ATAC_mCRPC_consensus.bed", col_names = c("chrom", "start", "end"))
-atac <- atac %>% dplyr::filter(chrom == "chr11") %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
+atac <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/ATAC_mCRPC_consensus.bed", col_names = c("chrom", "start", "end"))
+atac <- atac %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
 
 
 ```
@@ -122,28 +124,24 @@ atac <- atac %>% dplyr::filter(chrom == "chr11") %>% dplyr::select(c(chrom, star
 
 
 #Plot
-grtrack <- GeneRegionTrack( genome = "hg38",range = gene, chromosome = "chr11" , name = "MALAT1", transcriptAnnotation = "transcript", background.panel = "lightyellow", background.title = "darkblue", fill = "darkblue", stacking = "squish", col = "darkblue")
+grtrack <- GeneRegionTrack( genome = "hg38",range = gene, chromosome = chr , name = GOI, transcriptAnnotation = "transcript", background.panel = "lightyellow", background.title = viridis::plasma(10)[1], fill = viridis::plasma(10)[1], stacking = "dense", col = viridis::plasma(10)[1])
 
 
 
-atrack <- AnnotationTrack(hmr, name = "HMR", background.title = "darkred",  background.panel ="lightgrey", fill = "darkred", col = "darkred")
+atrack <- AnnotationTrack(hmr, name = "HMR", background.title = viridis::plasma(10)[3],  background.panel ="lightgrey", fill =viridis::plasma(10)[3], col = viridis::plasma(10)[3])
 
-arbtrack <- AnnotationTrack(metarbs, name = "ARBS", background.title = "darkgreen" , background.panel = "lightgrey", fill = "darkgreen", col = "darkgreen")
-atactrack <- AnnotationTrack(atac, name = "ATAC", background.title = "black" , background.panel = "lightgrey", fill = "black", rotation = 90, col = "black")
+arbtrack <- AnnotationTrack(metarbs, name = "ARBS", background.title = viridis::plasma(10)[6] , background.panel = "lightgrey", fill = viridis::plasma(10)[6], col = viridis::plasma(10)[6])
+atactrack <- AnnotationTrack(atac, name = "ATAC", background.title = viridis::plasma(10)[4] , background.panel = "lightgrey", fill = viridis::plasma(10)[4], rotation = 90, col = viridis::plasma(10)[4])
 
 gtrack <- GenomeAxisTrack()
-itrack <- IdeogramTrack(genome = "hg38", chromosome = "chr11")
+itrack <- IdeogramTrack(genome = "hg38", chromosome = chr)
 
 
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-# plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target), to = end(target), type = "polygon" )
-plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target), to = end(target), type = "histogram", sizes = c(0.1, 0.1, 0.2, 0.05, 0.05, 0.05, 0.2))
+plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target)- 1000, to = end(target) + 1000, type = "histogram")
 dev.off()   
            
-           #, groups = factor(ifelse( grepl(pattern = "SR", x = row.names(regions)), "PRAD", "mCRPC")), type = c("smooth"), legend=TRUE, lwd = 2)
-#dev.off()
-
 
 
 ```

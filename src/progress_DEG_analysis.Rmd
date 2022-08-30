@@ -247,201 +247,128 @@ down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(lo
 
 
 
-plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up[1:20], down[1:20]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs during progression", subtitle = "mCRPC v.s PRAD", FCcutoff = 1, labSize = 3)
+plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up[1:20], down[1:20]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs during progression", subtitle = "mCRPC v.s PRAD", FCcutoff = 1, labSize = 3) + scale_color_viridis_d(option = "plasma", end = 0.8)
 plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+```
 
-up
-down
 
-pdf("/Users/ds/Desktop/plot.pdf", height = 10)
-DotPlot(object = bmet, features = up[1:30], assay = "RNA") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+```{r}
+#Map up and down regulated genes to clusters
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+
+
+
+f <- up$Genes                                          
+names(f) <- up$cluster
+f <- f[!is.na(names(f))]
+
+
+f <- f[!duplicated(f)]
+p1 <- DotPlot(object = bmet, features =  f)
+
+f <- down$Genes                                          
+names(f) <- down$cluster
+f <- f[!is.na(names(f))]
+
+
+f <- f[!duplicated(f)]
+p2 <- DotPlot(object = bmet, features =  f)
+
+
+plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
+
+plot
+
+p1
+
+pdf("/Users/ds/Desktop/plot.pdf", height = 10, width = 15)
+p1  + theme(axis.text.x = element_text(size = 8, angle = 45, vjust = 0.75))  + ggtitle("Upregulated in mCRPC")
 dev.off()
-```
 
 
 
-```{r}
-
-
-bulk_deg %>% dplyr::filter(Genes %in% c(up, down))  %>% mutate(Group = ifelse(Genes %in% up, "Up", "Down"))  %>% left_join(y = filt_markers, by = c("Genes" = "gene"))%>% group_by(Group, cluster) %>% mutate(Count = n()) %>%  ggplot( aes(fill=cluster, y=Count, x=Group)) + geom_bar(position="dodge", stat="identity")
 
 ```
 
 
 ```{r}
-hmr_gene <- data.frame(linc, hmr[nearest(x =  GRanges(linc), subject = hmr),] )
-hmr_gene <- hmr_gene %>% mutate(Coord =paste0(seqnames, ".", start.1, ".", end) )
-?contrasts.fit
-hmr_meth %>% dplyr::filter(Coord %in% hmr_gene$Coord) %>% View()
 
 
-dss <- read_tsv(file = "/Users/ds/Desktop/DNAm_datasets/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+dss
 dss <- GRanges(dss)
+regions <- GRanges(linc)
+
+
+regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
+
+dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
 
 
 
-dss <- data.frame(linc, dss[nearest(x =  GRanges(linc), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% c(up) & Diff < -0.05, "A", ifelse(gene.name %in% c(down) & Diff > 0.05, "B", "Other")   ))
 
 
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("MALAT1", "H19", "DNM3OS", "LUCAT1", "NEAT1", "SCHLAP1", "HAGLR", "MEG3", "PCAT14")), color = "black", force =200) + scale_alpha_manual(values = c(1,1,0.5)) + scale_color_manual(values = c("darkblue", "darkred", "darkgrey")) + ylab("logFC mCRPC v.s PRAD") + xlab("Methylation difference mCRPC v.s PRAD")
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("MALAT1", "H19", "DNM3OS", "LUCAT1", "PVT1", "FTX")),  color = "black", force =10, nudge_y = 10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC mCRPC v.s PRAD") + xlab("Methylation difference mCRPC v.s PRAD") +  scale_color_viridis_d(option = "plasma", end = 0.5)
 plot
+
+View(dss)
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
-dss %>% dplyr::filter(Sig == "B") %>% View()
-
-
-```
-
-
-
-
-```{r}
-mcrpc_meth <- read_tsv(file = "/Users/ds/Desktop/projects/data/bs/all.mcrpc.hmr.txt", col_names = T)
-mcrpc_meth <- mcrpc_meth[!duplicated(mcrpc_meth$Coord),]
-
-
-prad_meth <- read_tsv(file = "/Users/ds/Desktop/projects/data/bs/all.prad.hmr.txt", col_names = T)
-
-
-
-#mcrpc_meth <- mcrpc_meth #%>% group_by(Coord) #%>% mutate(Coord = paste0(Coord, ":", 1:n())) %>% ungroup()
-
-
-
-
-#prad_meth <- prad_meth #%>% group_by(Coord) #%>% mutate(Coord = paste0(Coord, ":", 1:n())) %>% ungroup()
-
-
-hmr_meth <- inner_join(mcrpc_meth, prad_meth, by = c("Coord" = "Coord"))
-
-
-mval <- hmr_meth %>% dplyr::select(starts_with(c("DTB", "SR")))
-
-mval <- beta2m(mval/100)
-
-row.names(mval) <- hmr_meth$Coord
-colnames(mval) <- colnames(hmr_meth %>% dplyr::select(starts_with(c("DTB", "SR"))))
-
-anno <- colnames(mval) %>% data.frame(ID = ., Group = ifelse(grepl(pattern = "DTB", x = colnames(mval)), "mCRPC", "PRAD"))
-
-```
-
-
-```{r}
-
-
-hmr_meth
-
-#Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ Group, data = anno) 
-
-
-vfit <- lmFit(mval, design)
-
-#Calculate contrasts i.e logFC for genes across groups
-#vfit <- contrasts.fit(vfit, contrasts=contr.matrix)
-
-#Calculate t-stats and p vals using Emp bayes method
-efit <- eBayes(vfit)
-
-#Get list of all genes, arrange in decreasing order
-dmr <- topTable(efit, number = Inf, coef = 2) %>% data.frame(Coord = row.names(.))  %>% arrange(-logFC)
-dmr
-ncol(design)
-
-
-View(dmr)
-dmr <- dmr %>% inner_join(hmr_gene, by = c("Coord" = "Coord"))
-dmr
-hmr_gene
-intersect(dmr$Coord, hmr_gene$Coord)
-
-coord <- dmr %>% dplyr::filter(gene.name %in% c(up,down))  %>% .$Coord
-
-df <- hmr_meth %>% dplyr::filter(Coord %in% coord) %>% rowwise() %>% mutate( mCRPCvsPRAD =  mean(c_across(contains("DTB."))) - mean(c_across(contains("SRR")))) %>% dplyr::select(c(Coord, mCRPCvsPRAD)) %>% merge(dmr) %>% mutate(Group = ifelse(gene.name %in% up, "Up in mCRPC", "Up in PRAD"), Sig = ifelse(adj.P.Val < 0.01, "*", "ns")) 
-
-bulk_deg
-
-df %>% ggplot(aes( x= mCRPCvsPRAD, y = -log10(adj.P.Val) , alpha = Sig, label = gene.name, color = Group)) + geom_point(size = 1) + scale_alpha_discrete(range=c(1, 0.01)) + geom_text_repel(data = dplyr::filter(df, Sig == "*" & abs(mCRPCvsPRAD) > 20) ) + scale_color_manual(values= c("darkblue", "darkred"))
-
-
-dplyr::filter(df, Group == "Up in mCRPC" & mCRPCvsPRAD < -5) %>% View()
-View(data.frame(hmr))
-
-
-hmr_meth %>% dplyr::filter(Coord == "chr14.100850800.100851500") %>% gather(key = "ID", value = "Meth" , -Coord) %>% mutate(Batch = ifelse(grepl(pattern = "DTB", x = ID), "mCRPC", "PRAD")) %>% ggplot(aes(x  = Batch, y = Meth)) + geom_boxplot()
-
-
-df %>% dplyr::filter(gene.name == "MALAT1")
-```
-
-
-
-
-```{r}
-ehmr <- read.csv(file = "/Users/ds/Desktop/DNAm_datasets/ehmr.csv", header = T)%>% mutate(Coord = paste0(chrom, ".", start, ".",end ))
-
-query <- ehmr %>% dplyr::filter(symbol %in% c(up, down) & type == "HMR")  %>% .$Coord
-
-
-View(ehmr)
-query
-
-mat <- dplyr::select(hmr_meth, starts_with(c("DTB", "SR"))) %>% t() %>% data.frame()
-colnames(mat) <- hmr_meth$Coord
-
-
-
-
-mat <- mat[,grepl(pattern = paste0(query, collapse = "|"), x = colnames(mat))] %>% mutate(ID = row.names(.)) %>% mutate(Batch = ifelse(grepl(pattern= "DTB", x = ID), "mCRPC", "PRAD") )
-
-
-
-mat <- mat %>% gather(key = "Coord", value = "DNAm", -c(ID, Batch))
-
-
-
-res <- do.call(rbind, lapply(unique(mat$Coord), FUN= function(r){
-  
-
-  df <- dplyr::filter(mat, Coord == r)
-  
-  #Fit linear regression model with covariate as bone met site 
-  model <- lm(formula = df$DNAm ~ df$Batch) 
-  #Get coeff for Bone and pvalue
-  coef <- summary(model)$coefficients[, "Estimate"][2]
-  pval <- summary(model)$coefficients[, "Pr(>|t|)"][2]
-  
-  return(  data.frame(Coord  = r, Coef = coef, Pval = pval))
-
- })) %>% data.frame()
-
-
-
-#FDR correction across celltypes
-res$Adj.Pvalue <-p.adjust(res$Pval, method = "BH")
-res$Sig <-  ifelse(res$Adj.Pvalue < 0.1, "*", "ns")
-
-
-
-
-res <- res %>% mutate(Coord = gsub(pattern = ":1", replacement = "", x = Coord)) %>% merge(ehmr)  %>% mutate(Group = ifelse(symbol %in% up, "Up in mCRPC", "Up in PRAD")) %>% group_by(symbol) %>% mutate(Label = paste0(symbol, ":", 1:n())) %>% ungroup()
-
+dss %>% dplyr::filter(Sig == "A") %>% View()
 
 up
-
-
-
 ```
 
 
 ```{r}
-plot <- ggplot(res, aes(x = Coef, y = -log10(Pval), color = Group, alpha = Sig, label = symbol)) + geom_point() + scale_color_manual(values = c("darkred", "darkblue")) + xlab("Methylation difference in PRAD - mCRPC") + geom_text_repel(data = dplyr::filter(res, Sig == "*" & symbol %in% c(down, up)& abs(Coef) > 10) ) + scale_alpha_discrete(range=c(1, 0.1))
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
 
-plot
-res %>% View()
-plot
+# 
+# all_gene_sets = msigdbr(species = "Homo sapiens")
+# 
+# gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
+# 
+# querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
+# 
+# 
+# a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p()  %>% colMeans()
+
+
+b <- mcrpc_rna %>% dplyr::filter(Gene %in% "FTX") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
+
+
+
+df <- data.frame(FTX = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) 
+#df <- mutate(df, RB1 = ifelse(RB1 == 0, "Biallelic inactivation", "Monoallelic inactivation/wildtype"))
+df
+
+bmet$cluster.dominant.cell.type
+DotPlot(object = bmet, features = "FTX", group.by = "cluster.dominant.cell.type")
+p1 <- df %>% ggplot(aes(x = FTX, color = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, y =  TGFB )) + geom_point() + geom_smooth(method = "lm", color = "black") + stat_cor() + scale_color_viridis_c(option = 'plasma', name = "Fraction NK and T cell") + ylab("MutSigDB TGFB GEX") + xlab("HCP5 GEX")
+
+
+stat.test <- df %>% wilcox_test(formula = TGFB ~ RB1) %>% add_significance()   
+p2 <- ggboxplot(df, x = "RB1", y = "TGFB", fill = viridis::cividis(10)[5])
+stat.test <- stat.test %>% add_xy_position(x = "RB1")
+p2 <- p2 + 
+  stat_pvalue_manual(stat.test, label = "p") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
+
+
+stat.test <- df %>% wilcox_test(formula = HCP5 ~ RB1) %>% add_significance()   
+p3 <- ggboxplot(df, x = "RB1", y = "HCP5", fill = viridis::plasma(10)[5])
+stat.test <- stat.test %>% add_xy_position(x = "RB1")
+p3 <- p3 + 
+  stat_pvalue_manual(stat.test, label = "p") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
+
+plot <- p1 + p2  + p3
+
+
 ```
+
+
+
 

@@ -3,36 +3,9 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-#Enza compare
 ```{r}
-bmet$supercluster.for.LDSC.SEG %>% table()
-
-
-ob <- subset(bmet, idents =  "tumor" )
-
-
-ob$organ__ontology_label %>% table()
-deg <- FindMarkers(object = ob, group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T, test.use = "LR", latent.vars = c("organ__ontology_label"))
-
-sc_deg <- FindMarkers(object = bmet, group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T)
-
-sc_deg %>% arrange(-avg_log2FC) %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1) 
-
-up <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC > 1) %>% .$Gene
-
-
-down <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Gene = row.names(.)) %>% dplyr::filter(Gene %in% linc$gene.name) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC < -1) %>% .$Gene
-
-
-deg[c(up),] %>% arrange(-avg_log2FC) 
-
-DotPlot(object = bmet, features = "MIR4435-2HG", group.by = "supercluster.for.LDSC.SEG")
-
-deg
-
-
-
-bmet["LINC01060",]
+library(rstatix)
+library(ggpubr)
 ```
 
 
@@ -62,9 +35,18 @@ cf
 
 ```
 
+#Subset WGBS samples for DMR analysis
+```{r}
+anno <- cf[!duplicated(cf$wgs_id),]
+row.names(anno) <- anno$wgs_id
+anno <- anno %>% dplyr::select(RB1) %>% mutate(RB1 = as.factor(RB1))
+
+saveRDS(object = anno, file = "/Users/ds/Desktop/projects/lncRNA/data//RB1_mCRPC_WGBS_anno.rds")
+
+```
+
 
 ```{r}
-mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
 
 
 mcrpc_rna <- mcrpc_rna %>% dplyr::filter(Gene %in% c(up,down)) 
@@ -109,7 +91,6 @@ res
 
 
 ```{r}
-
 #Limma DE analysis 
 
 
@@ -144,7 +125,7 @@ x <- x[keep.exprs,, keep.lib.size = F]
 x <- calcNormFactors(x, method = "TMM")
 
 #Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ 0 + as.factor(RB1), data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+design <- model.matrix(~ 0 + as.factor(RB1) ,data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
 
 design
 colnames(design) <- c("Del", "WT") #, "Liver", "LN", "Other")
@@ -169,84 +150,125 @@ efit <- eBayes(vfit)
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
 bulk_deg <- bulk_deg %>% arrange(-logFC)
 
-bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1) %>%   left_join(y = filt_markers, by = c("Genes" = "gene"))
+#bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1) %>%   left_join(y = filt_markers, by = c("Genes" = "gene"))
 up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+```
 
- 
+
+
+
+```{r}
+
 
 f <- up$Genes                                          
 names(f) <- up$cluster
 f <- f[!is.na(names(f))]
 
-DotPlot(object = bmet, features =  f)
 
-res %>% ggplot(aes(x = ))
-bulk_deg %>% arrange(-adj.P.Val)
-
-anno
-
-mcrpc_rna
-
-bmet["AL691482.3",]
-
-a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
-b <- mcrpc_rna %>% dplyr::filter(Gene %in% "HCP5") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
-b
-
-bulk_deg %>% dplyr::filter(Genes %in% "HCP5")
-
-cf <- read.table(file = "/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_Fractions-Adjusted.txt", header = T)
-cf
-
-data.frame(RNA = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) %>% ggplot(aes(x = RNA, y = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_point() + geom_smooth(method = "lm") + stat_cor()
-
-data.frame(RNA = b, Mixture = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) %>% ggplot(aes(x = RNA, y = NK_T* 100)) + geom_point() + geom_smooth(method = "lm") + stat_cor()
+f <- f[!duplicated(f)]
+p1 <- DotPlot(object = bmet, features =  f)+ theme(axis.text.x = element_text(size = 8))  
+p1
+f <- down$Genes                                          
+names(f) <- down$cluster
+f <- f[!is.na(names(f))]
 
 
-cf
-a
-f
-cor.test(a,b)
+f <- f[!duplicated(f)]
+p2 <- DotPlot(object = bmet, features =  f)+ theme(axis.text.x = element_text(size = 8))  
 
-querygenes$TGFB
+plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
+
+
+pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 15)
+plot 
+dev.off()
 ```
 
 
 
 ```{r}
-plot <-  EnhancedVolcano(toptable = deg, x = "avg_log2FC", y = "p_val_adj", lab =row.names(deg), selectLab = c( up, down), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-01, legendPosition = "none", title = "Differential expression analysis of prostate cancer cells", subtitle = "Enzalutamide exposed v.s naive mCRPCs", FCcutoff = 1, labSize = 3)
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+plot <-  EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-02, legendPosition = "none", title = "Differential expression analysis of lncRNAs and RB1 mutations", subtitle = "RB1 biallelic inactivation v.s monoallelic/wildtype mCRPCs", FCcutoff = 1, labSize = 3)+ scale_color_viridis_d(option = "plasma")
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 20)
 
+cf
+up
 
+plot
+DotPlot(object = bmet, features = "CDKN2B-AS1")
+up
 ```
 
 
+
 ```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
 
 
 all_gene_sets = msigdbr(species = "Homo sapiens")
 
-gs <- all_gene_sets %>%
-  dplyr::filter(gs_cat == "H")
+gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
 
 querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
 
 
-
-a <- bmet[c(up),] %>% GetAssayData() %>% colMeans()
-b <- bmet[querygenes$TGFB,] %>% GetAssayData() %>% colMeans()
-df <- data.frame(lncRNA = a, TGFB = b, Enza = bmet$prior.enzalutamide)
+a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p()  %>% colMeans()
+b <- mcrpc_rna %>% dplyr::filter(Gene %in% "HCP5") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
 
 
-plot <- df %>% ggplot( aes( x= lncRNA, y = TGFB)) + geom_point(aes(color  = Enza)) + geom_smooth(method = "lm") + stat_cor(method = "spearman") + scale_color_manual(values = c("darkred", "darkblue")) 
+
+df <- data.frame(TGFB = a,HCP5 = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) 
+df <- mutate(df, RB1 = ifelse(RB1 == 0, "Biallelic inactivation", "Monoallelic inactivation/wildtype"))
+
+
+p1 <- df %>% ggplot(aes(x = HCP5, color = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, y =  TGFB )) + geom_point() + geom_smooth(method = "lm", color = "black") + stat_cor() + scale_color_viridis_c(option = 'plasma', name = "Fraction NK and T cell") + ylab("MutSigDB TGFB GEX") + xlab("HCP5 GEX")
+
+
+stat.test <- df %>% wilcox_test(formula = TGFB ~ RB1) %>% add_significance()   
+p2 <- ggboxplot(df, x = "RB1", y = "TGFB", fill = viridis::cividis(10)[5])
+stat.test <- stat.test %>% add_xy_position(x = "RB1")
+p2 <- p2 + 
+  stat_pvalue_manual(stat.test, label = "p") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
+
+
+stat.test <- df %>% wilcox_test(formula = HCP5 ~ RB1) %>% add_significance()   
+p3 <- ggboxplot(df, x = "RB1", y = "HCP5", fill = viridis::plasma(10)[5])
+stat.test <- stat.test %>% add_xy_position(x = "RB1")
+p3 <- p3 + 
+  stat_pvalue_manual(stat.test, label = "p") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
+
+plot <- p1 + p2  + p3
+
+
+```
+
+```{r}
+
+
+
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/all.dmr.RB1.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+
+dss <- GRanges(dss)
+regions <- GRanges(linc)
+
+
+regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
+
+
+
+dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
+
+
+
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("SCHLAP1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "PART1", "ARLNC1", "PCAT4", "HOTAIR")), color = "black", force =10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC RB1 loss v.s wildtype") + xlab("Methylation difference RB1 loss - wildtype") + scale_color_viridis_d(option = "plasma", end = 0.5)
 plot
-plot <- ggplot(df, aes( x= Enza, y = TGFB, fill = Enza)) + geom_jitter(width = 0.1) + geom_boxplot(alpha = 0.2) + scale_fill_manual(values = c("darkred", "darkblue"))
-plot
-lm(TGFB ~ lncRNA, data = df) %>% summary()
 
-df
+dss %>% dplyr::filter(Sig == "A")
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 ```
+
+
 

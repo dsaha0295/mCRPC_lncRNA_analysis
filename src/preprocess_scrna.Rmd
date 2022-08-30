@@ -114,7 +114,7 @@ dev.off()
 
 ```
 
-#Filter markers
+#Filter markers using Chen et al
 ```{r}
 valid <- read.table(file = "/Users/ds/Desktop/DNAm_datasets/Manual.Marker.modify.txt", header = T)
 
@@ -176,19 +176,65 @@ filt_markers
 ```
 
 
+#Filter markers using Kfoury et al
+```{r}
+bmcrpc <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/seurat/Kfoury_bmCRPC_scRNA.rds")
+
+
+Idents(bmcrpc) <- "cells"
+valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
+
+
+bmcrpc$cells %>% unique()
+
+#Filter prostate
+other_markers <- valid_kfoury %>% dplyr::filter(cluster != "Tumor") %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+a <- filt_markers %>% dplyr::filter(cluster == "tumor") %>% dplyr::filter( !gene %in% other_markers )
+
+
+
+#Filter NK/T cells
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("CTL-1", "CTL-2", "NK", "NKT", "CD4+ Naive" ,"Treg Active","Th1/17","Treg Resting","CD8+ Naive")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+b <- filt_markers %>% dplyr::filter(cluster == "NK/T") %>% dplyr::filter( !gene %in% other_markers )
+
+#Filter B lineage cells
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mature B","memBcell" ,"Pro-B","Immature B cells")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+c <- filt_markers %>% dplyr::filter(cluster == "B lineage") %>% dplyr::filter( !gene %in% other_markers )
+
+#Filter monocyte/macrophage cells
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte prog")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+d <- filt_markers %>% dplyr::filter(cluster == "monocyte/macrophage") %>% dplyr::filter( !gene %in% other_markers )
+
+
+#Filter erythroid cells
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Erythroid")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+e <- filt_markers %>% dplyr::filter(cluster == "erythroid") %>% dplyr::filter( !gene %in% other_markers )
+
+
+#No granulocytes in this dataset
+f <- filt_markers %>% dplyr::filter(cluster == "neutrophil")
+
+
+final_markers <- rbind(a,b,c,d,e,f)
+
+
+
+```
+
+
 #Plot markers
 ```{r}
 
-pca_lncrna <- filt_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
+pca_lncrna <- final_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
 
-notpca_lncrna <- filt_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
+notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
 
 
-bmet <- ScaleData(object = bmet, features = filt_markers$gene)
+bmet <- ScaleData(object = bmet, features = final_markers$gene)
 
 pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
 
-DoHeatmap(object = bmet, features = filt_markers$gene, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
+DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
 dev.off()
 
 
@@ -197,6 +243,15 @@ bmet
 
 bmet$supercluster.for.LDSC.SEG
 filt_markers %>% dplyr::filter(cluster == "tumor") %>% .$gene %>% paste0(collapse = " ")
+
+
+bmcrpc <- ScaleData(object = bmcrpc, features = final_markers$gene)
+
+DoHeatmap(object = bmcrpc, features = pca_lncrna, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
+res <- AverageExpression(object = bmcrpc, features = pca_lncrna, slot = "data") 
+
+
+data.frame(res) %>% log1p() %>% mutate(Genes = row.names(.)) %>% gather(key = "Cell", value = "GEX", -Genes) %>% ggplot(aes(x = Cell, y = GEX, fill = Cell)) +  geom_boxplot(width = 0.5, alpha  = 0.5) + scale_fill_viridis_d(option = "plasma") + ylab("Cell types")
 
 
 ```
@@ -281,7 +336,7 @@ gep %>% dplyr::filter(GeneSymbol %in% filt_markers$gene)
 pdf("/Users/ds/Desktop/plot.pdf", width = 15)
 ggplot(res, aes(y = reorder(Cell, GEX),x = GEX, fill = Cell))%>% facet(facet.by = "ID")  + geom_boxplot(width = 0.5, alpha  = 0.5) + scale_fill_viridis_d(option = "plasma") + ylab("Cell types")
 dev.off()
-
 ```
+
 
 

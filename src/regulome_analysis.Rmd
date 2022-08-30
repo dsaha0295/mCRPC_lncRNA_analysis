@@ -93,34 +93,41 @@ dev.off()
 #Misc
 ```{r}
 
-nk.t <- subset(bmet, idents = 'NK/T')  
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
+bmet <- bmet[row.names(bmet) %in% linc$gene.name,]#Subset lincRNAs for downstream analysis
 
-nk.t$cluster.dominant.cell.type %>% head()
-Idents(nk.t) <- "cluster.dominant.cell.type"
-nk.t.markers <- FindAllMarkers(object = nk.t, only.pos = T, verbose = T)
+# nk.t$cluster.dominant.cell.type %>% head()
+# Idents(bmet) <- "cluster.dominant.cell.type"
+# nk.t.markers <- FindAllMarkers(object = nk.t, only.pos = T, verbose = T)
+# 
+# nk.t.lncrna <-  nk.t.markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(p_val_adj < 0.1 & !(gene %in% pca_lncrna) & pct.1 > 0.1) %>% slice(1:n())
+# 
+# pdf("/Users/ds/Desktop/plot.pdf", height = 10)
+# DotPlot(object = nk.t, features = nk.t.lncrna$gene[!duplicated(nk.t.lncrna$gene)], assay = "RNA") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+# dev.off()
 
-nk.t.lncrna <-  nk.t.markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster) %>% dplyr::filter(p_val_adj < 0.1 & !(gene %in% pca_lncrna) & pct.1 > 0.1) %>% slice(1:n())
 
-pdf("/Users/ds/Desktop/plot.pdf", height = 10)
-DotPlot(object = nk.t, features = nk.t.lncrna$gene[!duplicated(nk.t.lncrna$gene)], assay = "RNA") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
-dev.off()
+row.names(mcrpc_rna) <- mcrpc_rna$Gene
+mat <- mcrpc_rna[,-1] %>% t() %>% data.frame()
+mat <- log1p(mat)
 
-nk.t$cluster.dominant.cell.type %>% table()
 
-nk.t <- FindVariableFeatures(nk.t, nfeatures = 2000) %>% 
-    ScaleData() %>% RunPCA()
+bmet <- FindVariableFeatures(bmet, nfeatures = 2000) %>% 
+    ScaleData() %>% RunPCA(object = bmet, )
 
-pc_load <- Loadings(nk.t, reduction = "pca") %>% t()
+pc_load <- Loadings(bmet, reduction = "pca") %>% t()
 
 SubGeneNames <- colnames(pc_load)
 
-
+colnames(pc_load) %>% data.frame() %>% View()
 ```
 
-```{r}
-powers = c(1:20)
 
-sft=pickSoftThreshold(pc_load,dataIsExpr = TRUE,powerVector = powers,corFnc = bicor,corOptions = list(use = 'p'),networkType = "signed", verbose = 1)
+
+```{r}
+powers = c(1:10)
+
+sft=pickSoftThreshold(mat,dataIsExpr = TRUE,powerVector = powers,corFnc = bicor,corOptions = list(use = 'p'),networkType = "signed", verbose = 1)
 
 
 
@@ -141,7 +148,7 @@ text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
 ```
 
 ```{r}
-softPower = 9
+softPower = 10
 
 
 #calclute the adjacency matrix
@@ -183,9 +190,10 @@ table(dynamicColors)
 
 
 plotDendroAndColors(geneTree, dynamicColors, "Dynamic Tree Cut", dendroLabels = FALSE, hang = 0.03, addGuide = TRUE, guideHang = 0.05, main = "Gene dendrogram and module colors")
+```
 
 
-
+```{r}
 #Cluster each module using the PC1
 MEList = moduleEigengenes(pc_load, colors = dynamicColors) 
 MEs = MEList$eigengenes
