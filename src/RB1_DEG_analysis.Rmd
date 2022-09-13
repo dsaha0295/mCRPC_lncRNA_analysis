@@ -46,48 +46,6 @@ saveRDS(object = anno, file = "/Users/ds/Desktop/projects/lncRNA/data//RB1_mCRPC
 ```
 
 
-```{r}
-
-
-mcrpc_rna <- mcrpc_rna %>% dplyr::filter(Gene %in% c(up,down)) 
-genes <- mcrpc_rna$Gene
-
-mcrpc_rna <- mcrpc_rna %>% dplyr::select(-Gene) %>% t() %>% data.frame() 
-colnames(mcrpc_rna) <- genes
-
-
-mcrpc_rna <- mcrpc_rna %>% mutate(sample_id = gsub(pattern = "\\.", replacement = "-", x = row.names(.))) %>% merge(cf)  %>% na.omit()
-
-mcrpc_rna
-res <- do.call(rbind, lapply(genes, FUN= function(g){
-  
-  print(g)
-  #Fit linear regression model with covariate as bone met site 
-  model <- lm(formula = log1p(mcrpc_rna[,g]) ~ mcrpc_rna[,"enza"]) 
-  #Get coeff for Bone and pvalue
-  coef <- summary(model)$coefficients[, "Estimate"][2]
-  pval <- summary(model)$coefficients[, "Pr(>|t|)"][2]
-  
-  return(  data.frame(Gene  = g, Coef = coef, Pval = pval))
-
- })) %>% data.frame()
-
-
-
-#FDR correction across celltypes
-res$Adj.Pvalue <-p.adjust(res$Pval, method = "BH")
-res$Sig <-  ifelse(res$Adj.Pvalue < 0.1, "*", "ns")
-
-
-#%>% na.omit() %>% ggplot(aes(x = enza, y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117)) + geom_boxplot() 
-
-#%>% ggplot(aes(x = log1p(RNA), y = Mono1 + Mono2 + Mono3 + TAM + TIM + mDC + Monocyte + CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, color = enza  )) + geom_point() + stat_cor() + geom_smooth(method = "lm")
-
-res
-
-```
-
-
 
 
 ```{r}
@@ -103,7 +61,6 @@ row.names(counts) <- counts$Genename
 counts <- counts[,-1] %>% as.matrix()
 colnames(counts) <- gsub("\\.", "-", colnames(counts))  
 
-counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
 
 #Keep matching sample ids of RNA-seq and WGS for cmp annotation
 ids <- intersect(colnames(counts),row.names(cf))
@@ -123,11 +80,12 @@ x <- x[keep.exprs,, keep.lib.size = F]
 
 #Calculate effective library size using EdgeR TMM method
 x <- calcNormFactors(x, method = "TMM")
+x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 ###############
 
 #Create design matrix (w/o intercept) specifying group membership
 design <- model.matrix(~ 0 + as.factor(RB1) ,data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
 
-design
+
 colnames(design) <- c("Del", "WT") #, "Liver", "LN", "Other")
 
 # #Create contrasts to calculate
@@ -151,12 +109,39 @@ bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.na
 bulk_deg <- bulk_deg %>% arrange(-logFC)
 
 #bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1) %>%   left_join(y = filt_markers, by = c("Genes" = "gene"))
-up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
-down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 ```
 
 
+#Map to cell types
+```{r}
+up_ae <- AverageExpression(object = bmet, features = na.omit(up)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
 
+
+up_ae <- up_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(up, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
+up_ae <- mutate(up_ae, Group = "Upregulated")
+
+down_ae <- AverageExpression(object = bmet, features = na.omit(down)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
+
+
+down_ae <- down_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(down, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
+
+down_ae <- mutate(down_ae, Group = "Downregulated")
+
+ae <- rbind(up_ae, down_ae)
+ae <- ae[!duplicated(ae$Genes),]
+
+
+ae <- ae %>% group_by(Group) %>% arrange(cluster, .by_group = T) %>% ungroup() %>% data.frame()
+row.names(ae) <- ae$Genes
+
+
+
+
+pheatmap(mat = dplyr::select(ae, starts_with("RNA")), annotation_row = dplyr::select(ae, c(cluster, Group)), cluster_cols = F, cluster_rows = F, scale = "row", gaps_row = nrow(dplyr::filter(ae, Group == "Downregulated")), filename = "/Users/ds/Desktop/plot.png", height = 10)
+
+```
 
 ```{r}
 
@@ -188,19 +173,20 @@ dev.off()
 
 
 ```{r}
-plot <-  EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-02, legendPosition = "none", title = "Differential expression analysis of lncRNAs and RB1 mutations", subtitle = "RB1 biallelic inactivation v.s monoallelic/wildtype mCRPCs", FCcutoff = 1, labSize = 3)+ scale_color_viridis_d(option = "plasma")
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 20)
-
-cf
-up
+plot <-  EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-02, legendPosition = "none", title = "Differential expression analysis of lncRNAs and RB1 mutations", subtitle = "RB1 biallelic inactivation v.s monoallelic/wildtype mCRPCs", FCcutoff = 1, labSize = 3)
 
 plot
-DotPlot(object = bmet, features = "CDKN2B-AS1")
-up
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height = 10)
+
+
+na.omit(down) %>% View()
+
+
+
 ```
 
 
-
+#CBS analysis of lncRNAs
 ```{r}
 mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
 
@@ -244,6 +230,7 @@ plot <- p1 + p2  + p3
 
 ```
 
+#Methylation analysis
 ```{r}
 
 

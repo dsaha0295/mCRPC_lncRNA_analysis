@@ -3,78 +3,72 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-
-#Enza compare
 ```{r}
-bmet$supercluster.for.LDSC.SEG %>% table()
-
-
-ob <- subset(bmet, idents =  "tumor" )
-
-
-ob$organ__ontology_label %>% table()
-deg <- FindMarkers(object = ob, group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T, test.use = "LR", latent.vars = c("organ__ontology_label"))
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
 ```
 
+
+#Enza compare
 
 ```{r}
 
 bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
+tumor <- subset(bmet, idents = "tumor")
+
+sc_deg <- FindMarkers(object =  tumor[row.names(tumor) %in% linc$gene.name,], group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T)
+
+sc_deg %>% arrange(-avg_log2FC) %>% mutate(Gene = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1 & abs(avg_log2FC) > 1) 
+
+up <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC > 1) %>%  left_join( y = final_markers, by = c("Genes" = "gene"))%>% arrange(-avg_log2FC.x)
 
 
-sc_deg <- FindMarkers(object =  bmet[row.names(bmet) %in% linc$gene.name,], group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T)
-
-sc_deg %>% arrange(-avg_log2FC) %>% mutate(Gene = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1) 
-
-up <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC > 1) %>%  left_join( y = filt_markers, by = c("Genes" = "gene"))%>% arrange(-avg_log2FC.x)
-
-
-down <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.)) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC < -1) %>%  left_join( y = filt_markers, by = c("Genes" = "gene")) %>% arrange(avg_log2FC.x)
+down <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.)) %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC < -1) %>%  left_join( y = final_markers, by = c("Genes" = "gene")) %>% arrange(avg_log2FC.x)
 
 down
 
-up
-sc_deg[c(up),] %>% arrange(-avg_log2FC) 
+up 
 
-DotPlot(object = bmet, features = "MIR4435-2HG", group.by = "supercluster.for.LDSC.SEG")
+#%>% ggplot(aes(x = cluster)) + geom_bar()
 
-deg
-
+DotPlot(object = bmet, features = "LINC01278", group.by = "supercluster.for.LDSC.SEG")
 
 
+View(markers)
 ```
 
 ```{r}
 
 
-plot <-  EnhancedVolcano(toptable = sc_deg, x = "avg_log2FC", y = "p_val_adj", lab =row.names(sc_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-01, legendPosition = "none", title = "Differential expression analysis of lncRNAs and Enzalutamide resistance", subtitle = "Enza resistant v.s naive mCRPCs", FCcutoff = 1, labSize = 3)+ scale_color_viridis_d(option = "plasma",end = 0.5)
+plot <-  EnhancedVolcano(toptable = sc_deg, x = "avg_log2FC", y = "p_val_adj", lab =row.names(sc_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-01, legendPosition = "none", title = "Differential expression analysis of lncRNAs and Enzalutamide resistance", subtitle = "Enza resistant v.s naive mCRPCs", FCcutoff = 1, labSize = 3)
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
 
-plot
+
 ```
 
 
 
 ```{r}
-
-
 all_gene_sets = msigdbr(species = "Homo sapiens")
 
 gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
 
 querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
+```
 
 
-
-
-a <- bmet[c(up$Genes),] %>% GetAssayData() %>% colMeans()
-b <- bmet[querygenes$TGFB,] %>% GetAssayData() %>% colMeans()
-df <- data.frame(lncRNA = a, TGFB = b, Enza = bmet$prior.enzalutamide)
+```{r}
+a <- tumor[c(dplyr::filter(up, cluster == 'tumor')$Genes),] %>% GetAssayData() %>% colMeans()
+b <- tumor[querygenes$TGFB,] %>% GetAssayData() %>% colMeans()
+df <- data.frame(lncRNA = a, TGFB = b, Enza = tumor$prior.enzalutamide)
 
 
 p1 <- df %>% ggplot( aes( x= lncRNA, y = TGFB)) + geom_point(aes(color  = Enza)) + geom_smooth(method = "lm", color  = "black") + stat_cor() + scale_color_viridis_d(end = 0.6, option = "cividis") + xlab("Enza resistant lncRNAs") + ylab("MSigDB TGFB pathway")
+
+
 
 stat.test <- df %>% wilcox_test(formula = TGFB ~ Enza) %>% add_significance()
 p2 <- ggboxplot(df, x = "Enza", y = "TGFB", fill = viridis::cividis(10)[5], xlab = "Enzalutamide resistance")
@@ -85,23 +79,12 @@ p2 <- p2 +
 
 plot <- p1 + p2
 
+
+plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 15)
 
 
-
-   
-p2 <- 
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-
-
-stat.test <- df %>% wilcox_test(formula = HCP5 ~ RB1) %>% add_significance()   
-p3 <- ggboxplot(df, x = "RB1", y = "HCP5", fill = viridis::plasma(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-p3 <- p3 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-
-plot <- p1 + p2  + p3
-
-
+down
+up
 ```
+

@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(CONICSmat)
+library(Seurat)
+library(tidyverse)
+library(biomaRt)
+
+```
+
+```{r}
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
+
+
+bmet@meta.data <- bmet@meta.data %>% dplyr::select(-biopsy)
+
+bmet@meta.data %>% mutate(sample_id = paste0(biosample_id, "_", cell_id))
+
+mat <- GetAssayData(object = bmet, slot = "data") %>% as.matrix()
+
+patients <- bmet@meta.data$biosample_id
+
+
+normal <- which(bmet$supercluster.for.LDSC.SEG != "tumor")
+tumor = which(bmet$supercluster.for.LDSC.SEG == "tumor")
+normal
+regions=read.table("/Users/ds/Desktop/chromosome_arm_positions_grch38.txt",sep="\t",row.names = 1,header = T)
+
+r <- read.table('/Users/ds/Desktop/cytoBand.txt', sep = "\t")
+r <- r %>% mutate(Arm = gsub(pattern = "[.0-9]*", replacement = "", x = V4)) %>% mutate(Chrom = gsub(pattern = "chr", replacement = "", x = V1)) %>% dplyr::filter(Chrom %in% as.character(c(1:22, c("X", "Y")))) %>% group_by(Chrom, Arm) %>% arrange(-V3) %>% slice(1)%>% mutate(End = V3)
+
+r$Start <- sapply(X = 1:nrow(r), FUN = function(i){ ifelse(r[i, "Arm"] == "p",0, r[i-1,"End"])}) %>% unlist()
+regions
+r <- r %>% mutate(Length = End - Start) %>% ungroup %>% dplyr::select(c(Chrom, Start, End, Length, Arm)) 
+r <- data.frame(r)
+row.names(r) <- paste0(r$Chrom, r$Arm)
+
+r <- r %>% dplyr::select(-Arm)
+```
+
+```{r}
+
+
+listMarts()
+ensembl=useMart("ensembl")
+ensembl = useDataset("hsapiens_gene_ensembl",mart=ensembl)
+
+m <- getBM(c( "ensembl_gene_id","hgnc_symbol","chromosome_name","start_position","end_position","strand"), filters =
+c("chromosome_name","with_entrezgene"),
+values=list(c(1:22,"X","Y"),TRUE), mart=ensembl)
+
+m$chromosome_name %>% unique()
+
+
+
+```
+
+```{r}
+#gene_pos=getGenePositions(rownames(mat)) #, ensembl_version = "http://apr2022.archive.ensembl.org/")
+
+mat=filterMatrix(mat,m[,"hgnc_symbol"],minCells=5)
+normFactor=calcNormFactors(mat)
+
+
+```
+
+```{r}
+l=plotAll(mat,normFactor,r,m,"mCRPC_CNVs", normal = normal, tumor = tumor)
+
+normal
+
+bin_mat=binarizeMatrix(l,normal,tumor,0.7)
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+plotBinaryMat(bin_mat,patients,normal,tumor,patient="01115655-TA")
+dev.off()
+detectBreakPoints(mat,normal,tumor,windowsize=100,gene_pos=m,chr="X",patients=patients,patient="01115578-TA",breakpoints=r)
+r
+?plotBinaryMatr
+patients
+
+unique(patients) 
+
+r
+View(m)
+plotChromosomeHeatmap(mat,normal = normal, plotcells = which(patients=="01115578-TA"), gene_pos = m, windowsize = 121, chr=T, expThresh=0.2, thresh = 1)
+
+data.frame(bin_mat)
+
+```
+

@@ -14,7 +14,13 @@ library(msigdbr)
 library(EnsDb.Hsapiens.v86)
 library(Matrix)
 library(ggpubr)
+library(tidytext)
+library(cowplot)
+library(ComplexHeatmap)
+library(circlize)
+
 options(ggrepel.max.overlaps = Inf)
+
 
 ```
 
@@ -85,6 +91,8 @@ mat["PCAT14",]
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
 
+
+
 ```
 
 
@@ -92,31 +100,33 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 #LncRNA markers for cells
 ```{r}
 
-bmet <- bmet[row.names(bmet) %in% linc$gene.name,]#Subset lincRNAs for downstream analysis
-markers <- FindAllMarkers(object = bmet, only.pos = T, verbose = T)
+markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% linc$gene.name,], only.pos = T, verbose = T)
+pcg_markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% pcg$gene.name], only.pos = T, verbose = T)
+
+markers %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1)  %>% dplyr::filter(cluster == 'tumor')
+
+
+markers <- markers  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) #Filter percent diff, logFC, and adj P value
+markers <- markers[!duplicated(markers$gene),]#Filter duplicates
 
 
 
-top <-filt_markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:5) %>% .$gene
+pcg_markers <- pcg_markers %>%  dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) 
+
+pcg_markers <- pcg_markers %>%  arrange(-avg_log2FC) %>% group_by(cluster) %>% slice_head(n = 2)   #Filter percent diff, logFC, and adj P value
 
 
+pcg_markers <- pcg_markers[!duplicated(pcg_markers$gene),]#Filter duplicates
 
-names(top) <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:5) %>% .$cluster
+View(pcg_markers)
 
-
-
-pdf("/Users/ds/Desktop/plot.pdf", width = 15)
-DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
-dev.off()
-
-
-
+bmet@assays$RNA@counts
 
 ```
 
 #Filter markers using Chen et al
 ```{r}
-valid <- read.table(file = "/Users/ds/Desktop/DNAm_datasets/Manual.Marker.modify.txt", header = T)
+valid <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/data/Manual.Marker.modify.txt", header = T)
 
 #Filter prostate
 other_markers <- valid %>% dplyr::filter(is.na(Epithelia) & (!is.na(BCell) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(Neutrophil) | !is.na(pDC) | !is.na(PlasmaCell) | !is.na(TCell)   )) 
@@ -125,7 +135,7 @@ other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% 
 
 
 
-a <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "tumor" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1) 
+a <- markers  %>% dplyr::filter(cluster == "tumor") %>% dplyr::filter(!gene %in% other_markers) %>% arrange(-avg_log2FC) 
 
 #Filter B cell lineage
 other_markers <- valid %>% dplyr::filter( (is.na(BCell) & is.na(PlasmaCell))   & (!is.na(Epithelia) | !is.na(DC)   | !is.na(Endothelia) | !is.na(Fibroblast) | !is.na(Macrophage) | !is.na(MastCell) | !is.na(Myofib) |  !is.na(Neutrophil) | !is.na(pDC) |  !is.na(TCell)   )) 
@@ -133,7 +143,7 @@ other_markers <- valid %>% dplyr::filter( (is.na(BCell) & is.na(PlasmaCell))   &
 other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
 
 
-b <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "B lineage" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+b <- markers  %>% dplyr::filter(cluster == "B lineage" ) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) 
 
 
 
@@ -143,7 +153,7 @@ other_markers <- valid %>% dplyr::filter(is.na(TCell) & (!is.na(Epithelia) | !is
 other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
 
 
-c <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "NK/T" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+c <- markers  %>% dplyr::filter(cluster == "NK/T") %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) 
 
 
 #Filter neutrophil cell
@@ -152,7 +162,7 @@ other_markers <- valid %>% dplyr::filter(is.na(Neutrophil) & (!is.na(Epithelia) 
 other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
 
 
-d <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "neutrophil" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+d <- markers  %>% dplyr::filter(cluster == "neutrophil") %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) 
 
 
 #Filter monocyte/macrophage cell
@@ -161,18 +171,16 @@ other_markers <- valid %>% dplyr::filter(is.na(Macrophage) & (!is.na(Epithelia) 
 other_markers <- other_markers  %>% dplyr::select(-ends_with(".p_val_adj")) %>% gather(key  = "Cell", value = "logFC", -markers.gene) %>% group_by(Cell) %>% dplyr::filter(logFC>1) %>% .$markers.gene %>% unique()
 
 
-e <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "monocyte/macrophage" & p_val_adj < 0.1) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+e <- markers  %>% dplyr::filter(cluster == "monocyte/macrophage" ) %>% dplyr::filter(! gene %in% other_markers) %>% arrange(-avg_log2FC) 
 
 
 #Filter erythroid cell
-f <- markers %>% dplyr::filter(gene %in% linc$gene.name) %>% dplyr::filter(cluster == "erythroid" & p_val_adj < 0.1) %>% arrange(-avg_log2FC) %>% dplyr::filter(pct.1 >= 0.1)
+f <- markers  %>% dplyr::filter(cluster == "erythroid" ) %>% arrange(-avg_log2FC) 
 
 
 filt_markers <- rbind(a,b,c,d,e,f)
 
 
-markers
-filt_markers 
 ```
 
 
@@ -185,37 +193,48 @@ Idents(bmcrpc) <- "cells"
 valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
 
 
-bmcrpc$cells %>% unique()
+
+valid_kfoury <- valid_kfoury  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) %>%  arrange(-avg_log2FC) 
+valid_kfoury <- valid_kfoury[!duplicated(valid_kfoury$gene),]#Filter duplicates
+
 
 #Filter prostate
-other_markers <- valid_kfoury %>% dplyr::filter(cluster != "Tumor") %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+other_markers <- valid_kfoury %>% dplyr::filter(cluster != "Tumor")  %>% .$gene
 a <- filt_markers %>% dplyr::filter(cluster == "tumor") %>% dplyr::filter( !gene %in% other_markers )
 
 
 
 #Filter NK/T cells
-other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("CTL-1", "CTL-2", "NK", "NKT", "CD4+ Naive" ,"Treg Active","Th1/17","Treg Resting","CD8+ Naive")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("CTL-1", "CTL-2", "NK", "NKT", "CD4+ Naive" ,"Treg Active","Th1/17","Treg Resting","CD8+ Naive"))  %>% .$gene
 b <- filt_markers %>% dplyr::filter(cluster == "NK/T") %>% dplyr::filter( !gene %in% other_markers )
 
 #Filter B lineage cells
-other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mature B","memBcell" ,"Pro-B","Immature B cells")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mature B","memBcell" ,"Pro-B","Immature B cells"))  %>% .$gene
 c <- filt_markers %>% dplyr::filter(cluster == "B lineage") %>% dplyr::filter( !gene %in% other_markers )
 
 #Filter monocyte/macrophage cells
-other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte prog")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte prog")) %>%  .$gene
 d <- filt_markers %>% dplyr::filter(cluster == "monocyte/macrophage") %>% dplyr::filter( !gene %in% other_markers )
 
 
 #Filter erythroid cells
-other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Erythroid")) %>% dplyr::filter(avg_log2FC > 1 & pct.1 > 0.1 & p_val_adj < 0.1) %>% .$gene
+other_markers <- valid_kfoury %>% dplyr::filter(! cluster %in% c("Erythroid")) %>% .$gene
 e <- filt_markers %>% dplyr::filter(cluster == "erythroid") %>% dplyr::filter( !gene %in% other_markers )
 
 
 #No granulocytes in this dataset
 f <- filt_markers %>% dplyr::filter(cluster == "neutrophil")
 
+final_markers <- rbind(a,c,b,f,d,e)
 
-final_markers <- rbind(a,b,c,d,e,f)
+
+View(final_markers)
+```
+
+
+```{r}
+compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), a,dplyr::filter(pcg_markers, cluster == "B lineage") , c,dplyr::filter(pcg_markers, cluster == "NK/T"),b,dplyr::filter(pcg_markers, cluster == "neutrophil"),f,dplyr::filter(pcg_markers, cluster == "monocyte/macrophage"),d,dplyr::filter(pcg_markers, cluster == "erythroid"),e)
+
 
 
 
@@ -224,35 +243,105 @@ final_markers <- rbind(a,b,c,d,e,f)
 
 #Plot markers
 ```{r}
-
 pca_lncrna <- final_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
 
-notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
 
+
+notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
+other_lncrna <- linc %>% dplyr::filter(!gene.name %in% final_markers$gene) %>% .$gene.name
+```
+
+
+```{r}
+other_lncrna
+linc
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_CPM_genename.txt", header = T)
+
+mcrpc_rna <- mcrpc_rna %>% dplyr::filter(Genename %in% c(pca_lncrna, notpca_lncrna)) %>% mutate(Group = ifelse(Genename %in% pca_lncrna, "Prostate lncRNA", "Non prostate lncRNA")) %>% gather(key = "ID", value = "GEX", -c(Genename, Group)) %>% mutate(GEX = log1p(GEX)) 
+
+mcrpc %>% ggplot(aes(x = Group, y = GEX)) + geom_boxplot()
+
+stat.test <- mcrpc_rna %>% wilcox_test(formula = GEX ~ Group) %>% add_significance()   
+p2 <- ggboxplot(mcrpc_rna, x = "Group", y = "GEX", fill = viridis::cividis(10)[5])
+stat.test <- stat.test %>% add_xy_position(x = "Group")
+p2 <- p2 + 
+  stat_pvalue_manual(stat.test, label = "p") +
+  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
+stat.test
+```
+
+
+```{r}
 
 bmet <- ScaleData(object = bmet, features = final_markers$gene)
 
+
 pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
 
-DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
+DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0)) 
 dev.off()
 
 
-dim(filt_markers)
-bmet
+```
 
-bmet$supercluster.for.LDSC.SEG
-filt_markers %>% dplyr::filter(cluster == "tumor") %>% .$gene %>% paste0(collapse = " ")
-
-
-bmcrpc <- ScaleData(object = bmcrpc, features = final_markers$gene)
-
-DoHeatmap(object = bmcrpc, features = pca_lncrna, assay = "RNA", slot = "scale.data"  )+ theme(axis.text.y = element_text(size = 0)) 
-res <- AverageExpression(object = bmcrpc, features = pca_lncrna, slot = "data") 
+#Compare lncRNA markers with PCG markers
+```{r}
+top <-compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:7) %>% .$gene
 
 
-data.frame(res) %>% log1p() %>% mutate(Genes = row.names(.)) %>% gather(key = "Cell", value = "GEX", -Genes) %>% ggplot(aes(x = Cell, y = GEX, fill = Cell)) +  geom_boxplot(width = 0.5, alpha  = 0.5) + scale_fill_viridis_d(option = "plasma") + ylab("Cell types")
 
+names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:7) %>% .$cluster
+
+
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 15, height = 15)
+DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+dev.off()
+
+
+
+
+write.table(x = final_markers, file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+
+
+final_markers <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
+
+```
+
+
+#Validate markers
+```{r}
+
+
+res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
+  
+  
+  query_lncrna <- final_markers %>%  dplyr::filter(cluster == c) %>% arrange(-avg_log2FC)  %>% .$gene
+  ae <- AverageExpression(object = bmcrpc, features = query_lncrna, slot = "data") %>%  data.frame() %>% log1p() 
+  ae <- ae %>% mutate(Genes = row.names(.), Cluster = c)
+  return(ae)
+
+  
+} ))
+
+
+
+res
+mat <-  dplyr::select(res, -c("Genes", "Cluster"))
+anno <- dplyr::select(res, c("Genes", "Cluster"))
+mat
+mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Tumor"),c("Mature.B","memBcell" ,"Pro.B","Immature.B.cells"),  c("CTL.1", "CTL.2", "NK", "NKT", "CD4..Naive" ,"Treg.Active","Th1.17","Treg.Resting","CD8..Naive"),c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte.prog"), c("Erythroid")))))
+
+mat <- t(scale(t(mat))) %>% data.frame() 
+colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
+
+row_ha = rowAnnotation(Cluster = anno$Cluster )
+mat
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+Heatmap(matrix = mat, left_annotation = row_ha, height = unit(20, "cm"), col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_rows = F, cluster_columns = F, na_col = 'black', column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E"    )), row_split = anno$Cluster, row_names_gp = gpar(fontsize = 5))
+dev.off()
+
+nrow(res)/nrow(final_markers)
 
 ```
 
@@ -286,6 +375,7 @@ dev.off()
 
 
 UMAPPlot(object = bmet, label = T, repel = T)
+
 ```
 
 
@@ -312,31 +402,116 @@ write.table(reference, file = "/Users/ds/Desktop/He_bulk_reference.txt", quote =
 
 #Plot GEP estimates - see if similar to scRNA data
 ```{r}
-gep <- read.table(file = "/Users/ds/Desktop/CIBERSORTx_Job40_output/CIBERSORTxGEP_Job40_GEPs.txt", header = T)
+gep <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/CIBERSORTxGEP_Job40_GEPs.txt", header = T)
+gep <- gep %>% inner_join(y = final_markers, by = c("GeneSymbol"= "gene"))
+
+
+row.names(gep) <- gep$GeneSymbol
+gep <- gep %>% dplyr::select(c("tumor", "B", "NK_T", "neutrophi", "monocyte_macrophage", "erythroid", "cluster", "GeneSymbol"))
+
+
+gep <- gep %>% arrange(cluster)
+
+mat <- gep  %>% dplyr::select(-c("GeneSymbol", "cluster"))
+anno <- gep %>% dplyr::select(c("GeneSymbol", "cluster"))
 
 
 
-res <- do.call(rbind, lapply(unique(filt_markers$cluster), FUN = function(c){
-  
-  cell_spec_lncrna <- dplyr::filter(filt_markers, cluster == c) %>% .$gene
+gep
+mat <- t(scale(t(mat))) %>% data.frame() 
+mat <- na.omit(mat)
+
+row_ha = rowAnnotation(Cluster = anno[row.names(mat),]$cluster )
 
 
-  query <- gep %>% dplyr::filter(GeneSymbol %in% cell_spec_lncrna) %>% dplyr::select(-GeneSymbol) %>% log1p() 
-
-
-
-  query <- query%>% gather(key = "Cell", value = "GEX") %>% mutate(ID = paste0(c, " specific lncRNA"))
-
-  return(query)
-}))
-
-gep %>% dplyr::filter(GeneSymbol %in% filt_markers$gene)
-
-
-pdf("/Users/ds/Desktop/plot.pdf", width = 15)
-ggplot(res, aes(y = reorder(Cell, GEX),x = GEX, fill = Cell))%>% facet(facet.by = "ID")  + geom_boxplot(width = 0.5, alpha  = 0.5) + scale_fill_viridis_d(option = "plasma") + ylab("Cell types")
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+Heatmap(matrix = mat, left_annotation = row_ha, width = unit(10, "cm"), col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_rows = F, cluster_columns = F, na_col = 'black', row_split = anno[row.names(mat),]$cluster, column_split = letters[1:6], height = unit(20, 'cm'), row_names_gp = grid::gpar(fontsize = 0) , column_names_gp = gpar(fontsize = 10))
 dev.off()
+
+
+
+
+nrow(mat)/nrow(final_markers)
+
+
 ```
 
+#Plot heatmaps for specific lncRNAs
+```{r}
+anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+anno
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR,tumor_purity_rna, RB1 )) 
+
+
+cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
+cf$sample_id <- gsub("\\.", "-", cf$Mixture)
+row.names(cf) <- cf$Mixture
+
+cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
+
+
+
+row.names(cf) <- cf$sample_id
+
+
+cf <- na.omit(cf)#Omit samples without WGS data
+
+
+ehmr <- read.csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv")
+
+ehmr <-  ehmr %>% dplyr::filter(type == "HMR" & symbol %in% pca_lncrna) %>% group_by(symbol) %>% arrange(cor) %>% slice(1) %>% mutate(Coord = paste0(chrom, ".", start, ".", end)) 
+
+hmr <- read.table(file = "/Users/ds/Desktop/projects/data/bs/all.mcrpc.hmr.txt", header = T)
+hmr <- hmr[!duplicated(hmr$Coord),]
+hmr <- hmr %>% merge(ehmr) %>% mutate(HMR = paste0(symbol, ".", type)) %>% dplyr::select(c(HMR, starts_with("DTB")))
+row.names(hmr) <- hmr$HMR
+hmr <- hmr[-1] %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
+
+
+cna <- read.table(file = "/Users/ds/Desktop/2018_04_15_matrix_CN_integer_symbol_copycat.txt", header = T)
+
+cna <- cna %>% dplyr::filter(IDENTIFIER %in% pca_lncrna) %>% mutate(CopyNumber = paste0(IDENTIFIER, ".CN"))
+row.names(cna) <- cna$CopyNumber
+cna <- dplyr::select(cna, -c(CopyNumber, IDENTIFIER)) %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
+
+paste0(pca_lncrna, collapse = " ")
+
+```
+
+
+```{r}
+df <- data.frame(mcrpc_rna[, "cases", drop = F],mcrpc_rna[,c(colnames(mcrpc_rna) %in% pca_lncrna)]) %>% inner_join(cf, by = c("cases" = "sample_id")) %>% merge(hmr) %>% merge(cna)
+
+
+goi <- c("PCAT14", "SCHLAP1", "COLCA1", "PART1", "PCAT1")
+df
+
+df <- df[,c(goi, "cases", "AR", "RB1", paste0(goi, ".HMR"), paste0(goi, ".CN"))] %>% mutate(RB1 = ifelse(RB1 == 0, "Loss", "WT")) %>% mutate(AR = ifelse(AR == 3, "Gain", "WT")) 
+df
+```
+
+
+```{r}
+
+df
+df <- df %>% arrange(PCAT14)  
+
+row.names(df) <- df$cases
+
+col_fun1 = colorRamp2(c(0, 100), c("grey", "blue"))
+
+col_fun2 = colorRamp2(c(0, 3), c("grey", "purple"))
+
+column_ha = HeatmapAnnotation( PCAT14 = anno_barplot(df[,"PCAT14"]  ), HMR = df[,"PCAT14.HMR"], CNA = df[,"PCAT14.CN"], simple_anno_size = unit(2, "cm"), height = unit(10,"cm"), col = list(PCAT14 = "black", HMR = col_fun1, CNA = col_fun2 ))
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+Heatmap(matrix = t(df[,c("RB1", "AR")]), top_annotation = column_ha, height = unit(5, "cm"), col = colorRampPalette(c("darkred","navy", "grey"))(3), show_column_names = F)
+dev.off()
+
+df
+
+```
 
 

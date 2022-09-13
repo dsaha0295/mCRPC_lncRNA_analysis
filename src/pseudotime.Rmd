@@ -1,0 +1,75 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(Seurat)
+library(monocle3)
+library(SeuratWrappers)
+```
+
+```{r}
+
+tumor <- subset(bmet, idents = "tumor")
+
+bmet$organ__ontology_label %>% unique()
+seurat_pipeline <- function(object, ndims, seed, resolution){
+  
+  #Data already normalized 
+    FindVariableFeatures(object = object, nfeatures = 2000) %>% 
+    ScaleData() %>%
+    RunPCA() %>% 
+    RunUMAP(dims = 1:ndims, reduction = "pca") %>% 
+    FindNeighbors(reduction = "pca", dims = 1:ndims) %>% 
+    FindClusters(resolution = resolution, algorithm = 1, random.seed =seed) %>% 
+    return()
+  
+}
+
+
+tumor <- seurat_pipeline(object = tumor, ndims = 40, seed = 123, 0.5)
+
+```
+
+```{r}
+tumor.cds <- as.cell_data_set(tumor)
+tumor.cds <- cluster_cells(cds = tumor.cds, reduction_method = "UMAP")
+tumor.cds <- learn_graph(tumor.cds, use_partition = TRUE)
+
+tumor.cds <- order_cells(tumor.cds, reduction_method = "UMAP")
+plot_cells(cds = tumor.cds, color_cells_by = "pseudotime", show_trajectory_graph = TRUE)
+
+pr_graph_test_res <- graph_test(tumor.cds, neighbor_graph="knn", cores=8)
+pr_graph_test_res <- pr_graph_test_res %>% mutate(Genes = row.names(.))
+pr_deg_ids <- row.names(subset(pr_graph_test_res, q_value < 0.05))
+
+tumor <- AddMetaData(
+  object = tumor,
+  metadata = tumor.cds@principal_graph_aux@listData$UMAP$pseudotime,
+  col.name = "Pseudotime"
+)
+tumor@meta.data
+
+
+
+
+length(pr_deg_ids)
+
+dplyr::filter(pr_graph_test_res, Genes %in% pr_deg_ids[pr_deg_ids %in% pca_lncrna]) %>% arrange(-morans_I)
+
+pr_deg_ids
+Idents(tumor) <- "prior.enzalutamide"
+FeaturePlot(object = tumor, features = c("Pseudotime", "SNHG19", "prior.enzalutamide"), label = T)
+GetAssayData()
+colData(tumor.cds) %>% data.frame()
+
+
+plot_genes_in_pseudotime(tumor.cds[c("COLCA1", "PART1")],
+                         color_cells_by="organ__ontology_label",
+                         min_expr=0.5)
+
+DimPlot(object = tumor, reduction = 'umap', label = T)
+
+```
+

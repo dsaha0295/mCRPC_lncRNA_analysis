@@ -4,13 +4,16 @@ output: html_notebook
 ---
 
 ```{r}
-library(EnsDb.Hsapiens.v75)
+library(EnsDb.Hsapiens.v86)
 library(edgeR)
 library(Seurat)
 library(WGCNA)
 library(flashClust)
 library(cowplot)
 library(dittoSeq)
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(rtracklayer)
+
 ```
 
 #Download ARBS/HMR/ATAC datasets
@@ -32,12 +35,18 @@ b <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% pca_lnc
 c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
+e <- GRanges(linc[linc$gene.name %in% other_lncrna,]) %>% length()
+f <- subsetByOverlaps(ranges = arbs, x =GRanges(linc[linc$gene.name %in% other_lncrna,]) ) %>% length()
+
+
+
 
 p1 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'plasma', end = 0.5)
   
 p2 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'plasma', end = 0.5)
   
-
+p3 <- data.frame(Category = c("No Overlap with ARBS", "Overlap with ARBS"), Count = c(e-f,f)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("other lncRNAs") + scale_fill_viridis_d(option = 'plasma', end = 0.5)
+  
 
 
 a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
@@ -46,29 +55,61 @@ b <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% pca_lncr
 c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
-p3 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'viridis', end = 0.5)
+e <- GRanges(linc[linc$gene.name %in% other_lncrna,]) %>% length()
+f <- subsetByOverlaps(ranges = hmr, x =GRanges(linc[linc$gene.name %in% other_lncrna,]) ) %>% length()
+
+
+
+p4 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'viridis', end = 0.5)
 
   
-p4 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs")+ scale_fill_viridis_d(option = 'viridis', end = 0.5)
+p5 <- data.frame(Category = c("No Overlap with HMRs", "Overlap with HMRs"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs")+ scale_fill_viridis_d(option = 'viridis', end = 0.5)
   
+p6 <- data.frame(Category = c("No Overlap with HMR", "Overlap with HMR"), Count = c(e-f,f)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("other lncRNAs") + scale_fill_viridis_d(option = 'viridis', end = 0.5)
+  
+
+
+
 a <- GRanges(linc[linc$gene.name %in% pca_lncrna,]) %>% length()
 b <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% pca_lncrna,]) ) %>% length()
 
 c <- GRanges(linc[linc$gene.name %in% notpca_lncrna,]) %>% length()
 d <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) ) %>% length()
 
-p5 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
+e <- GRanges(linc[linc$gene.name %in% other_lncrna,]) %>% length()
+f <- subsetByOverlaps(ranges = atac, x =GRanges(linc[linc$gene.name %in% other_lncrna,]) ) %>% length()
+
+
+
+p7 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks" ), Count = c(a-b,b)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) +theme_void() + ggtitle("Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
   
-p6 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
+p8 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(c-d,d)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("not Prostate-specific\n lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
   
 
-plot <- plot_grid(p1, p2,p3, p4, p5, p6, ncol = 3, byrow = F)
+p9 <- data.frame(Category = c("No Overlap with ATAC peaks", "Overlap with ATAC peaks"), Count = c(e-f,f)) %>% ggplot(aes(x = "", y = Count, fill = Category)) + geom_bar(stat = "identity", width = 1) + coord_polar("y", start = 0) + theme_void() + ggtitle("other lncRNAs") + scale_fill_viridis_d(option = 'magma', end = 0.5)
+
+
+plot <- plot_grid(p1, p2,p3, p4, p5, p6,p7, p8, p9, ncol = 3, byrow = F)
 plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 15)
 
 
 
 ```
+
+```{r}
+
+a <- subsetByOverlaps(x = atac, ranges =GRanges(linc[linc$gene.name %in% pca_lncrna,]) )
+b <- subsetByOverlaps(x = atac, ranges =GRanges(linc[linc$gene.name %in% notpca_lncrna,]) )
+c <- subsetByOverlaps(x = atac, ranges =GRanges(linc[linc$gene.name %in% other_lncrna,]) )
+
+
+length(pca_lncrna) + length(notpca_lncrna) + length(other_lncrna)
+
+dim(linc)
+
+```
+
 
 
 #eHMR analysis
@@ -81,13 +122,148 @@ a <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "HMR") %>% arrange(
 
 b <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Not prostate specific")
 
+c <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Other")
+
+
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 
-rbind(a,b) %>% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5) + xlab("Correlation") + scale_fill_viridis_d(option = 'plasma', end  = 0.5)
+rbind(a,b,c) %>% ggplot(aes(x = cor, fill = Group)) + geom_density(alpha = 0.5) + xlab("Correlation") + scale_fill_viridis_d(option = 'plasma', end  = 0.5)
 dev.off()
 
 
 ```
+
+
+
+```{r}
+
+query <- linc[linc$gene.name %in% pca_lncrna,'gene', drop = T] 
+
+query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
+style
+seqlevelsStyle(query) <- "UCSC"
+
+
+
+seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
+names(seq) <- query$tx_id
+
+query <- linc[linc$gene.name %in% notpca_lncrna,'gene', drop = T] 
+
+query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
+
+seqlevelsStyle(query) <- "UCSC"
+
+
+
+seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
+names(seq) <- query$tx_id
+
+
+
+writeXStringSet(seq, filepath = "/Users/ds/Desktop/notpca_lncrna.fa")
+
+
+#Centrimo differential motif enrichment anywhere in promoter sequence in pca_lncrna v.s notpca_lncrna
+motif <- read_tsv(file = "/Users/ds/Desktop/centrimo.tsv")
+
+
+motif <- motif %>%   mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id), Rank = 1:nrow(.))
+motif <- motif %>% dplyr::select(c("TF", "Rank", "log_adj_p-value", "E-value"))
+colnames(motif) <- c("TF", "Rank", "log_adjPvalue", "Evalue")
+motif <-  motif %>% mutate(TF = ifelse(TF == "ANDR", "AR", TF))
+motif <- mutate(motif, Color = ifelse(Rank %in% 1:10, "A", ifelse(TF %in% c("AR", "FOXA1", "HOXB13", "NKX31","ERG", "ETS1", "ETV1", "ETV2", "ETV3", "ETV4", "ETV5"), "B", ifelse(TF %in% c("SNAI1", "SNAI2", "ZEB1", "ZEB2", "TWST1"), "C", "D"))))
+motif <- motif %>% mutate(Label = ifelse(Color %in% c("A", "B", "C"), TF, ""))
+
+
+p <- motif %>% ggplot(aes(x = Rank, y  = -log_adjPvalue, label = Label, color = Color)) + geom_point(size = 1, alpha = 0.5) + ggrepel::geom_text_repel() + scale_color_manual(values = c("darkred", "darkblue", "darkgreen", "black"))
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
+
+View(final_markers)
+DotPlot(object = bmet, features = "EPAS1")
+
+
+p <- motif %>% inner_join(dplyr::filter(pcg_markers, cluster == "tumor"), by = c("TF" = "gene")) %>% ggplot(aes(y = reorder(TF, -Rank), x = -log_adjPvalue, fill = avg_log2FC)) + geom_col() + ylab("TF") + scale_fill_viridis_c(option = "C")
+
+
+```
+
+
+```{r}
+altprom <- read.table("/Users/ds/Desktop/projects/data/rna/promoter_category_WCDT.txt", header = T)
+
+cat <- read.table(file ="/Users/ds/Desktop/projects/data/rna/promoter_metadata.txt", header = T )
+cat <- cat %>% dplyr::filter(geneSymbol %in% c(linc$gene.name))
+
+act <- readRDS(file ="/Users/ds/Desktop/projects/data/rna/relative_promoter_activity_WCDT.tsv.rds")
+act <- act[,-c(105,106)]
+
+act <- read_tsv(file ="/Users/ds/Desktop/projects/data/rna/absolute_promoter_activity_WCDT.tsv" )
+
+act
+```
+
+
+```{r}
+
+act <- read.table(file ="/Users/ds/Desktop/projects/data/rna/alternative_promoters_within_WCDT_filtered_rel_diff_0.5_recurrent_5.txt", header = T , sep = "\t")
+
+df <-  act %>% dplyr::filter(geneSymbol %in% c(pca_lncrna, notpca_lncrna, other_lncrna)) %>% mutate(Group = ifelse(geneSymbol %in% pca_lncrna, "Prostate specific lncRNA", ifelse(geneSymbol %in% notpca_lncrna, "not Prostate specific lncRNA", ifelse(geneSymbol %in% other_lncrna, "Other lncRNA", NA))))
+
+df %>% dplyr::select(Group, pr_rel_diff) %>% ggplot(aes(x = Group, y = pr_rel_diff, fill = Group)) + geom_boxplot()
+
+```
+
+
+```{r}
+query <- cat %>% dplyr::filter(geneSymbol %in% pca_lncrna) %>% .$geneId
+
+
+query <- altprom %>% dplyr::filter(geneId %in% query)  %>% dplyr::select(c(promoterId,geneId, median)) 
+
+a <- act  %>% inner_join(query, by = c("promoterId" = "promoterId"))%>% mutate(Group = "Prostate specific lncRNA") %>% dplyr::select(c(promoterId,median.x, median.y, Group))
+
+
+
+query <- cat %>% dplyr::filter(geneSymbol %in% notpca_lncrna) %>% .$geneId
+
+
+query <- altprom %>% dplyr::filter(geneId %in% query)  %>% dplyr::select(c(promoterId,geneId, median)) 
+
+b <- act  %>% inner_join(query, by = c("promoterId" = "promoterId"))%>% mutate(Group = "not Prostate specific lncRNA") %>% dplyr::select(c(promoterId,median.x, median.y, Group))
+
+
+query <- cat %>% dplyr::filter(geneSymbol %in% other_lncrna) %>% .$geneId
+
+
+query <- altprom %>% dplyr::filter(geneId %in% query)  %>% dplyr::select(c(promoterId,geneId, median)) 
+
+c<- act  %>% inner_join(query, by = c("promoterId" = "promoterId"))%>% mutate(Group = "Other lncRNA") %>% dplyr::select(c(promoterId,median.x, median.y, Group))
+```
+
+
+```{r}
+b
+df <- rbind(a,b,c)
+
+colnames(df) <- c("promoterId", "Mean.activity", "Category", "Group")
+
+
+
+p <- df%>% ggplot(aes(x = Group, y= Mean.activity, fill = Category)) + geom_boxplot(alpha = 0.5) + ylab("Median relative promoter activity") + scale_fill_manual(values =  viridis::magma(3))
+
+p
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
+
+
+a
+c
+```
+
+
+
+
 
 
 #Misc

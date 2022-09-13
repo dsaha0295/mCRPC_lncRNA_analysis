@@ -2,6 +2,9 @@
 title: "R Notebook"
 output: html_notebook
 ---
+```{r}
+library(viridis)
+```
 
 #Create list of samples with AR activating mutations and WT mutations from deep RNA-seq data
 ```{r}
@@ -50,7 +53,7 @@ row.names(counts) <- counts$Genename
 counts <- counts[,-1] %>% as.matrix()
 colnames(counts) <- gsub("\\.", "-", colnames(counts))  
 
-counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+#counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
 
 
 #Keep matching sample ids of RNA-seq and WGS for cmp annotation
@@ -58,10 +61,6 @@ ids <- intersect(colnames(counts),row.names(cf))
 counts <- counts[,ids]
 cf <- cf[ids,]
 
-
-```
-
-```{r}
 
 
 #Create dge object - create counts matrix and sample anno df with library sizes
@@ -77,9 +76,8 @@ x <- x[keep.exprs,, keep.lib.size = F]
 #Calculate effective library size using EdgeR TMM method
 x <- calcNormFactors(x, method = "TMM")
 
-```
+x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 
 
-```{r}
 #Create design matrix (w/o intercept) specifying group membership
 design <- model.matrix(~ 0 + as.factor(AR), data = cf) 
 
@@ -115,11 +113,41 @@ bulk_deg <- bulk_deg %>% arrange(-logFC)
 #Plot DEG results
 ```{r}
 #Map up and down regulated genes to clusters
-up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
-down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = filt_markers, by = c("Genes" = "gene"))
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+```
+
+#Map to cell types
+```{r}
+
+DoHeatmap(object = bmet, na.omit(up)$genes)
+up_ae <- AverageExpression(object = bmet, features = na.omit(up)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
 
 
+up_ae <- up_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(up, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
+up_ae <- mutate(up_ae, Group = "Upregulated")
 
+down_ae <- AverageExpression(object = bmet, features = na.omit(down)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
+
+
+down_ae <- down_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(down, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
+
+down_ae <- mutate(down_ae, Group = "Downregulated")
+
+ae <- rbind(up_ae, down_ae)
+ae <- ae[!duplicated(ae$Genes),]
+
+
+ae <- ae %>% group_by(Group) %>% arrange(cluster, .by_group = T) %>% ungroup() %>% data.frame()
+row.names(ae) <- ae$Genes
+
+
+pheatmap(mat = dplyr::select(ae, starts_with("RNA")), annotation_row = dplyr::select(ae, c(cluster, Group)), cluster_cols = F, cluster_rows = F, scale = "row", gaps_row = nrow(dplyr::filter(ae, Group == "Downregulated")), filename = "/Users/ds/Desktop/plot.png", height = 10)
+
+```
+
+
+```{r}
 f <- up$Genes                                          
 names(f) <- up$cluster
 f <- f[!is.na(names(f))]
@@ -167,17 +195,17 @@ lm(data= a, formula = RNA ~ as.factor(AR) + Tumor) %>% summary()
 
 #Volcano plots
 ```{r}
-plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)  + scale_color_viridis_d(option = "plasma")
+plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)
 
 plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height = 10)
 
-
+na.omit(up) %>% View()
 
 ```
 
 
-
+#DMR analysis
 ```{r}
 dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
 dss
