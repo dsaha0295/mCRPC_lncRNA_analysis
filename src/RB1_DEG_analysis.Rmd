@@ -31,7 +31,7 @@ cf <- na.omit(cf)
 
 cf <- cf %>% mutate(RB1 = ifelse(RB1 == 0, 0, 1))
 
-cf
+cf <- cf %>% dplyr::filter(disease_type_SIG_GEX =='adeno')
 
 ```
 
@@ -72,7 +72,7 @@ cf <- cf[ids,]
 x <- DGEList(counts = counts)
 
 #Add cluster variable to designate group membership to sample df
-x$samples <- cbind(x$samples, dplyr::select(cf, c( RB1 )))
+x$samples <- cbind(x$samples, dplyr::select(cf, c( RB1 ,tumor_purity_rna)))
 
 #Remove genes with low expression across samples
 keep.exprs <- filterByExpr(x)
@@ -115,71 +115,22 @@ down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(l
 
 
 #Map to cell types
-```{r}
-up_ae <- AverageExpression(object = bmet, features = na.omit(up)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-up_ae <- up_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(up, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-up_ae <- mutate(up_ae, Group = "Upregulated")
-
-down_ae <- AverageExpression(object = bmet, features = na.omit(down)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-down_ae <- down_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(down, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-
-down_ae <- mutate(down_ae, Group = "Downregulated")
-
-ae <- rbind(up_ae, down_ae)
-ae <- ae[!duplicated(ae$Genes),]
-
-
-ae <- ae %>% group_by(Group) %>% arrange(cluster, .by_group = T) %>% ungroup() %>% data.frame()
-row.names(ae) <- ae$Genes
-
-
-
-
-pheatmap(mat = dplyr::select(ae, starts_with("RNA")), annotation_row = dplyr::select(ae, c(cluster, Group)), cluster_cols = F, cluster_rows = F, scale = "row", gaps_row = nrow(dplyr::filter(ae, Group == "Downregulated")), filename = "/Users/ds/Desktop/plot.png", height = 10)
-
-```
 
 ```{r}
+bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
 
+bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
-f <- up$Genes                                          
-names(f) <- up$cluster
-f <- f[!is.na(names(f))]
+                                          
+                                   
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.25), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.25 ), force = 0.5) + ggtitle(label = "lncRNAs associated with RB1 biallelic inactivation")
+                                   
 
+plot             
+                               
+down
 
-f <- f[!duplicated(f)]
-p1 <- DotPlot(object = bmet, features =  f)+ theme(axis.text.x = element_text(size = 8))  
-p1
-f <- down$Genes                                          
-names(f) <- down$cluster
-f <- f[!is.na(names(f))]
-
-
-f <- f[!duplicated(f)]
-p2 <- DotPlot(object = bmet, features =  f)+ theme(axis.text.x = element_text(size = 8))  
-
-plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
-
-
-pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 15)
-plot 
-dev.off()
-```
-
-
-
-```{r}
-plot <-  EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c( up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-02, legendPosition = "none", title = "Differential expression analysis of lncRNAs and RB1 mutations", subtitle = "RB1 biallelic inactivation v.s monoallelic/wildtype mCRPCs", FCcutoff = 1, labSize = 3)
-
-plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height = 10)
-
-
-na.omit(down) %>% View()
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
 
@@ -241,21 +192,57 @@ dss <- GRanges(dss)
 regions <- GRanges(linc)
 
 
-regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
-
-
-
 dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
 
+dss
+dss %>% dplyr::filter(Sig %in% c("A","B"))
 
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC RB1 loss v.s wildtype") + xlab("Methylation difference RB1 loss - wildtype") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey"))
 
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("SCHLAP1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "PART1", "ARLNC1", "PCAT4", "HOTAIR")), color = "black", force =10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC RB1 loss v.s wildtype") + xlab("Methylation difference RB1 loss - wildtype") + scale_color_viridis_d(option = "plasma", end = 0.5)
 plot
-
-dss %>% dplyr::filter(Sig == "A")
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 ```
 
 
+```{r}
 
+
+hyper <- dss %>% dplyr::filter(Sig == "B", cluster !='Unknown' )  %>% .$gene.name
+
+
+query <- linc[linc$gene.name %in% hyper,'gene', drop = T] 
+
+
+query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
+
+seqlevelsStyle(query) <- "UCSC"
+
+query
+
+seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
+names(seq) <- query$tx_id
+
+writeXStringSet(seq, filepath = "/Users/ds/Desktop/hyper_rb1.fa")
+
+
+```
+
+
+```{r}
+
+
+motif <- read_tsv(file = "/Users/ds/Desktop/sea (10).tsv", col_names = T)
+motif$RANK <- as.numeric(motif$RANK)
+
+motif <- motif %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = ID)) %>% mutate(Label = ifelse(RANK %in% 1:10, "A", ifelse(TF %in% c("ANDR", "FOXA1", "HOXB13", "NKX31", "ETV1", "ERG", "ETV2", "ETV3", "ETV4", "ETV5", "E2F3", "E2F6"), "B", "C"))) 
+
+motif %>% dplyr::filter(grepl(pattern = "E2F", x = ID))
+
+p <- ggplot(motif, aes(x = reorder(TF, RANK), y = -LOG_QVALUE, color = Label, label = TF)) + geom_point() + theme(axis.text.x = element_text(size = 0)) + geom_text_repel(data = dplyr::filter(motif, Label %in% c("A", "B")), direction = "y") + scale_color_manual(values = c("navy", "darkred", "grey")) + xlab("RANK") 
+
+p
+
+
+ggsave("/Users/ds/Desktop/plot.pdf", p)
+```

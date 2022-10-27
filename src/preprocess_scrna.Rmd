@@ -84,15 +84,13 @@ id <- intersect(row.names(mat), linc$gene.name)
 
 dim(mat[id,])[1] / dim(linc)[1]
 
-
-DotPlot(object = bmet, features = "LINC00152")
-
+bmet$organ__ontology_label
 mat["PCAT14",]
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
+View(dss)
 
-
-
+bmet
 ```
 
 
@@ -118,7 +116,7 @@ pcg_markers <- pcg_markers %>%  arrange(-avg_log2FC) %>% group_by(cluster) %>% s
 
 pcg_markers <- pcg_markers[!duplicated(pcg_markers$gene),]#Filter duplicates
 
-View(pcg_markers)
+View(final_markers)
 
 bmet@assays$RNA@counts
 
@@ -236,6 +234,7 @@ View(final_markers)
 compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), a,dplyr::filter(pcg_markers, cluster == "B lineage") , c,dplyr::filter(pcg_markers, cluster == "NK/T"),b,dplyr::filter(pcg_markers, cluster == "neutrophil"),f,dplyr::filter(pcg_markers, cluster == "monocyte/macrophage"),d,dplyr::filter(pcg_markers, cluster == "erythroid"),e)
 
 
+compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), dplyr::filter(final_markers, cluster == 'tumor'),dplyr::filter(pcg_markers, cluster == "B lineage") , dplyr::filter(final_markers, cluster == 'B lineage'),dplyr::filter(pcg_markers, cluster == "NK/T"),dplyr::filter(final_markers, cluster == 'NK/T'),dplyr::filter(pcg_markers, cluster == "neutrophil"),dplyr::filter(final_markers, cluster == 'neutrophil'),dplyr::filter(pcg_markers, cluster == "monocyte/macrophage"),dplyr::filter(final_markers, cluster == 'monocyte/macrophage'),dplyr::filter(pcg_markers, cluster == "erythroid"),dplyr::filter(final_markers, cluster == 'erythroid'))
 
 
 ```
@@ -243,12 +242,22 @@ compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), a,dplyr
 
 #Plot markers
 ```{r}
+
+set.seed(111)
 pca_lncrna <- final_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
 
-
-
 notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
+#notpca_lncrna_ds <- sample(notpca_lncrna, length(pca_lncrna))
+notpca_lncrna_ds <- sample(notpca_lncrna, length(notpca_lncrna))
+
 other_lncrna <- linc %>% dplyr::filter(!gene.name %in% final_markers$gene) %>% .$gene.name
+
+#other_lncrna_ds <- sample(other_lncrna, length(pca_lncrna))
+other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
+
+
+
+
 ```
 
 
@@ -295,7 +304,7 @@ names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %
 
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 15, height = 15)
-DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip()
+DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue', 'blue', 'blue', 'blue'), 5)))
 dev.off()
 
 
@@ -305,43 +314,6 @@ write.table(x = final_markers, file = "/Users/ds/Desktop/projects/lncRNA/results
 
 
 final_markers <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
-
-```
-
-
-#Validate markers
-```{r}
-
-
-res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
-  
-  
-  query_lncrna <- final_markers %>%  dplyr::filter(cluster == c) %>% arrange(-avg_log2FC)  %>% .$gene
-  ae <- AverageExpression(object = bmcrpc, features = query_lncrna, slot = "data") %>%  data.frame() %>% log1p() 
-  ae <- ae %>% mutate(Genes = row.names(.), Cluster = c)
-  return(ae)
-
-  
-} ))
-
-
-
-res
-mat <-  dplyr::select(res, -c("Genes", "Cluster"))
-anno <- dplyr::select(res, c("Genes", "Cluster"))
-mat
-mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Tumor"),c("Mature.B","memBcell" ,"Pro.B","Immature.B.cells"),  c("CTL.1", "CTL.2", "NK", "NKT", "CD4..Naive" ,"Treg.Active","Th1.17","Treg.Resting","CD8..Naive"),c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte.prog"), c("Erythroid")))))
-
-mat <- t(scale(t(mat))) %>% data.frame() 
-colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
-
-row_ha = rowAnnotation(Cluster = anno$Cluster )
-mat
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-Heatmap(matrix = mat, left_annotation = row_ha, height = unit(20, "cm"), col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_rows = F, cluster_columns = F, na_col = 'black', column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E"    )), row_split = anno$Cluster, row_names_gp = gpar(fontsize = 5))
-dev.off()
-
-nrow(res)/nrow(final_markers)
 
 ```
 
@@ -363,81 +335,50 @@ seurat_pipeline <- function(object, ndims, seed, resolution){
   
 }
 
-
+tumor <- subset(bmet, supercluster.for.LDSC.SEG == 'tumor')
 bmet <- seurat_pipeline(object = bmet, ndims = 40, seed = 123, 0.5)
+
+
+tumor <- seurat_pipeline(object = tumor, ndims = 40, seed = 123, 0.5)
 
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 top
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-FeaturePlot(object = bmet, features = top[seq(1, length(top), 5)], label = T, repel = T)
+FeaturePlot(object = bmet, features =c("COLCA1", "FTX"), label = T, repel = T, label.size = 3)
 dev.off()
+final_markers
+
+UMAPPlot(object = tumor, label = T, repel = T)
+tumor$AR.regulon <- tumor[tni.get(object = rtni,what = "regulons" )$AR,] %>% GetAssayData() %>% colMeans()
 
 
-UMAPPlot(object = bmet, label = T, repel = T)
-
-```
-
-
-
-#Create reference for CIBERSORTX GEP estimation (S mode)
-```{r}
-
-
-meta <- meta %>%  mutate(celltype = ifelse(supercluster.for.LDSC.SEG == "NK/T", "NK_T.", ifelse(supercluster.for.LDSC.SEG == "monocyte/macrophage", "monocyte_macrophage.",ifelse(supercluster.for.LDSC.SEG == "B lineage", "B.",ifelse(supercluster.for.LDSC.SEG == "tumor", "tumor.", ifelse(supercluster.for.LDSC.SEG == "erythroid", "erythroid.", supercluster.for.LDSC.SEG)) ) ))) %>% group_by(celltype) %>% mutate(ID = paste0(celltype, 1:n())) 
-
-
-colnames(tpm) <- meta$ID
-
-
-reference <- data.frame(Genes = row.names(tpm), tpm)
-colnames(reference) <- c("Genes", gsub(x = colnames(reference)[-1], pattern = ".[0-9]*$", replacement = ""))
-
-head(reference)
-
-write.table(reference, file = "/Users/ds/Desktop/He_bulk_reference.txt", quote = F, row.names = F, sep = "\t" )
-
-
-```
-
-#Plot GEP estimates - see if similar to scRNA data
-```{r}
-gep <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/CIBERSORTxGEP_Job40_GEPs.txt", header = T)
-gep <- gep %>% inner_join(y = final_markers, by = c("GeneSymbol"= "gene"))
-
-
-row.names(gep) <- gep$GeneSymbol
-gep <- gep %>% dplyr::select(c("tumor", "B", "NK_T", "neutrophi", "monocyte_macrophage", "erythroid", "cluster", "GeneSymbol"))
-
-
-gep <- gep %>% arrange(cluster)
-
-mat <- gep  %>% dplyr::select(-c("GeneSymbol", "cluster"))
-anno <- gep %>% dplyr::select(c("GeneSymbol", "cluster"))
-
-
-
-gep
-mat <- t(scale(t(mat))) %>% data.frame() 
-mat <- na.omit(mat)
-
-row_ha = rowAnnotation(Cluster = anno[row.names(mat),]$cluster )
-
-
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-Heatmap(matrix = mat, left_annotation = row_ha, width = unit(10, "cm"), col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_rows = F, cluster_columns = F, na_col = 'black', row_split = anno[row.names(mat),]$cluster, column_split = letters[1:6], height = unit(20, 'cm'), row_names_gp = grid::gpar(fontsize = 0) , column_names_gp = gpar(fontsize = 10))
+pdf("/Users/ds/Desktop/plot.pdf", width = 5)
+FeaturePlot(object = tumor, features = c("AR.regulon", "COLCA1"), ncol = 1)
 dev.off()
-
-
-
-
-nrow(mat)/nrow(final_markers)
-
-
 ```
+
+
+
+
 
 #Plot heatmaps for specific lncRNAs
 ```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
+
+
+
+
+row.names(mcrpc_rna) <- mcrpc_rna$Genename
+mcrpc_rna <- mcrpc_rna[,-1]
+mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
+#mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
+row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
+mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
+
+
+
 anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
 
 
@@ -457,26 +398,35 @@ row.names(cf) <- cf$sample_id
 
 
 cf <- na.omit(cf)#Omit samples without WGS data
+cf <- cf %>% dplyr::filter(disease_type_SIG_GEX =='adeno')
 
 
-ehmr <- read.csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv")
+ehmr <- read_csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv", col_names = T)
+ehmr <- ehmr %>% dplyr::filter(type == "HMR")%>% group_by(symbol) %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1)
 
-ehmr <-  ehmr %>% dplyr::filter(type == "HMR" & symbol %in% pca_lncrna) %>% group_by(symbol) %>% arrange(cor) %>% slice(1) %>% mutate(Coord = paste0(chrom, ".", start, ".", end)) 
+ehmr <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna) %>% mutate(Coord = paste0(chrom, ".", start, ".", end))
+
+
+
 
 hmr <- read.table(file = "/Users/ds/Desktop/projects/data/bs/all.mcrpc.hmr.txt", header = T)
 hmr <- hmr[!duplicated(hmr$Coord),]
+
+
+
 hmr <- hmr %>% merge(ehmr) %>% mutate(HMR = paste0(symbol, ".", type)) %>% dplyr::select(c(HMR, starts_with("DTB")))
 row.names(hmr) <- hmr$HMR
 hmr <- hmr[-1] %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
 
 
-cna <- read.table(file = "/Users/ds/Desktop/2018_04_15_matrix_CN_integer_symbol_copycat.txt", header = T)
+cna <- read.table(file = "/Users/ds/Desktop/projects/data/wgs/2018_04_15_matrix_CN_integer_symbol_copycat.txt", header = T)
 
 cna <- cna %>% dplyr::filter(IDENTIFIER %in% pca_lncrna) %>% mutate(CopyNumber = paste0(IDENTIFIER, ".CN"))
 row.names(cna) <- cna$CopyNumber
 cna <- dplyr::select(cna, -c(CopyNumber, IDENTIFIER)) %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
 
-paste0(pca_lncrna, collapse = " ")
+
+
 
 ```
 
@@ -485,17 +435,19 @@ paste0(pca_lncrna, collapse = " ")
 df <- data.frame(mcrpc_rna[, "cases", drop = F],mcrpc_rna[,c(colnames(mcrpc_rna) %in% pca_lncrna)]) %>% inner_join(cf, by = c("cases" = "sample_id")) %>% merge(hmr) %>% merge(cna)
 
 
+
+
 goi <- c("PCAT14", "SCHLAP1", "COLCA1", "PART1", "PCAT1")
 df
 
-df <- df[,c(goi, "cases", "AR", "RB1", paste0(goi, ".HMR"), paste0(goi, ".CN"))] %>% mutate(RB1 = ifelse(RB1 == 0, "Loss", "WT")) %>% mutate(AR = ifelse(AR == 3, "Gain", "WT")) 
+df <- df[,c(goi, "cases", "AR", paste0(goi, ".HMR"), paste0(goi, ".CN"))]  %>% mutate(AR = ifelse(AR == 3, "Gain", "WT")) 
 df
 ```
 
 
 ```{r}
 
-df
+
 df <- df %>% arrange(PCAT14)  
 
 row.names(df) <- df$cases
@@ -504,14 +456,50 @@ col_fun1 = colorRamp2(c(0, 100), c("grey", "blue"))
 
 col_fun2 = colorRamp2(c(0, 3), c("grey", "purple"))
 
-column_ha = HeatmapAnnotation( PCAT14 = anno_barplot(df[,"PCAT14"]  ), HMR = df[,"PCAT14.HMR"], CNA = df[,"PCAT14.CN"], simple_anno_size = unit(2, "cm"), height = unit(10,"cm"), col = list(PCAT14 = "black", HMR = col_fun1, CNA = col_fun2 ))
+column_ha = HeatmapAnnotation( PCAT14 = anno_barplot(df[,"PCAT14"]  ), HMR = df[,"PCAT14.HMR"], CNA = df[,"PCAT14.CN"], simple_anno_size = unit(2, "cm"), height = unit(8,"cm"), col = list(PCAT14 = "black", HMR = col_fun1, CNA = col_fun2 ))
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-Heatmap(matrix = t(df[,c("RB1", "AR")]), top_annotation = column_ha, height = unit(5, "cm"), col = colorRampPalette(c("darkred","navy", "grey"))(3), show_column_names = F)
+pdf("/Users/ds/Desktop/plot.pdf")
+Heatmap(matrix = t(df[,c( "AR"), drop = F]), top_annotation = column_ha, height = unit(2, "cm"), col = colorRampPalette(c("navy", "grey"))(2), show_column_names = F, name = "Mutational.status")
 dev.off()
 
-df
+
 
 ```
 
+
+```{r}
+df
+df <- df %>% arrange(COLCA1)  
+
+row.names(df) <- df$cases
+
+col_fun1 = colorRamp2(c(0, 100), c("grey", "blue"))
+
+col_fun2 = colorRamp2(c(0, 3), c("grey", "purple"))
+
+column_ha = HeatmapAnnotation( COLCA1 = anno_barplot(df[,"COLCA1"]  ), HMR = df[,"COLCA1.HMR"], simple_anno_size = unit(2, "cm"), height = unit(5,"cm"), col = list(COLCA1 = "black", HMR = col_fun1))
+
+pdf("/Users/ds/Desktop/plot.pdf")
+Heatmap(matrix = t(df[,c( "AR"), drop = F]), top_annotation = column_ha, height = unit(2, "cm"), show_column_names = F, name = "Mutational.status", col = colorRampPalette(c("navy", "grey"))(2))
+dev.off()
+
+df
+```
+
+```{r}
+
+
+m1 <- lm(COLCA1 ~ COLCA1.HMR, data = df)
+m2 <- lm(COLCA1 ~ AR + COLCA1.HMR, data = df)
+
+lm(SCHLAP1 ~ AR + SCHLAP1.HMR, data = df) %>% summary()
+
+lm(PCAT14 ~ AR + PCAT14.HMR + PCAT14.CN, data = df) %>% summary()
+
+ggplot(df, aes(x = COLCA1.HMR, y = COLCA1, color = AR)) + geom_smooth(method = 'lm') + ggpubr::stat_cor() + geom_point()
+
+anova(m1,m2)
+
+
+```
 

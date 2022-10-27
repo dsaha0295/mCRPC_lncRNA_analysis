@@ -10,6 +10,9 @@ library(ggpubr)
 library(edgeR)
 library(ggrepel)
 library(viridis)
+library(DiffBind)
+
+
 ```
 
 #Create deep RNA CPM txt file from raw counts
@@ -144,6 +147,43 @@ write.table(dnam[,wgs_id], file = "/Users/ds/Desktop/scratch/SV_association/HMR/
 ```
 
 
+#Create ATACseq txt file
+```{r}
+#Load in binding affinity matrix from Diffbind output
+dba_res <- readRDS(file = "/Users/ds/Desktop/ATAC_mCRPC_DBA_results.rds") 
+
+
+#Extract Consensus peakset (minoverlap = 0.5) - RPKM if ATAC - Beta if DNAm
+cons <- dba.peakset(DBA = dba_res, peaks = NULL, bRetrieve=T) %>% data.frame()
+
+atac_rpkm <- cons %>% mutate(Coord = paste0(seqnames, ".", start, ".", end)) %>% dplyr::select(c(Coord, starts_with(c("DTB", "PR"))))
+
+
+final_markers %>% dplyr::filter(cluster != 'tumor')
+
+```
+
+
+```{r}
+#Format to match wgs samples - for SV association analysis
+txt <- cons %>% dplyr::select(starts_with(c("DTB", "PR")))
+row.names(txt) <- cons$Coord 
+t <- data.frame(sample_id = colnames(txt) %>% gsub(pattern = "\\.", replacement = "-") %>% gsub(pattern ="PRO-", replacement = "Pro"), index = 1:length(colnames(txt))) %>% merge(clin)
+txt <- txt[,t$index]
+colnames(txt) <- t$wgs_id
+
+#Subset common samples w/ RNA and ATAC
+rna_cpm <- read.table(file= "/Users/ds/Desktop/scratch/txt/mCRPC_CPM_filter.txt", header = T, )
+colnames(rna_cpm) <- gsub("\\.", "-", colnames(rna_cpm)) 
+
+common <- intersect(colnames(txt), colnames(rna_cpm))
+
+
+write.table(rna_cpm[,common], file= "/Users/ds/Desktop/scratch/txt/mCRPC_CPM_filter_matchATAC.txt", quote = F, sep = "\t", row.names = T, col.names = T)
+
+txt[,common] %>% write.table("/Users/ds/Desktop/scratch/txt/ATAC_mCRPC_consensus.txt", quote = F, sep = "\t", row.names = T, col.names = T)
+
+```
 
 
 

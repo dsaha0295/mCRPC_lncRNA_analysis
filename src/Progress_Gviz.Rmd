@@ -2,29 +2,22 @@
 title: "R Notebook"
 output: html_notebook
 ---
-
 ```{r}
-mcrpc_cpg <- read.table("/Users/ds/Desktop/projects/data/bs/chr11.mcrpc.cpg.txt", header = T)
-prad_cpg <- read.table("/Users/ds/Desktop/projects/data/bs/chr11.prad.cpg.txt", header = T)
-
-
-
-query <- intersect(mcrpc_cpg$Coord, prad_cpg$Coord) %>% str_split("\\.") %>% unlist() %>% matrix(ncol = 3, byrow = T) %>% data.frame() 
-
-
-
-colnames(query) <- c("Chr", "Start", "End")
-query$Chr <- gsub(pattern = "chr", replacement = "", x = query$Chr)
-
+library(Gviz)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(EnsDb.Hsapiens.v86)
+library(tidyverse)
 ```
 
 ```{r}
-GOI <- "FTX"
-chr <- "chrX"
+GOI <- "SCHLAP1"
+chr <- "chr2"
 
 target <- EnsDb.Hsapiens.v86 %>% ensembldb::filter(~ symbol == GOI) %>% genes()
 #target <- resize(x = target, width = width(target) + 10000, fix = "center")
 target <- target[1]
+
+target
 ```
 
 
@@ -32,12 +25,15 @@ target <- target[1]
 
 
 dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-dss <- dss %>% dplyr::filter(chrom == chr) %>% dplyr::select(-Stat) %>% mutate(Diff = Diff * -100) %>% GRanges()
+dss <- dss %>% dplyr::filter(chrom == chr) %>% dplyr::select(-Stat) %>% mutate(Diff = Diff * 100) %>% GRanges()
+dss
 
 
-dTrack <- DataTrack(dss, name = "DSS", background.title = viridis::plasma(10)[8], fill = viridis::plasma(10)[8])
 
-plotTracks(list(dTrack), from = start(target), to = end(target), type = c("histogram"), baseline = 0)
+
+dTrack <- DataTrack(dss, name = "Methylation", background.title = 'purple4', fill = 'purple4')
+
+plotTracks(list(dTrack), from = start(target), to = end(target), type = c("histogram"), ylim = c(-30,0))
 
 ```
 
@@ -101,7 +97,7 @@ txdb <- S4Vectors::expand(txdb, c("GENEID", "EXONID", "TXNAME"))
 
 
 ```{r}
-gene <- txdb[txdb$GENEID ==  100302692] %>% data.frame()
+gene <- txdb[txdb$GENEID ==   101669767] %>% data.frame()
 colnames(gene) <- c("chromosome", "start", "end", "width", "strand", "gene", "exon", "transcript")
 
 
@@ -109,12 +105,12 @@ colnames(gene) <- c("chromosome", "start", "end", "width", "strand", "gene", "ex
 hmr <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/hmr.bed", col_names  = c("chrom", "start", "end"))
 hmr <- hmr %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
 
-metarbs <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/AR_chip_hg38.bed", col_names = c("chrom", "start", "end"))
+metarbs <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/AR.chip.hg38.bed", col_names = c("chrom", "start", "end"))
 metarbs <- metarbs %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
 
-atac <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/ATAC_mCRPC_consensus.bed", col_names = c("chrom", "start", "end"))
-atac <- atac %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, end)) %>% GRanges()
-
+h3ac <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/H3K27ac.chip.hg38.bed", col_names = c("chr", "start", "end"))
+h3ac <- h3ac %>% dplyr::select(c(chr, start, end)) %>% GRanges()
+h3ac <- subsetByOverlaps(x = h3ac, ranges = GRanges(dplyr::filter(linc, gene.name == "SCHLAP1")))
 
 ```
 
@@ -124,14 +120,14 @@ atac <- atac %>% dplyr::filter(chrom == chr) %>% dplyr::select(c(chrom, start, e
 
 
 #Plot
-grtrack <- GeneRegionTrack( genome = "hg38",range = gene, chromosome = chr , name = GOI, transcriptAnnotation = "transcript", background.panel = "lightyellow", background.title = viridis::plasma(10)[1], fill = viridis::plasma(10)[1], stacking = "dense", col = viridis::plasma(10)[1])
+grtrack <- GeneRegionTrack( genome = "hg38",range = gene, chromosome = chr , name = GOI, transcriptAnnotation = "transcript", background.panel = "lightyellow", background.title = 'navy', fill = 'navy', stacking = "squish", col = 'navy')
 
 
 
-atrack <- AnnotationTrack(hmr, name = "HMR", background.title = viridis::plasma(10)[3],  background.panel ="lightgrey", fill =viridis::plasma(10)[3], col = viridis::plasma(10)[3])
+atrack <- AnnotationTrack(hmr, name = "HMR", background.title = 'darkred',  background.panel ="lightgrey", fill ='darkred', col = 'darkred')
 
-arbtrack <- AnnotationTrack(metarbs, name = "ARBS", background.title = viridis::plasma(10)[6] , background.panel = "lightgrey", fill = viridis::plasma(10)[6], col = viridis::plasma(10)[6])
-atactrack <- AnnotationTrack(atac, name = "ATAC", background.title = viridis::plasma(10)[4] , background.panel = "lightgrey", fill = viridis::plasma(10)[4], rotation = 90, col = viridis::plasma(10)[4])
+arbtrack <- AnnotationTrack(metarbs, name = "ARBS", background.title = 'darkgreen' , background.panel = "lightgrey", fill = 'darkgreen', col = 'darkgreen')
+atactrack <- AnnotationTrack(h3ac, name = "H3K27ac", background.title = 'black' , background.panel = "lightgrey", fill = 'black', col = 'black')
 
 gtrack <- GenomeAxisTrack()
 itrack <- IdeogramTrack(genome = "hg38", chromosome = chr)
@@ -139,7 +135,7 @@ itrack <- IdeogramTrack(genome = "hg38", chromosome = chr)
 
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target)- 1000, to = end(target) + 1000, type = "histogram")
+plotTracks(list(itrack,gtrack, dTrack,arbtrack, atactrack, atrack, grtrack), from = start(target), to = end(target), type = "histogram",ylim = c(-30,0))
 dev.off()   
            
 

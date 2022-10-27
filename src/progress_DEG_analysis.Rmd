@@ -5,7 +5,7 @@ output: html_notebook
 
 
 ```{r}
-counts <- dplyr::select(rna, -c(cases, Purity, batch)) %>% t() %>% data.frame()
+counts <- dplyr::select(rna, -c(cases, Purity, batch, Grade_Mutational_status)) %>% t() %>% data.frame()
 colnames(counts) <- rna$cases
 
 
@@ -58,14 +58,22 @@ bulk_deg <- bulk_deg %>% arrange(-logFC)
 
 
 ```{r}
-up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1) %>% .$Genes
-down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(logFC) %>% .$Genes
+bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
 
+bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
+                                          
+                                   
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.1 & Genes %in% c(na.omit(up)$Genes, na.omit(down)$Genes) ), force = 0.8, size = 2) + scale_alpha(range = c(0.8,1))
+                                   
+bulk_deg$Genes
+bulk_deg %>% dplyr::filter(logFC < -1 & adj.P.Val < 0.1)   %>% arrange(-logFC)                   
+                               
+  bulk_deg
 
-plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up[1:20], down[1:20]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 1e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs during progression", subtitle = "mCRPC v.s PRAD", FCcutoff = 1, labSize = 3) 
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height = 10)
+
 ```
 
 
@@ -74,106 +82,46 @@ ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height 
 up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 
+write.table(x = bulk_deg, file = "/Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 
-
-na.omit(down)
-```
-
-
-#Map to cell types
-```{r}
-up_ae <- AverageExpression(object = bmet, features = na.omit(up)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-up_ae <- up_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(up, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-up_ae <- mutate(up_ae, Group = "Upregulated")
-
-down_ae <- AverageExpression(object = bmet, features = na.omit(down)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-down_ae <- down_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(down, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-
-down_ae <- mutate(down_ae, Group = "Downregulated")
-
-ae <- rbind(up_ae, down_ae)
-ae <- ae[!duplicated(ae$Genes),]
-
-
-ae <- ae %>% group_by(Group) %>% arrange(cluster, .by_group = T) %>% ungroup() %>% data.frame()
-row.names(ae) <- ae$Genes
-
-
-
-
-
-pheatmap(mat = dplyr::select(ae, starts_with("RNA")), annotation_row = dplyr::select(ae, c(cluster, Group)), cluster_cols = F, cluster_rows = F, scale = "row", gaps_row = nrow(dplyr::filter(ae, Group == "Downregulated")), filename = "/Users/ds/Desktop/plot.png", height = 10)
-
-
-```
-
-```{r}
-f <- up$Genes                                          
-names(f) <- up$cluster
-f <- f[!is.na(names(f))]
-
-
-f <- f[!duplicated(f)]
-p1 <- DotPlot(object = bmet, features =  f)
-
-f <- down$Genes                                          
-names(f) <- down$cluster
-f <- f[!is.na(names(f))]
-
-
-f <- f[!duplicated(f)]
-p2 <- DotPlot(object = bmet, features =  f)
-
-
-plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
-
-plot
-
-p1
-
-pdf("/Users/ds/Desktop/plot.pdf", height = 10, width = 15)
-p1  + theme(axis.text.x = element_text(size = 8, angle = 45, vjust = 0.75))  + ggtitle("Upregulated in mCRPC")
-dev.off()
-
-
-
-
-```
-
-
-```{r}
-
-
-dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-dss
-dss <- GRanges(dss)
-regions <- GRanges(linc)
-
-
-regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
-
-dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
-
-
-
-
-
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("MALAT1", "H19", "DNM3OS", "LUCAT1", "PVT1", "FTX")),  color = "black", force =10, nudge_y = 10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC mCRPC v.s PRAD") + xlab("Methylation difference mCRPC v.s PRAD") +  scale_color_viridis_d(option = "plasma", end = 0.5)
-plot
-
-View(dss)
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
-
-dss %>% dplyr::filter(Sig == "A") %>% View()
+bulk_deg <- read.table(file = "//Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", header = T)
 
 up
 ```
 
 
+#Methylation analysis
+```{r}
+
+
+
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+
+dss <- GRanges(dss)
+
+dss %>% mutate(mid = round(end-start/2))
+
+regions <- GRanges(linc)
+
+
+dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
+
+
+
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10, size = 2.5) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC mCRPC v.s. PRAD") + xlab("Methylation difference mCPRC - PRAD") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey"))
+
+
+
+plot
+
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+
+
+down
+```
+
+#Example plot
 ```{r}
 mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
 

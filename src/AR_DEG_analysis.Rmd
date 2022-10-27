@@ -3,7 +3,11 @@ title: "R Notebook"
 output: html_notebook
 ---
 ```{r}
-library(viridis)
+library(BSgenome.Hsapiens.UCSC.hg38)
+library(edgeR)
+library(tidyverse)
+library(ComplexHeatmap)
+library(RTN)
 ```
 
 #Create list of samples with AR activating mutations and WT mutations from deep RNA-seq data
@@ -12,7 +16,7 @@ anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sampl
 
 
 anno
-anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR)) 
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR,tumor_purity_rna)) 
 cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
 cf$sample_id <- gsub("\\.", "-", cf$Mixture)
 row.names(cf) <- cf$Mixture
@@ -25,6 +29,10 @@ row.names(cf) <- cf$sample_id
 
 
 cf <- na.omit(cf)#Omit samples without WGS data
+
+cf <- cf %>% dplyr::filter(disease_type_SIG_GEX =='adeno')
+
+cf
 ```
 
 
@@ -34,7 +42,9 @@ anno <- cf[!duplicated(cf$wgs_id),]
 row.names(anno) <- anno$wgs_id
 anno <- anno %>% dplyr::select(AR) %>% mutate(AR = as.factor(AR))
 
-saveRDS(object = anno, file = "/Users/ds/Desktop/DNAm_datasets/AR_mCRPC_WGBS_anno.rds")
+
+
+saveRDS(object = anno, file = "/Users/ds/Desktop/projects/lncRNA/data//AR_mCRPC_WGBS_anno.rds")
 
 ```
 
@@ -67,7 +77,7 @@ cf <- cf[ids,]
 x <- DGEList(counts = counts)
 
 #Add cluster variable to designate group membership to sample df
-x$samples <- cbind(x$samples, dplyr::select(cf, c( biopsy_site, disease_type_SIG_GEX, AR )))
+x$samples <- cbind(x$samples, dplyr::select(cf, c( biopsy_site, disease_type_SIG_GEX, AR,tumor_purity_rna )))
 
 #Remove genes with low expression across samples
 keep.exprs <- filterByExpr(x)
@@ -79,10 +89,12 @@ x <- calcNormFactors(x, method = "TMM")
 x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 
 
 #Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ 0 + as.factor(AR), data = cf) 
+design <- model.matrix(~ 0 + as.factor(AR) + tumor_purity_rna , data = cf) 
 
 
-colnames(design) <- c("WT", "MT") 
+design
+
+colnames(design) <- c("WT", "MT", "Purity") 
 
 # #Create contrasts to calculate
 contr.matrix <- makeContrasts(MT - WT, levels = colnames(design))
@@ -103,75 +115,22 @@ efit <- eBayes(vfit)
 
 #Get list of all genes, arrange in decreasing order
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
-bulk_deg <- bulk_deg %>% arrange(-logFC)
-
-#bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1)
 
 
+bulk_deg
+cf
 ```
 
 #Plot DEG results
 ```{r}
 #Map up and down regulated genes to clusters
 up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+View(bulk_deg)
+
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 ```
 
-#Map to cell types
-```{r}
 
-DoHeatmap(object = bmet, na.omit(up)$genes)
-up_ae <- AverageExpression(object = bmet, features = na.omit(up)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-up_ae <- up_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(up, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-up_ae <- mutate(up_ae, Group = "Upregulated")
-
-down_ae <- AverageExpression(object = bmet, features = na.omit(down)[,"Genes"], slot = "data") %>%  data.frame() %>% log1p() 
-
-
-down_ae <- down_ae %>% data.frame() %>% mutate(Genes = row.names(.)) %>% inner_join(down, by = c("Genes" = "Genes")) %>% dplyr::select(c(starts_with("RNA"), "Genes", "cluster")) 
-
-down_ae <- mutate(down_ae, Group = "Downregulated")
-
-ae <- rbind(up_ae, down_ae)
-ae <- ae[!duplicated(ae$Genes),]
-
-
-ae <- ae %>% group_by(Group) %>% arrange(cluster, .by_group = T) %>% ungroup() %>% data.frame()
-row.names(ae) <- ae$Genes
-
-
-pheatmap(mat = dplyr::select(ae, starts_with("RNA")), annotation_row = dplyr::select(ae, c(cluster, Group)), cluster_cols = F, cluster_rows = F, scale = "row", gaps_row = nrow(dplyr::filter(ae, Group == "Downregulated")), filename = "/Users/ds/Desktop/plot.png", height = 10)
-
-```
-
-
-```{r}
-f <- up$Genes                                          
-names(f) <- up$cluster
-f <- f[!is.na(names(f))]
-
-
-f <- f[!duplicated(f)]
-p1 <- DotPlot(object = bmet, features =  f)
-
-f <- down$Genes                                          
-names(f) <- down$cluster
-f <- f[!is.na(names(f))]
-
-
-f <- f[!duplicated(f)]
-p2 <- DotPlot(object = bmet, features =  f)
-
-
-plot <- plot_grid(p1, p2, ncol = 1, byrow = T, labels = list("Upregulated", "Downregulated"))
-plot
-
-pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 15)
-plot
-dev.off()
-```
 
 #Extra plots misc
 ```{r}
@@ -195,53 +154,261 @@ lm(data= a, formula = RNA ~ as.factor(AR) + Tumor) %>% summary()
 
 #Volcano plots
 ```{r}
-plot <- EnhancedVolcano(toptable = bulk_deg, x = "logFC", y = "adj.P.Val", lab =row.names(bulk_deg), selectLab = c(up$Genes[1:10], down$Genes[1:10]), pointSize = 1 , max.overlaps	= Inf, drawConnectors = T, pCutoff = 25e-2, legendPosition = "none", title = "Differential expression analysis of lncRNAs in mCRPC", subtitle = "AR activating mutation v.s wildtype", FCcutoff = 1, labSize = 3)
 
+bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
+
+bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.8, 1))
+
+                                          
+                                   
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.25), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 ), force = 0.1) + ggtitle(label = "lncRNAs associated with AR activating mutations")
+
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10, height = 10)
 
-na.omit(up) %>% View()
+
+DotPlot(object = bmet, features = c("ARLNC1", "PRNCR1"))
 
 ```
 
 
 #DMR analysis
 ```{r}
-dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
-dss
+dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/all.dmr.AR.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+
 dss <- GRanges(dss)
 regions <- GRanges(linc)
 
+df <- data.frame(Near = nearest(x =  regions, subject = dss, ignore.strand = T)) %>% mutate(Row = 1:nrow(.))
+dss <- dss %>% data.frame() %>% mutate(Row = 1:nrow(.)) %>% merge(df)
 
-regions <- resize(x = regions, width = width(regions) + 5000, fix = "center")
-linc
+
+
+
+dss <- data.frame(linc, dss )
+
+# dss <- dss %>%  inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
+
 dss
-regions
-dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
+
+dss <- dss %>% mutate(Sig = ifelse( logFC > 1 & Diff < -0.05, "A", ifelse(logFC < -1 & Diff > 0.05, "B", "Other")   ))
 
 
-up
+dss %>% dplyr::filter(gene.name == "SCHLAP1")
 
-dss
-dss %>% dplyr::filter(Sig == "B") 
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC AR activating v.s wildtype") + xlab("Methylation difference AR activating - wildtype") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey"))
 
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Sig, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, gene.name %in% c("COLCA1", "PCAT1", "PCAT14", "CCAT2", "PRNCR1", "NKILA")), color = "black", force =10) + scale_alpha_manual(values = c(1,1,0.1))  + ylab("logFC AR activating v.s wildtype") + xlab("Methylation difference AR activating - wildtype") + scale_color_viridis_d(option = "plasma", end = 0.5)
 plot
-
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
-DotPlot(object = bmet, features = "RAMP2-AS1")
-
-dss
-
-bulk_deg %>% dplyr::filter(Genes %in% c(up, down))  %>% mutate(Group = ifelse(Genes %in% up, "Up", "Down"))  %>% left_join(y = filt_markers, by = c("Genes" = "gene")) %>% group_by(Group, cluster) %>% mutate(Count = n()) %>%  ggplot( aes(fill=cluster, y=Count, x=Group)) + geom_bar(position="dodge", stat="identity")
 
 ```
 
 
 
+```{r}
+
+hypo <- dss %>% dplyr::filter(Sig == "A")  %>% .$gene.name
+
+
+hypo
+dss
+
+query <- linc[linc$gene.name %in% hypo,'gene', drop = T] 
+
+
+query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
+
+seqlevelsStyle(query) <- "UCSC"
+
+
+
+seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
+names(seq) <- query$tx_id
+writeXStringSet(seq, filepath = "/Users/ds/Desktop/hypo_ar.fa")
+
+
+query <- linc[!linc$gene.name %in% hypo,'gene', drop = T] 
+
+
+query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
+
+seqlevelsStyle(query) <- "UCSC"
+
+
+
+seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
+names(seq) <- query$tx_id
+writeXStringSet(seq, filepath = "/Users/ds/Desktop/bg_ar.fa")
+
+
+query %>% write.table()
+query
+```
+
+```{r}
+
+
+motif <- read_tsv(file = "/Users/ds/Desktop/sea (10).tsv", col_names = T)
+motif$RANK <- as.numeric(motif$RANK)
+
+motif <- motif %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = ID)) %>% mutate(Label = ifelse(RANK %in% 1:10, "A", ifelse(TF %in% c("ANDR", "FOXA1", "HOXB13", "NKX31", "ETV1", "ERG", "ETV2", "ETV3", "ETV4", "ETV5"), "B", "C"))) 
+
+
+motif
+
+p <-  motif %>% dplyr::filter(grepl(pattern = "FOXAA|FOXA2|ANDR|ETV|ERG|HOXB|NKX31", x = TF)) %>% ggplot(aes(x = reorder(TF, RANK), y = -LOG_QVALUE)) + geom_col(fill = "navy", width = 0.5) + xlab("Transcription factor Motif")
+motif
+
+p
+
+# p <- ggplot(motif, aes(x = reorder(TF, RANK), y = -LOG_QVALUE, color = Label, label = TF)) + geom_point() + theme(axis.text.x = element_text(size = 0)) + geom_text_repel(data = dplyr::filter(motif, Label %in% c("A", "B")), direction = "y") + scale_color_manual(values = c("navy", "darkred", "grey")) + xlab("RANK") 
+
+motif
+
+
+ggsave("/Users/ds/Desktop/plot.pdf")
+```
 
 
 
 
+```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
+
+
+
+
+row.names(mcrpc_rna) <- mcrpc_rna$Genename
+mcrpc_rna <- mcrpc_rna[,-1]
+mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
+#mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
+row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
+mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
+
+
+
+anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR,tumor_purity_rna, RB1, TMPRSS2_ERG , AR_enhancer, cmp)) 
+
+
+cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
+cf$sample_id <- gsub("\\.", "-", cf$Mixture)
+row.names(cf) <- cf$Mixture
+
+cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
+
+
+
+row.names(cf) <- cf$sample_id
+cf <- na.omit(cf)#Omit samples without WGS data
+
+
+bulk_lnc <- data.frame(mcrpc_rna[, "cases", drop = F],mcrpc_rna[,c(colnames(mcrpc_rna) %in% tme_lncrna)]) %>% inner_join(cf, by = c("cases" = "sample_id"))
+
+
+
+
+hmr <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/hmr.bed", col_names = c("chr", "start", "end"))
+hmr <- GRanges(hmr)
+coord <- subsetByOverlaps(x = hmr, ranges  =GRanges(linc[linc$gene.name %in% pca_lncrna,]) )
+coord <- coord %>% data.frame() %>% mutate(Coord = paste0(seqnames, ".", start, ".", end)) %>% .$Coord
+
+dnam <- read.table(file = "/Users/ds/Desktop/projects/data/bs/all.mcrpc.hmr.txt", header = T)
+dnam <- dnam[!duplicated(dnam$Coord),]
+
+
+
+dnam <- dnam%>% dplyr::filter(Coord %in% coord)
+row.names(dnam) <- dnam$Coord
+dnam <- dnam[,-1]
+bulk_lnc <- t(dnam) %>% data.frame() %>%  mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.))) %>% merge(bulk_lnc)
+
+
+
+```
+
+```{r}
+
+se <- mcrpc_rna %>% dplyr::select(-c(cases, batch)) %>% t() #%>% SummarizedExperiment()
+se
+
+tfs <- c("AR","E2F2","E2F3","FOXA1")
+rtni <- tni.constructor(expData = se, 
+                        regulatoryElements = tfs,)
+# Please set nPermutations >= 1000
+rtni <- tni.permutation(rtni)
+
+rtni <- tni.bootstrap(rtni)
+rtni <- tni.dpi.filter(rtni)
+
+res <- tni.regulon.summary(rtni, regulatoryElements = "AR")
+
+?tni.get
+
+
+rtni1st <- tni.gsea2(rtni, regulatoryElements = tfs)
+regact <- tni.get(rtni1st, what = "regulonActivity")
+
+regact <- regact$differential %>% data.frame()
+colnames(regact) <- paste0(colnames(regact), ".activity")
+saveRDS(object = rtni, file = "/Users/ds/Desktop/projects/lncRNA/results/regulon.scores.rds")
+bulk_lnc$cases
+
+```
+
+
+
+```{r}
+
+bulk_lnc <- bulk_lnc %>% arrange(cmp)
+
+rnamat <- bulk_lnc[,colnames(bulk_lnc) %in% tme_lncrna]
+means <- rnamat %>% colMeans()
+
+
+
+#rnamat <- rnamat[,names(means[means > 0])] 
+rnamat <- rnamat %>% scale() %>% ramify::clip(.min = -5, .max = 5)%>% t()
+#rnamat <- rnamat %>% scale() %>% t()
+
+# 
+# dnammat <- bulk_lnc[, grepl(pattern = "chr", x = colnames(bulk_lnc))]
+# dnammat <- dnammat %>% scale() %>% ramify::clip(.min = -2, .max = 2)%>% t()
+# 
+
+bulk_lnc$AR <- ifelse(bulk_lnc$AR == 3, "Gain", "WT")
+bulk_lnc$RB1 <- ifelse(bulk_lnc$RB1 == 0, "Loss", "Mono/WT")
+bulk_lnc <- regact %>% mutate(cases = row.names(.)) %>% merge(bulk_lnc)
+
+
+column_ha = HeatmapAnnotation( AR = bulk_lnc$AR, RB1 = bulk_lnc$RB1, Purity = bulk_lnc$tumor_purity_rna, CMP = bulk_lnc$cmp, Site = bulk_lnc$biopsy_site, Histology = bulk_lnc$disease_type_SIG_GEX. ,AR.activity = bulk_lnc$AR.activity, FOXA1.activity = bulk_lnc$FOXA1.activity,E2F2.activity = bulk_lnc$E2F2.activity, E2F3.activity = bulk_lnc$E2F3.activity, annotation_name_side = 'left', annotation_legend_param = list(direction = 'horizontal'))
+
+
+
+#row_ha <- rowAnnotation(Datatype = c(  rep("RNA", nrow(rnamat)), rep("DNAm", nrow(dnammat))), show_legend = F)
+
+
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+Heatmap(matrix = rbind(rnamat), col = colorRampPalette(c("blue","white", "red"))(3), top_annotation = column_ha, name = "Z score", show_row_names = T, show_heatmap_legend = T, cluster_columns = F)
+dev.off()
+
+```
+
+```{r}
+
+
+p1 <- ggplot(bulk_lnc,aes(x = chr11.111300900.111306800, y = COLCA1) ) + geom_point() + geom_smooth(method = 'lm') + ggpubr::stat_cor() 
+p2 <- ggplot(bulk_lnc,aes(x = AR.activity, y = COLCA1) ) + geom_point() + geom_smooth(method = 'lm') + ggpubr::stat_cor() 
+plot <- p1 + p2
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p2)
+
+
+?tni.gsea2
+```
 

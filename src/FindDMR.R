@@ -40,7 +40,7 @@ sampleid <- lapply(str_split(sampleid, ".merged."), FUN = function(i){i[1]})
 
 #Read in annoical annotations df for WGS/WGBS samples and subset sampleids/files/anno list to those in common
 #anno format: rownames = sampleid, columns = annotations for each sample
-anno <- readRDS(paste0("/storage1/fs1/ha/Active/maherlab/saha.d/projects/lncRNA_analysis/data/RB1_mCRPC_WGBS_anno.rds"))
+anno <- readRDS(paste0("/storage1/fs1/ha/Active/maherlab/saha.d/projects/lncRNA_analysis/data/Histo_mCRPC_WGBS_anno.rds"))
 
 ids <- intersect(row.names(anno), sampleid)
 
@@ -49,8 +49,8 @@ bsfiles <- bsfiles[sampleid %in% ids] #Uses partial string matching
 sampleid <- sampleid[sampleid %in% ids]
 anno <- anno[row.names(anno) %in% ids,, drop = F]
 
-group1 <- row.names(anno)[anno$RB1 == 0]
-group2 <- row.names(anno)[anno$RB1 == 1]
+group1 <- row.names(anno)[anno$Histology == "small_cell"]
+group2 <- row.names(anno)[anno$Histology == "adeno"]
 
 
 ################################ Read in CpG files and format ########################################################
@@ -98,6 +98,5 @@ dmr = callDMR(dmlTest.sm, p.threshold=0.01)
 #dmr <- callDMR(DMLresult = DMLtest.cell, p.threshold = 1e-2) #Adjust pvalue threshold ***
 
 #Write DMR bed to disk - need to use Aggregate_cpg.R to find methylation values 
-write.table(x = dmr, file = paste0("/storage1/fs1/ha/Active/maherlab/saha.d/projects/lncRNA_analysis/results/", args[1], ".dmr.RB1.bed"), sep = "\t", quote = F, row.names = F)
-
+write.table(x = dmr, file = paste0("/storage1/fs1/ha/Active/maherlab/saha.d/projects/lncRNA_analysis/results/", args[1], ".dmr.Histo.bed"), sep = "\t", quote = F, row.names = F)
 
