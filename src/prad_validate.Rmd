@@ -1,0 +1,170 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+
+
+scrna <- readRDS(file = "/Users/ds/Desktop/dge_pca.rds")
+
+Idents(scrna) %>% head()
+
+UMAPPlot(object = scrna, label= T, group.by = 'ID_coarse')
+Idents(scrna) <- "ID_coarse"
+
+
+scrna@meta.data
+
+olap <- intersect(row.names(bmcrpc), final_markers$gene) %>% intersect( row.names(scrna))
+
+
+
+length(olap)/length(final_markers$gene)
+FeaturePlot(object = scrna, features = "CD3D", label = T)
+DotPlot(object = scrna, features = "FOXA1")
+
+
+FeaturePlot(object = scrna, features = query, label = T)
+DotPlot(object = scrna, features = down$Genes)
+DotPlot(object = scrna, features = up)
+
+down <- bulk_deg %>% dplyr::filter(Cluster == 'tumor') %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)
+scrna@meta.data
+
+
+row.names(scrna)[grepl(pattern = "CYTOR", x = row.names(scrna))]
+```
+
+```{r}
+
+
+res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
+  
+  
+  query_lncrna <- final_markers %>%  dplyr::filter(cluster == c & gene %in% olap) %>% arrange(-avg_log2FC)  %>% .$gene
+  ae <- AverageExpression(object = scrna, features = query_lncrna, slot = "data") %>%  data.frame() %>% log1p() 
+  ae <- ae %>% mutate(Genes = row.names(.), Cluster = c)
+  return(ae)
+
+  
+} ))
+
+GetAssayData(object = scrna) %>% head()
+
+
+
+
+res <- res %>% mutate(Order = ifelse(Cluster == 'tumor' , 1, ifelse(Cluster == 'B lineage', 2, ifelse(Cluster=='NK/T', 3, ifelse(Cluster == "neutrophil", 4, ifelse(Cluster == "monocyte/macrophage", 5, ifelse(Cluster == "erythroid", 6, 7))  ))))) %>% arrange(Order)
+
+
+
+mat <-  dplyr::select(res, -c("Genes", "Cluster", "Order"))
+anno <- dplyr::select(res, c("Genes", "Cluster"))
+
+```
+
+
+
+```{r}
+
+
+mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Epithelial"),c("B.cell", "Plasma"),  c("T.cell"),c("Myeloid")))))
+
+
+mat <- t(scale(t(mat), scale = T)) 
+mat <- ramify::clip(x = mat, .min = -2, .max = 2)
+colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
+
+mat[is.na(mat)] <- 0
+
+anno_col <- colorRampPalette(c("green", "blue", "red", "black", "grey", "purple"))(6)
+names(anno_col) <- unique(anno$Cluster)
+list(anno_col)
+
+row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
+
+
+pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
+Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 2),rep("C",1),rep("D", 1))),row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
+dev.off()
+
+
+dplyr::filter(final_markers, gene %in% olap) #%>% .$cluster %>% table()
+```
+
+
+
+```{r}
+library(harmony)
+
+
+
+tumor <- seurat_pipeline(object = tumor, ndims = 40, seed = 123, 0.5)
+
+
+
+
+tumor <- RunHarmony(tumor, "donor_id", seed = 123)
+
+tumor <- RunUMAP(tumor, reduction = "harmony", dims = 1:40) %>% FindNeighbors(reduction = "harmony", dims = 1:40) %>% FindClusters(resolution = 0.6, algorithm = 1, random.seed =123) 
+
+
+tumor$Prostate.lncRNAs <- tumor[pca_lncrna,] %>% GetAssayData() %>% colMeans()
+tumor$Hallmark.Androgen.response <- tumor[dplyr::filter(gs, gs_name == "HALLMARK_ANDROGEN_RESPONSE")$gene_symbol,] %>% GetAssayData() %>% colMeans()
+
+
+pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 10)
+FeaturePlot(object = tumor, features = c( "Hallmark.Androgen.response", "Prostate.lncRNAs", "PCAT1", "SCHLAP1"),  label = T)
+dev.off()
+
+
+
+```
+
+
+```{r}
+tumor.markers <- FindAllMarkers(object = tumor, only.pos = T, verbose = T)
+
+tumor.markers <- FindMarkers(object = tumor, ident.1 = c("1"), only.pos = F, verbose = T)
+
+tumor.markers %>% arrange(avg_log2FC)
+
+
+
+tumor.markers <- tumor.markers%>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & abs(avg_log2FC)> 1) 
+
+
+dplyr::filter(tumor.mark,cluster == 0)$gene
+tumor.markers %>% dplyr::filter(cluster == 2)
+tumor.mark %>% dplyr::filter(cluster == 0)
+
+
+tumor.markers
+res <- do.call(rbind, lapply(pathways, FUN = function(p){
+  
+  print(p)
+  a <- tumor[dplyr::filter(tumor.markers,cluster == 0)$gene,] %>% GetAssayData() %>% colMeans()
+  b <- tumor[dplyr::filter(tumor.markers,cluster == 1)$gene,] %>% GetAssayData() %>% colMeans()
+  c <-tumor[dplyr::filter(tumor.markers,cluster == 3)$gene,] %>% GetAssayData() %>% colMeans()
+  g <- gs %>% dplyr::filter(gs_name == p) %>% .$gene_symbol
+  d <- tumor[g,] %>% GetAssayData() %>% colMeans()
+  
+  df <- data.frame(Pathway = p, PCC.0 = cor.test(a,d)$estimate, Pval.0 = cor.test(a,d)$p.value, PCC.1 = cor.test(b,d)$estimate, Pval.1= cor.test(b,d)$p.value, PCC.3 = cor.test(c,d)$estimate, Pval.3= cor.test(c,d)$p.value)
+  
+  return(df)
+}))
+
+
+tumor.mark %>% left_join(y = final_markers, by = c("gene" = "gene")) %>% dplyr::filter(cluster.y == 'tumor')
+
+res %>% arrange(-PCC.0)
+tumor.mark %>% dplyr::filter(cluster == 3) %>%left_join(y = final_markers, by = c("gene" = "gene")) 
+
+
+query <- tumor.markers %>% dplyr::filter(cluster == 0) %>% .$gene
+
+intersect(dplyr::filter(tumor.mark,cluster == 0)$gene, sc_sig)
+
+tumor@meta.data %>% dplyr::select(participant, seurat_clusters) %>% table() %>% prop.table() %>% data.frame() %>% ggplot(aes(x = seurat_clusters, y = Freq, fill = participant)) + geom_col()
+```
+

@@ -247,12 +247,12 @@ set.seed(111)
 pca_lncrna <- final_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-avg_log2FC)  %>% .$gene
 
 notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
-#notpca_lncrna_ds <- sample(notpca_lncrna, length(pca_lncrna))
+notpca_lncrna_ds <- sample(notpca_lncrna, length(pca_lncrna))
 notpca_lncrna_ds <- sample(notpca_lncrna, length(notpca_lncrna))
 
 other_lncrna <- linc %>% dplyr::filter(!gene.name %in% final_markers$gene) %>% .$gene.name
 
-#other_lncrna_ds <- sample(other_lncrna, length(pca_lncrna))
+other_lncrna_ds <- sample(other_lncrna, length(pca_lncrna))
 other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
 
 
@@ -260,24 +260,6 @@ other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
 
 ```
 
-
-```{r}
-other_lncrna
-linc
-mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_CPM_genename.txt", header = T)
-
-mcrpc_rna <- mcrpc_rna %>% dplyr::filter(Genename %in% c(pca_lncrna, notpca_lncrna)) %>% mutate(Group = ifelse(Genename %in% pca_lncrna, "Prostate lncRNA", "Non prostate lncRNA")) %>% gather(key = "ID", value = "GEX", -c(Genename, Group)) %>% mutate(GEX = log1p(GEX)) 
-
-mcrpc %>% ggplot(aes(x = Group, y = GEX)) + geom_boxplot()
-
-stat.test <- mcrpc_rna %>% wilcox_test(formula = GEX ~ Group) %>% add_significance()   
-p2 <- ggboxplot(mcrpc_rna, x = "Group", y = "GEX", fill = viridis::cividis(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "Group")
-p2 <- p2 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-stat.test
-```
 
 
 ```{r}
@@ -314,7 +296,10 @@ write.table(x = final_markers, file = "/Users/ds/Desktop/projects/lncRNA/results
 
 
 final_markers <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
+write.csv(x = final_markers, file = "/Users/ds/Desktop/Supplementary.Table1.csv",quote = F, row.names = F)
 
+
+final_markers %>% dplyr::filter(gene %in% c("SCHLAP1", "PCAT1"))
 ```
 
 
@@ -345,17 +330,22 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 top
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-FeaturePlot(object = bmet, features =c("COLCA1", "FTX"), label = T, repel = T, label.size = 3)
+FeaturePlot(object = bmet, features =c("PCAT14", "MIAT"), label = T, repel = T, label.size = 3)
 dev.off()
 final_markers
 
 UMAPPlot(object = tumor, label = T, repel = T)
-tumor$AR.regulon <- tumor[tni.get(object = rtni,what = "regulons" )$AR,] %>% GetAssayData() %>% colMeans()
+#tumor$Androgen.response <- tumor[tni.get(object = rtni,what = "regulons" )$AR,] %>% GetAssayData() %>% colMeans()
 
+
+gs
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 5)
-FeaturePlot(object = tumor, features = c("AR.regulon", "COLCA1"), ncol = 1)
+FeaturePlot(object = tumor, features = c("Androgen.response", "SCHLAP1"), ncol = 1, label = T)
 dev.off()
+tumor$organ__ontology_label
+UMAPPlot(object = tumor, group.by = "organ__ontology_label")
+
 ```
 
 

@@ -8,44 +8,27 @@ library(rstatix)
 library(ggpubr)
 ```
 
-
-
-
 ```{r}
-cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
-cf$sample_id <- gsub("\\.", "-", cf$Mixture)
-row.names(cf) <- cf$Mixture
-
 anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
 
 
 
-anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, RB1, tumor_purity_rna, tumor_purity_wgs, tumor_purity_hist)) 
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, RB1,tumor_purity_rna)) 
+cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
+cf$sample_id <- gsub("\\.", "-", cf$Mixture)
+row.names(cf) <- cf$Mixture
 
 cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
+
+
 
 row.names(cf) <- cf$sample_id
 
 
-cf <- na.omit(cf)
+cf <- na.omit(cf)#Omit samples without WGS data
 
-cf <- cf %>% mutate(RB1 = ifelse(RB1 == 0, 0, 1))
-
-cf <- cf %>% dplyr::filter(disease_type_SIG_GEX =='adeno')
-
+cf$RB1 <- ifelse(cf$RB1 == 0, "Del", "WT.Mono")
 ```
-
-#Subset WGBS samples for DMR analysis
-```{r}
-anno <- cf[!duplicated(cf$wgs_id),]
-row.names(anno) <- anno$wgs_id
-anno <- anno %>% dplyr::select(RB1) %>% mutate(RB1 = as.factor(RB1))
-
-saveRDS(object = anno, file = "/Users/ds/Desktop/projects/lncRNA/data//RB1_mCRPC_WGBS_anno.rds")
-
-```
-
-
 
 
 ```{r}
@@ -61,6 +44,8 @@ row.names(counts) <- counts$Genename
 counts <- counts[,-1] %>% as.matrix()
 colnames(counts) <- gsub("\\.", "-", colnames(counts))  
 
+#counts <- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+
 
 #Keep matching sample ids of RNA-seq and WGS for cmp annotation
 ids <- intersect(colnames(counts),row.names(cf))
@@ -68,28 +53,31 @@ counts <- counts[,ids]
 cf <- cf[ids,]
 
 
+
 #Create dge object - create counts matrix and sample anno df with library sizes
 x <- DGEList(counts = counts)
 
 #Add cluster variable to designate group membership to sample df
-x$samples <- cbind(x$samples, dplyr::select(cf, c( RB1 ,tumor_purity_rna)))
+x$samples <- cbind(x$samples, dplyr::select(cf, c( biopsy_site, disease_type_SIG_GEX, RB1,tumor_purity_rna )))
 
 #Remove genes with low expression across samples
-keep.exprs <- filterByExpr(x)
+keep.exprs <- filterByExpr(x, min.count = 5)
 x <- x[keep.exprs,, keep.lib.size = F]
 
 #Calculate effective library size using EdgeR TMM method
 x <- calcNormFactors(x, method = "TMM")
-x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 ###############
+
+x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 
 
 #Create design matrix (w/o intercept) specifying group membership
-design <- model.matrix(~ 0 + as.factor(RB1) ,data = cf) #+ biopsy_site, data = cf) #+ disease_type_SIG_GEX, data = cf)
+design <- model.matrix(~ 0 + RB1 + tumor_purity_rna , data = cf) 
 
 
-colnames(design) <- c("Del", "WT") #, "Liver", "LN", "Other")
+colnames(design) <- c("Del", "WT.Mono", "Purity") 
 
 # #Create contrasts to calculate
-contr.matrix <- makeContrasts(Del - WT, levels = colnames(design))
+contr.matrix <- makeContrasts(Del - WT.Mono, levels = colnames(design))
+
 
 #Normalize counts to log CPM using voom
 v <- voom(x, design = design)
@@ -106,143 +94,149 @@ efit <- eBayes(vfit)
 
 #Get list of all genes, arrange in decreasing order
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC) 
-bulk_deg <- bulk_deg %>% arrange(-logFC)
 
-#bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & abs(logFC) > 1) %>%   left_join(y = filt_markers, by = c("Genes" = "gene"))
-up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
-down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.25 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
-```
+bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 
 
-#Map to cell types
+#bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = pcg_markers, by = c("Genes" = "gene"))
 
-```{r}
-bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
-
-bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
-
-                                          
-                                   
-plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.25), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.25 ), force = 0.5) + ggtitle(label = "lncRNAs associated with RB1 biallelic inactivation")
-                                   
-
-plot             
-                               
-down
-
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
-
+bulk_deg
 
 
 ```
 
 
-#CBS analysis of lncRNAs
+
 ```{r}
-mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
-
-
-all_gene_sets = msigdbr(species = "Homo sapiens")
-
-gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
-
-querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
-
-
-a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p()  %>% colMeans()
-b <- mcrpc_rna %>% dplyr::filter(Gene %in% "HCP5") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
+bulk_deg$cluster <- bulk_deg$cluster %>% as.character()
+bulk_deg <- bulk_deg %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster)) %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.8, 1))
 
 
 
-df <- data.frame(TGFB = a,HCP5 = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) 
-df <- mutate(df, RB1 = ifelse(RB1 == 0, "Biallelic inactivation", "Monoallelic inactivation/wildtype"))
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.1 & Cluster !="Unknown"  ), force = 0.1) + ggtitle(label = "lncRNAs associated with bi-allelic RB1 loss") + theme_classic()
 
-
-p1 <- df %>% ggplot(aes(x = HCP5, color = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, y =  TGFB )) + geom_point() + geom_smooth(method = "lm", color = "black") + stat_cor() + scale_color_viridis_c(option = 'plasma', name = "Fraction NK and T cell") + ylab("MutSigDB TGFB GEX") + xlab("HCP5 GEX")
-
-
-stat.test <- df %>% wilcox_test(formula = TGFB ~ RB1) %>% add_significance()   
-p2 <- ggboxplot(df, x = "RB1", y = "TGFB", fill = viridis::cividis(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-p2 <- p2 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-
-
-stat.test <- df %>% wilcox_test(formula = HCP5 ~ RB1) %>% add_significance()   
-p3 <- ggboxplot(df, x = "RB1", y = "HCP5", fill = viridis::plasma(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-p3 <- p3 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-
-plot <- p1 + p2  + p3
+ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 10)
 
 
 ```
 
-#Methylation analysis
+
+```{r}
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
+
+
+
+
+row.names(mcrpc_rna) <- mcrpc_rna$Genename
+mcrpc_rna <- mcrpc_rna[,-1]
+keep.exprs <- filterByExpr(as.matrix(mcrpc_rna),min.count = 5 )
+
+
+
+
+mcrpc_rna <- mcrpc_rna[keep.exprs,]
+mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
+#mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
+row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
+mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
+
+
+
+anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient,tumor_purity_rna, RB1 ))
+
+clin <- read_csv(file = "/Users/ds/Desktop/chen.rb1.loss.csv", col_names = T)
+
+```
+
+```{r}
+rbs <- read_csv(file = "/Users/ds/Desktop/chen.rb1.loss.csv", col_names = T)
+
+sig.up <- rbs$`Highly-expressed in RB1-loss:` %>% na.omit()
+sig.down <- rbs$`Low-expressed in RB1-loss:` %>% na.omit()
+
+
+```
+
+
+
+```{r}
+#clin$Enzalutamide.resistant  <- clin$`Enzalutamide resistant`
+
+
+df <- mcrpc_rna[,colnames(mcrpc_rna) %in% c(tumor.down) , drop = F] %>% rowMeans() %>% data.frame(sample_id = names(.), GEX = .) 
+
+df <- mcrpc_rna[,colnames(mcrpc_rna) %in% c(sig.up) , drop = F] %>% rowMeans() %>% data.frame(sample_id = names(.), RBS = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
+df$Group <- ntile(df$GEX, n = 2) %>% as.factor()
+df$RB1 <- as.factor(ifelse(df$RB1 == 0, "Deletion", "WT/Mono"))
+
+p1 <- coxph(Surv(time =OS.mCRPC , event = Event)~ GEX, data = df) %>% ggforest()
+
+p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ GEX  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest() 
+
+p <- p1 + p2
+p1
+p2
+
+#ggsave(filename = "/Users/ds/Desktop/plot.pdf", width = 20, plot = p)
+
+# fit <- survfit(Surv(time = OS.mCRPC, event = Event)~ Group , data = df) 
+# 
+# plot(fit)
+# autoplot(object = fit, timeTicks = "custom", times= seq(1, 3000, 500))
+
+print("h")
+
+```
+
+
+```{r}
+a <- mcrpc_rna[,colnames(mcrpc_rna) %in% c(tme.up), drop = F] %>% rowMeans()
+b <- mcrpc_rna[,colnames(mcrpc_rna) %in% c(sig.up), drop = F] %>% rowMeans()
+c <- mcrpc_rna[,colnames(mcrpc_rna) %in% dplyr::filter(gs, gs_name == "HALLMARK_INTERFERON_GAMMA_RESPONSE")$gene_symbol, drop = F] %>% rowMeans()
+
+
+p <- data.frame(RBS.high.lncRNA = a,RBS.upregulated.genes = b,Hallmark.Interferon.Gamma.Signaling = c) %>% gather(key = "Signature", value = "GEX", -RBS.high.lncRNA) %>% ggplot(aes(x = RBS.high.lncRNA
+, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("darkred", "darkblue")) + theme_classic() + ylab("Expression log CPM") + xlab("RB1 loss upregulated lncRNAs")
+
+p
+```
+
 ```{r}
 
+tme.up <- bulk_deg %>% dplyr::filter(logFC > 0 & (!Cluster %in% c("tumor", "Unknown", 'erythroid')) ) %>% .$Genes
+tumor.down <- bulk_deg %>% dplyr::filter(logFC < 0 & (Cluster %in% c("tumor")) ) %>% .$Genes
+res <- do.call(rbind, lapply(pathways, FUN = function(p){
+  
+  print(p)
+  a <- bmet[c(tme.up),] %>% GetAssayData() %>% colMeans()
+  b <- bmet[c(up),] %>% GetAssayData() %>% colMeans()
+  g <- gs %>% dplyr::filter(gs_name == p) %>% .$gene_symbol
+  c <- bmet[g,] %>% GetAssayData() %>% colMeans()
+  
+  df <- data.frame(Pathway = p, PCC.up = cor.test(a,c)$estimate, Pval.up = cor.test(a,c)$p.value, PCC.down = cor.test(b,c)$estimate, Pval.down = cor.test(b,c)$p.value)
+  return(df)
+}))
 
 
-dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/all.dmr.RB1.format.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
+res %>% arrange(-PCC.down)
+res.up <- arrange(res, -PCC.up)[1:5,c("Pathway", "PCC.up")]
+colnames(res.up) <- c("Pathway", "PCC")
 
-dss <- GRanges(dss)
-regions <- GRanges(linc)
+res.down <- arrange(res, -PCC.down)[1:5,c("Pathway", "PCC.down")]
+colnames(res.down) <- c("Pathway", "PCC")
 
+p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Upregulated TME lncRNAs", "Upregulated all lncRNAs")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
+p
 
-dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% inner_join(bulk_deg, by = c("gene.name" = "Genes" )) %>% mutate(Sig = ifelse(gene.name %in% up$Genes & Diff < -0.05, "A", ifelse(gene.name %in% down$Genes & Diff > 0.05, "B", "Other")   ))
-
-dss
-dss %>% dplyr::filter(Sig %in% c("A","B"))
-
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC RB1 loss v.s wildtype") + xlab("Methylation difference RB1 loss - wildtype") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey"))
 
 plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
-```
-
-
-```{r}
-
-
-hyper <- dss %>% dplyr::filter(Sig == "B", cluster !='Unknown' )  %>% .$gene.name
-
-
-query <- linc[linc$gene.name %in% hyper,'gene', drop = T] 
-
-
-query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
-
-seqlevelsStyle(query) <- "UCSC"
-
-query
-
-seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
-names(seq) <- query$tx_id
-
-writeXStringSet(seq, filepath = "/Users/ds/Desktop/hyper_rb1.fa")
-
 
 ```
 
-
-```{r}
-
-
-motif <- read_tsv(file = "/Users/ds/Desktop/sea (10).tsv", col_names = T)
-motif$RANK <- as.numeric(motif$RANK)
-
-motif <- motif %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = ID)) %>% mutate(Label = ifelse(RANK %in% 1:10, "A", ifelse(TF %in% c("ANDR", "FOXA1", "HOXB13", "NKX31", "ETV1", "ERG", "ETV2", "ETV3", "ETV4", "ETV5", "E2F3", "E2F6"), "B", "C"))) 
-
-motif %>% dplyr::filter(grepl(pattern = "E2F", x = ID))
-
-p <- ggplot(motif, aes(x = reorder(TF, RANK), y = -LOG_QVALUE, color = Label, label = TF)) + geom_point() + theme(axis.text.x = element_text(size = 0)) + geom_text_repel(data = dplyr::filter(motif, Label %in% c("A", "B")), direction = "y") + scale_color_manual(values = c("navy", "darkred", "grey")) + xlab("RANK") 
-
-p
-
-
-ggsave("/Users/ds/Desktop/plot.pdf", p)
-```

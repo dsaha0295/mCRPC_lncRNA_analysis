@@ -157,7 +157,6 @@ prad_rna <- prad_rna %>% mutate(id = row.names(.), batch = "PRAD") %>% merge(dpl
 ```{r}
 anno_prad <- read.csv(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_supp.csv", header = T)
 anno_prad <- anno_prad %>% dplyr::select(avgRNA_purity, PATIENT_ID, Reviewed_Gleason_sum)
-anno_prad$AR
 
 prad_rna <- inner_join(prad_rna, anno_prad, by = c("cases.submitter_id" = "PATIENT_ID")) %>% mutate(Purity = avgRNA_purity * 100, cases = cases.submitter_id, Grade_Mutational_status = Reviewed_Gleason_sum)
 
@@ -316,7 +315,7 @@ p2
 
 
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+pdf("/Users/ds/Desktop/plot.pdf", width = 15)
 p1 + p2
 dev.off()
 

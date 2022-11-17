@@ -11,16 +11,17 @@ library(dittoSeq)
 
 
 ```{r}
-olap <- intersect(row.names(bmcrpc), final_markers$gene) %>% intersect( gep$GeneSymbol)
+olap <- intersect(row.names(bmcrpc), final_markers$gene) %>% intersect( row.names(scrna))
 
 olap <- dplyr::filter(final_markers, gene %in% olap)$gene
 
 length(olap)/length(final_markers$gene)
 
+olap %>% length()
+
 pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
 DoHeatmap(object = bmet, features = dplyr::filter(final_markers, gene %in% olap)$gene, slot = "scale.data", )
 dev.off()
-
 
 ```
 
@@ -58,16 +59,9 @@ row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 
 
-Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 1),rep("C",1),rep("D", 1), "E" , "F")), row_split = c(rep("A",16 ), rep("B", 2), rep("C", 9), rep("D",11 ), rep("E", 3), rep("F", 4)) )
 
-
-mat
-
-
-
-anno_col
-pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 5)
-Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 1),rep("C",1),rep("D", 1), "E" , "F")), row_split = c(rep("A",16 ), rep("B", 2), rep("C", 9), rep("D",11 ), rep("E", 3), rep("F", 4)), height = unit(10, 'cm'),row_names_gp = grid::gpar(fontsize = 8) , column_names_gp = gpar(fontsize = 10) )
+pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
+Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 1),rep("C",1),rep("D", 1), "E" , "F")),row_names_gp = grid::gpar(fontsize = 10) , column_names_gp = gpar(fontsize = 10) ,row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
 
 
@@ -115,13 +109,58 @@ row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 anno_col
 pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E" )), row_split = c(rep("A",16 ), rep("B", 2), rep("C", 9), rep("D",11 ), rep("E", 3), rep("F", 4)) )
+Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E" )), row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
 
 
 
 ```
 
+```{r}
+res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
+  
+  
+  query_lncrna <- final_markers %>%  dplyr::filter(cluster == c & gene %in% olap) %>% arrange(-avg_log2FC)  %>% .$gene
+  ae <- AverageExpression(object = scrna, features = query_lncrna, slot = "data") %>%  data.frame() %>% log1p() 
+  ae <- ae %>% mutate(Genes = row.names(.), Cluster = c)
+  return(ae)
+
+  
+} ))
+
+
+
+
+
+res <- res %>% mutate(Order = ifelse(Cluster == 'tumor' , 1, ifelse(Cluster == 'B lineage', 2, ifelse(Cluster=='NK/T', 3, ifelse(Cluster == "neutrophil", 4, ifelse(Cluster == "monocyte/macrophage", 5, ifelse(Cluster == "erythroid", 6, 7))  ))))) %>% arrange(Order)
+
+
+
+mat <-  dplyr::select(res, -c("Genes", "Cluster", "Order"))
+anno <- dplyr::select(res, c("Genes", "Cluster"))
+
+mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Epithelial"),c("B.cell", "Plasma"),  c("T.cell"),c("Myeloid")))))
+
+
+mat <- t(scale(t(mat), scale = T)) 
+mat <- ramify::clip(x = mat, .min = -2, .max = 2)
+colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
+
+mat[is.na(mat)] <- 0
+
+anno_col <- colorRampPalette(c("green", "blue", "red", "black", "grey", "purple"))(6)
+names(anno_col) <- unique(anno$Cluster)
+list(anno_col)
+
+row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
+
+
+pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
+Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 2),rep("C",1),rep("D", 1))),row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
+dev.off()
+
+
+```
 
 
 #Create reference for CIBERSORTX GEP estimation (S mode)

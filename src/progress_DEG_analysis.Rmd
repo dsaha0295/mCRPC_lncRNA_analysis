@@ -78,28 +78,36 @@ plot
 
 
 ```{r}
+
+write.table(x = bulk_deg, file = "/Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+
+write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table2.csv",quote = F, row.names = F)
+
+
+
+bulk_deg <- read.table(file = "//Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", header = T)
 #Map up and down regulated genes to clusters
 up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
 
-write.table(x = bulk_deg, file = "/Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 
-bulk_deg <- read.table(file = "//Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", header = T)
+bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
+bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
-up
+bulk_deg %>% dplyr::filter(Genes %in% c("CYTOR", "MIAT"))
+
+
 ```
 
 
 #Methylation analysis
 ```{r}
 
-
+nepc
 
 dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
 
 dss <- GRanges(dss)
-
-dss %>% mutate(mid = round(end-start/2))
 
 regions <- GRanges(linc)
 
@@ -108,7 +116,7 @@ dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>
 
 
 
-plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10, size = 2.5) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC mCRPC v.s. PRAD") + xlab("Methylation difference mCPRC - PRAD") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey"))
+plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= gene.name, alpha = Sig)) + geom_point(size= 1) + geom_vline(xintercept = c(-5,5), linetype = "dashed")  + geom_hline(yintercept = c(-1,1), linetype = "dashed") + geom_text_repel(data = dplyr::filter(dss, Sig %in% c("A", "B") & Cluster != "Unknown"), force =10, size = 2.5) + scale_alpha_manual(values = c(1,1,0.5))  + ylab("logFC mCRPC v.s. PRAD") + xlab("Methylation difference mCPRC - PRAD") + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + theme_classic()
 
 
 
@@ -118,58 +126,6 @@ plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
-down
 ```
-
-#Example plot
-```{r}
-mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/bulkRNA_mCRPC_CPM_gene.txt", header = T)
-
-# 
-# all_gene_sets = msigdbr(species = "Homo sapiens")
-# 
-# gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
-# 
-# querygenes <- list(TGFB = gs[grepl(pattern = "TGF", x = gs$gs_name),"gene_symbol", drop = T])
-# 
-# 
-# a <- mcrpc_rna %>% dplyr::filter(Gene %in% querygenes$TGFB) %>% dplyr::select(-Gene) %>% log1p()  %>% colMeans()
-
-
-b <- mcrpc_rna %>% dplyr::filter(Gene %in% "FTX") %>% dplyr::select(-Gene) %>% log1p() %>% colMeans()
-
-
-
-df <- data.frame(FTX = b, sample_id = gsub(pattern = "\\.", replacement = "-", x = names(b)))  %>% merge(cf) 
-#df <- mutate(df, RB1 = ifelse(RB1 == 0, "Biallelic inactivation", "Monoallelic inactivation/wildtype"))
-df
-
-bmet$cluster.dominant.cell.type
-DotPlot(object = bmet, features = "FTX", group.by = "cluster.dominant.cell.type")
-p1 <- df %>% ggplot(aes(x = FTX, color = CD4 + CD8 + TregA + TregR + CTL1 + CTL2 + NK + NKT +  Th117, y =  TGFB )) + geom_point() + geom_smooth(method = "lm", color = "black") + stat_cor()  + ylab("MutSigDB TGFB GEX") + xlab("HCP5 GEX")
-
-
-stat.test <- df %>% wilcox_test(formula = TGFB ~ RB1) %>% add_significance()   
-p2 <- ggboxplot(df, x = "RB1", y = "TGFB", fill = viridis::cividis(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-p2 <- p2 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-
-
-stat.test <- df %>% wilcox_test(formula = HCP5 ~ RB1) %>% add_significance()   
-p3 <- ggboxplot(df, x = "RB1", y = "HCP5", fill = viridis::plasma(10)[5])
-stat.test <- stat.test %>% add_xy_position(x = "RB1")
-p3 <- p3 + 
-  stat_pvalue_manual(stat.test, label = "p") +
-  scale_y_continuous(expand = expansion(mult = c(0.05, 0.1)))
-
-plot <- p1 + p2  + p3
-
-
-```
-
-
-
 
 

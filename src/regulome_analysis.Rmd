@@ -30,7 +30,7 @@ hmr <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/hmr.bed", col_nam
 hmr <- GRanges(hmr)
 
 
-arbs
+
 ```
 
 
@@ -103,14 +103,15 @@ df <- res %>% mutate(Region = rep(c("AR", "FOXA1", "H3K27ac", "HMR"), each = 6))
 df$Order <- rep(c(1,1,2,2,3,3), by = 4)
 
 
-  
-  
-p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("navy", "darkred", "darkgreen")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 ) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45))
+dplyr::filter(df, Category == "Overlap") %>% dplyr::filter(Group == "TME-lncRNAs\n n=298")
+
+
+p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 ) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45))
 
 p
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
 
-
+13/91
 ```
 
 
@@ -154,7 +155,7 @@ seqlevelsStyle(query) <- "UCSC"
 overlaps <-subsetByOverlaps(x = regs[[i]], ranges= query)
 
 data.frame(overlaps) %>% dplyr::select(c("seqnames", "start", "end"))%>% write.table( file = paste0("/Users/ds/Desktop/projects/lncRNA/results/Deeptools/", names(regs)[i], "_tmelinc.bed"), sep = "\t", row.names = F, col.names = F, quote = F)
-
+ 
 
 
 query <- linc[linc$gene.name %in% other_lncrna_ds,'gene', drop = T] 
@@ -201,6 +202,12 @@ g <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "H3K27AC")%>% arr
 
 df <- rbind(a,b,c,e,f,g) 
 
+df %>% dplyr::filter(type == "HMR" &Group == "Prostate lncRNAs" )
+
+df %>% group_by(type, Group) %>% summarise(mean(cor))
+
+
+df %>% .$Group %>% table()
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 df %>% ggplot(aes(x = cor, fill = Group)) +facet_grid(~ type) + geom_density(alpha = 0.5) + xlab("Correlation between methylation v.s gene expression") + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + theme_classic()
@@ -278,7 +285,9 @@ tme_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mu
 
 
 
-p <- rbind(pca_motif, mutate(tme_motif, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "PCa lncRNA", "TME lncRNA")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic() + xlab("-log10(Adj Pvalue)")
+p <- rbind(pca_motif, mutate(tme_motif, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "PCa lncRNA", "TME lncRNA")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() + xlab("-log10(Adj Pvalue)")
 
+
+p
 ```
 

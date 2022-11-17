@@ -7,6 +7,8 @@ output: html_notebook
 library(tidyverse)
 library(ggpubr)
 library(rstatix)
+
+?FindMarkers
 ```
 
 
@@ -17,43 +19,35 @@ library(rstatix)
 bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
-tumor <- subset(bmet,supercluster.for.LDSC.SEG=='tumor' )
 
 
-tumor@meta.data
-
-bmet@meta.data
 sc_deg <- FindMarkers(object =  bmet[row.names(bmet) %in% linc$gene.name,], group.by = "prior.enzalutamide",only.pos = F, ident.1 = "True", verbose = T)
 
 
 
-sc_deg
-
 up <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC > 1) %>%  left_join( y = final_markers, by = c("Genes" = "gene"))%>% arrange(-avg_log2FC.x)
 down <- sc_deg %>% arrange(-avg_log2FC)  %>% mutate(Genes = row.names(.))  %>% dplyr::filter(p_val_adj < 0.1 & avg_log2FC < -1) %>%  left_join( y = final_markers, by = c("Genes" = "gene"))%>% arrange(-avg_log2FC.x)
 
-up
 
-
+sc_deg
 ```
 
 ```{r}
 
 
 
-plot
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
 sc_deg <- sc_deg %>% mutate(Genes = row.names(.)) %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
 sc_deg <- sc_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
+write.csv(x = sc_deg, file = "/Users/ds/Desktop/Supplementary.Table3.csv",quote = F, row.names = F)
 
-sc_deg %>% arrange(-avg_log2FC.x)
 
-plot <- ggplot(sc_deg, aes(x = avg_log2FC.x, y = -log10(p_val_adj.x), label = Genes) ) + geom_point(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1), aes(color = Cluster)) + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1 ), force = 0.8) + xlab("avg_log2FC") + ylab("-log10(p_val_adj)") + ggtitle("lncRNAs associated with Enza treatment")
+plot <- ggplot(sc_deg, aes(x = avg_log2FC.x, y = -log10(p_val_adj.x), label = Genes) ) + geom_point(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1), aes(color = Cluster)) + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1 ), force = 0.8) + xlab("avg_log2FC") + ylab("-log10(p_val_adj)") + ggtitle("lncRNAs associated with Enza treatment") + theme_classic()
                                 
-plot
+
 ```
 
 
@@ -69,7 +63,6 @@ gs <- all_gene_sets %>% dplyr::filter(gs_cat == "H")
 
 pathways <- gs$gs_name %>% unique()
 
-querygenes
 
 res <- do.call(rbind, lapply(pathways, FUN = function(p){
   
@@ -84,7 +77,7 @@ res <- do.call(rbind, lapply(pathways, FUN = function(p){
 }))
 
 
-res
+res %>% arrange(-PCC.down)
 
 res.up <- arrange(res, -PCC.up)[1:5,c("Pathway", "PCC.up")]
 colnames(res.up) <- c("Pathway", "PCC")
@@ -94,8 +87,33 @@ colnames(res.down) <- c("Pathway", "PCC")
 
 p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Upregulated", "Downregulated")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred"))
 
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", width = 10, plot = p)
+
+p
+#ggsave(filename = "/Users/ds/Desktop/plot.pdf", width = 10, plot = plot)
 ```
+
+```{r}
+res <- do.call(rbind, lapply(pathways, FUN = function(p){
+  
+  print(p)
+  a <- tumor[c(up$Genes),] %>% GetAssayData() %>% colMeans()
+  b <- tumor[c(down$Genes),] %>% GetAssayData() %>% colMeans()
+  g <- gs %>% dplyr::filter(gs_name == p) %>% .$gene_symbol
+  c <- tumor[g,] %>% GetAssayData() %>% colMeans()
+  
+  df <- data.frame(Pathway = p, PCC.up = cor.test(a,c)$estimate, Pval.up = cor.test(a,c)$p.value, PCC.down = cor.test(b,c)$estimate, Pval.down = cor.test(b,c)$p.value)
+  return(df)
+}))
+
+```
+
+
+
+
+
+
+
+
 
 
 ```{r}
@@ -110,7 +128,7 @@ p1 <- data.frame(GEX = rowMeans(df), GS = query) %>% ggplot(aes(x = GEX, y = GS)
 query <- mcrpc_rna[, colnames(mcrpc_rna) %in% dplyr::filter(gs, gs_name == "HALLMARK_ANDROGEN_RESPONSE")$gene_symbol, drop = F] %>% rowMeans()      
 
 df <-  mcrpc_rna[,colnames(mcrpc_rna) %in% down$Genes, drop = F] 
-df
+
 
 df <- df[,colMeans(df) >0]
 p2 <- data.frame(GEX = rowMeans(df), GS = query) %>% ggplot(aes(x = GEX, y = GS)) + geom_point() + geom_smooth(method = 'lm') + stat_cor()  + theme_classic() + ylab("HALLMARK_ANDROGEN_RESPONSE") + xlab("Enza lncRNA Downregulated")
@@ -128,7 +146,6 @@ colnames(lcm)[1] <- "Gene"
 
 meta <- read_csv(file = "/Users/ds/Desktop/projects/data/anno/LCM_enza_WCDT_meta.csv", col_names = c("Patient.ID", "Timepoint", "Biopsy.site", "Same.lesion", "PSA", "TOS", "AR.VIPER", "AR.GEX", "Aggarwal", "Labrecque" ))
 
-meta
 
 ```
 
@@ -149,7 +166,7 @@ df$AR.VIPER <- as.numeric(df$AR.VIPER)
 
 
 column_ha = HeatmapAnnotation( PSA = df$PSA, AR.GEX = df$AR.GEX, AR.VIPER = df$AR.VIPER, Aggarwal.cluster = df$Aggarwal, Labrecque.cluster = df$Labrecque)
-df
+
 mat <- dplyr::select(df, c(Enza_up, Enza_down)) %>% scale() %>% t()
 mat <- ramify::clip(mat, .min = -2, .max = 2)
 
@@ -167,10 +184,9 @@ stat.test <- dplyr::filter(df, PSA != "Unknown") %>%
   add_significance()
 
 # Create a box plot
-p1 <- ggboxplot(
+p1 <- ggviolin(
   dplyr::filter(df, PSA != "Unknown"), x = "Timepoint", y = "Enza_down", fill = "darkred", alpha = 0.5,
-  facet.by = "PSA"
-  )
+  facet.by = "PSA", draw_quantiles = 0.5)
 
 # Make facet and add p-values
 stat.test <- stat.test %>% add_xy_position(x = "Timepoint")
@@ -186,32 +202,22 @@ stat.test <- dplyr::filter(df, PSA != "Unknown") %>%
   add_significance()
 
 # Create a box plot
-p2 <- ggboxplot(
+p2 <- ggviolin(
   dplyr::filter(df, PSA != "Unknown"), x = "Timepoint", y = "Enza_up", fill = "navy", alpha = 0.5,
-  facet.by = "PSA"
+  facet.by = "PSA", draw_quantiles = 0.5
   )
 
 # Make facet and add p-values
 stat.test <- stat.test %>% add_xy_position(x = "Timepoint")
 p2 <- p2 + stat_pvalue_manual(stat.test, label = 'p.adj')
-
+stat.test
 plot <- p1 + p2
-plot
-```
-
-
-```{r}
-
-
-p1 <- ggplot(df, aes(x = Enza_down, y = Andr)) + geom_point(aes(shape = Timepoint, color = PSA)) + geom_smooth(method = "lm", color = 'black') + stat_cor() + scale_color_manual(values = c("blue", "darkred", "black")) + ylab("Enza_down lncRNA siganture") + xlab("Hallmark Androgen Response pathway") 
-p2 <- ggplot(df, aes(x = Enza_up, y = Inflamm)) + geom_point(aes(shape = Timepoint, color = PSA)) + geom_smooth(method = "lm", color = 'black') + stat_cor() + scale_color_manual(values = c("blue", "darkred", 'black')) + ylab("Enza_up lncRNA siganture") + xlab("Hallmark Inflammatory Response pathway") 
-
-
-plot <- p1 + p2
-
 plot
 
 
 
 ```
+
+
+
 

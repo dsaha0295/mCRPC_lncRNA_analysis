@@ -10,7 +10,7 @@ library(msigdbr)
 library(EnsDb.Hsapiens.v86)
 library(BSgenome.Hsapiens.UCSC.hg38)
 library(pROC)
-
+library(edgeR)
 ```
 
 ```{r}
@@ -24,12 +24,13 @@ sc_deg <- FindMarkers(object = bmet[row.names(bmet) %in% linc$gene.name,], ident
 
 sc_deg <-  sc_deg %>% dplyr::filter(abs(avg_log2FC) > 1 & p_val_adj < 0.1)  %>% mutate(Genes = row.names(.)) %>%  left_join( y = final_markers, by = c("Genes" = "gene")) %>% arrange(avg_log2FC.x)
 
-sc_deg
+write.csv(x = sc_deg, file = "/Users/ds/Desktop/Supplementary.Table4.csv",quote = F, row.names = F)
+
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
 #DotPlot(object = subset(bmet,organ__ontology_label == 'liver' ), features = c("SSTR5-AS1", "LINC00617", "H19", "LINC00514", "FENDRR"))
 
-
+sc_deg %>% dplyr::filter(Genes == "RMST")
 ```
 
 ```{r}
@@ -41,7 +42,9 @@ mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
 
 row.names(mcrpc_rna) <- mcrpc_rna$Genename
 mcrpc_rna <- mcrpc_rna[,-1]
-keep.exprs <- filterByExpr(as.matrix(mcrpc_rna))
+keep.exprs <- filterByExpr(as.matrix(mcrpc_rna),min.count = 5 )
+
+
 
 
 mcrpc_rna <- mcrpc_rna[keep.exprs,]
@@ -50,15 +53,17 @@ mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normali
 row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
 mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
 
-mcrpc_rna
+
 
 anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
 
 
 
-anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient,tumor_purity_rna )) 
+anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient,tumor_purity_rna, enza ))
+```
 
 
+```{r}
 cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
 cf$sample_id <- gsub("\\.", "-", cf$Mixture)
 row.names(cf) <- cf$Mixture
@@ -106,7 +111,7 @@ liver <- subset(bmet,organ__ontology_label == 'liver' )
 
 sc_sig <- dplyr::filter(sc_deg,avg_log2FC.x<0 )$Genes
 adeno_sig <- dplyr::filter(sc_deg,avg_log2FC.x>0 )$Genes
-
+sc_sig
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 Idents(liver)  <- "supercluster.for.LDSC.SEG"
 order <- FindAllMarkers(object = liver, features =sc_sig, verbose = T, only.pos = T)
@@ -179,7 +184,7 @@ res <- do.call(rbind, lapply(pathways, FUN = function(p){
 }))
 
 
-res %>% arrange(-PCC.up)
+res %>% arrange(-PCC.down)
 
 
 res.up <- arrange(res, -PCC.up)[1:5,c("Pathway", "PCC.up")]
@@ -210,14 +215,16 @@ dss <- GRanges(dss)
 
 regions <- GRanges(linc)
 
-dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% mutate(Sig = ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% sc_sig], "SC signature", ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% adeno_sig], "Adeno signature", "Other")   ))
+dss <- data.frame(linc, dss[nearest(x =  GRanges(regions), subject = dss),] ) %>% mutate(Signature = ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% sc_sig], "SC signature", ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% adeno_sig], "Adeno signature", "Other")   ))
 
+dplyr::filter(dss, Signature %in% c("SC signature","Adeno signature")) %>% group_by(Signature) %>% summarise(median(Diff))
 
+plot <- dplyr::filter(dss, Signature %in% c("SC signature","Adeno signature")) %>% ggplot(aes(x = Signature, y= Diff, label = gene.name)) + geom_point() + geom_violin(draw_quantiles = 0.5, aes(fill = Signature, alpha = 0.5)) + geom_jitter(width = 0.1) + xlab("Signature") + ylab("Methylation Difference (SC - Adeno)") +   scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
 
-plot <- dplyr::filter(dss, Sig %in% c("SC signature","Adeno signature")) %>% ggplot(aes(x = Sig, y= Diff, label = gene.name)) + geom_point() + geom_violin(draw_quantiles = 0.5, aes(fill = Sig, alpha = 0.5)) + geom_jitter(width = 0.1) + xlab("Signature") + ylab("Methylation Difference (SC - Adeno)") +   scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
-
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 plot
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
+dev.off()
+
 
 ```
 
@@ -230,24 +237,25 @@ nepc_lnc <- nepc_lnc %>% dplyr::filter(`NEPC (n=122)` == 1)
 
 nepc <- read_csv(file = "/Users/ds/Desktop/nepc_genes.csv",col_names = T)
 
-comb_rna <- mcrpc_rna[,query]
 
 Beltran <- mcrpc_rna[, colnames(mcrpc_rna) %in% nepc$`HGNC ID`] %>% rowMeans()
-Ramnarine <- mcrpc_rna[, colnames(mcrpc_rna) %in% nepc_lnc$lncRNA] %>% rowMeans()
-Single_cell <- mcrpc_rna[, colnames(mcrpc_rna) %in% c(adeno_sig, sc_sig)] %>% rowMeans()
+Ramnarine <- mcrpc_rna[, colnames(mcrpc_rna) %in% unique(nepc_lnc$lncRNA)] %>% rowMeans()
+Single_cell <- mcrpc_rna[, colnames(mcrpc_rna) %in% c(adeno_sig,sc_sig)] %>% rowMeans()
+SHH <- mcrpc_rna[, colnames(mcrpc_rna) %in% dplyr::filter(gs, gs_name == "HALLMARK_HEDGEHOG_SIGNALING")$gene_symbol] %>% rowMeans()
+
+df <- data.frame(sample_id = names(Beltran), Beltran.et.al = Beltran, Ramnarine.et.al = Ramnarine, Single.cell = Single_cell, Hedgehog = SHH) %>% merge(anno) 
 
 
-
-df <- data.frame(sample_id = names(Beltran), Beltran.et.al = Beltran, Ramnarine.et.al = Ramnarine, Single.cell = Single_cell) %>% merge(anno) 
-
-
-mets <- df  %>% mutate(Histology = disease_type_SIG_GEX) %>% dplyr::select(c(sample_id, Beltran.et.al,Ramnarine.et.al, Single.cell, Histology )) 
+mets <- df  %>% mutate(Histology = disease_type_SIG_GEX) %>% dplyr::select(c(sample_id, Beltran.et.al,Ramnarine.et.al, Single.cell, Histology, Hedgehog )) 
 
 
 p <- mets %>% dplyr::select(c(Beltran.et.al, Ramnarine.et.al, Single.cell)) %>% gather(key = "Signature" , value = "GEX", -Beltran.et.al ) %>% ggplot(aes(x = GEX, y = Beltran.et.al, color = Signature))  %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("navy", 'darkred')) + theme_classic()
 
-df
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 p
+dev.off()
+mets %>% dplyr::select(c(Beltran.et.al, Ramnarine.et.al, Single.cell,Hedgehog)) %>% gather(key = "Signature" , value = "GEX", -Hedgehog ) %>% ggplot(aes(x = GEX, y = Hedgehog, color = Signature))  %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("navy", 'darkred', 'darkgreen')) + theme_classic()
+
 ```
 
 
@@ -258,85 +266,64 @@ predictions <- mets$Ramnarine.et.al
 labels <- mets$Histology
 
 #define object to plot and calculate AUC
-rocobj1 <- roc(labels, predictions)
-auc1 <- round(auc(labels, predictions),4)
+rocobj1 <- roc(labels, predictions, direction = ">")
+auc1 <- round(auc(labels, predictions, direction = ">"),2)
 
 predictions <- mets$Single.cell
 
-rocobj2 <- roc(labels, predictions)
-auc2 <- round(auc(labels, predictions),4)
+rocobj2 <- roc(labels, predictions, direction = "<")
+auc2 <- round(auc(labels, predictions, direction = "<"),2)
 
 
 predictions <- mets$Beltran.et.al
 
-rocobj3 <- roc(labels, predictions)
-auc3 <- round(auc(labels, predictions),4)
-
+rocobj3 <- roc(response = labels,predictor =  predictions, direction = ">" )
+auc3 <- round(auc(labels, predictions, direction = ">"),2)
 
 
 #create ROC plot
-p <- ggroc(list(Ramnarine.et.al = rocobj1, Single.cell = rocobj2, Beltran.et.al = rocobj3), size = 1)+ scale_color_manual(values = c("navy", "darkred", "darkgreen"), name = "Signature", labels = c(paste0("Ramnarine AUC= ", auc1), paste0("Single cell AUC=", auc2), paste0("Beltran AUC=", auc3)) ) + theme_classic() + ggtitle('AUC analysis of 71 CRPC and 3 NEPC')
- 
+p <- ggroc(list(Ramnarine.et.al = rocobj1, Single.cell = rocobj2 ), size = 1)+ scale_color_manual(values = c("navy", "darkred", "darkgreen"), name = "Signature", labels = c(paste0("Ramnarine AUC= ", auc1), paste0("Single cell AUC=", auc2), paste0("Beltran AUC=", auc3)) ) + theme_classic() + ggtitle('AUC analysis of 71 CRPC-adeno and 3 CRPC-small cell')
+ p
 
-
+mets %>% gather(key = "Sig", value = "Score", -c(sample_id, Histology, Hedgehog)) %>% ggplot(aes(x = Histology, y = Score, fill = Sig)) + geom_boxplot()
 
 
 ```
 
 
 ```{r}
+bmet$cluster.dominant.cell.type
+Idents(bmet) <- "cluster.dominant.cell.type"
+DotPlot(object = bmet, features = c("HOTAIR", "ANRIL", "PCAT19", "MEG3", "TINCR", "PRNCR1", "POLR2E", "HOTTIP", "H19"))
+DotPlot(object = bmet, features = c("PCAT19", "PRNCR1"))
+DotPlot(object = subset(bmet, organ__ontology_label != 'liver'), features = c("MIAT"))
+bmet$organ__ontology_label
+final_markers %>% dplyr::filter(gene == "POLR2E")
 
+DotPlot(object = bmet, features = c("H19", "LINC00514", "LINC00617", "SSTR5-AS1"), group.by = "organ__ontology_label")
+bmet$organ__ontology_label
+mcrpc_rna
 
-hypo <- dss %>% dplyr::filter(Sig == "A")  %>% .$gene.name
+DotPlot(object = bmet, features = c("PCA3"))
 
-dss %>% dplyr::filter(Sig == "A") 
+sc_deg
+sc_sig[sc_sig == "SSTR5-AS1"]
 
+sc_deg %>% View()
+sc_sig
+intersect(nepc_lnc$lncRNA, sc_sig)
 
+bmet@meta.data%>% dplyr::select(-biopsy) %>% dplyr::filter(organ__ontology_label == 'liver')
 
-hypo
+nk.t.markers %>% dplyr::filter(cluster == 'CD8+ PDCD1+ T cell')
 
 sc_sig
-dss
-
-query <- linc[linc$gene.name %in% sc_sig,'gene', drop = T] 
-
-query <- linc[linc$gene.name %in% pca_lncrna,'gene', drop = T] 
-
-query <- EnsDb.Hsapiens.v86 %>% promoters() %>% data.frame() %>% dplyr::filter(gene_id %in% query) %>% GRanges()
-
-seqlevelsStyle(query) <- "UCSC"
+nepc_lnc$lncRNA %>% intersect(c(sc_sig, adeno_sig))
 
 
-
-seq <- getSeq(BSgenome.Hsapiens.UCSC.hg38, query)
-names(seq) <- query$tx_id
-writeXStringSet(seq, filepath = "/Users/ds/Desktop/pca_lncrna.fa")
+DotPlot(object = bmet, features = c("PCA3", "PCAT1", "PCAT29", "PCGEM1", "PRNCR1", "ARLNC1", "ANRIL"), dot.min = .05)
 
 
-paste0(sc_sig, collapse = " ")
-
-
-sc_sig[sc_sig == "MTCL-AS1"]
-
-
-data.frame(sc_sig) %>% View()
-```
-
-
-```{r}
-
-
-nepc <- read_tsv(file = "/Users/ds/Desktop/nepc_dmr_hg38.bed", col_names = c("chr", "start", "end", "Diff"))
-
-
-
-
-nepc <- GRanges(nepc)
-nepc <- data.frame(linc, nepc[nearest(x =  GRanges(regions), subject = nepc),] ) %>% mutate(Sig = ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% sc_sig], "Small cell", ifelse(gene.name %in% colnames(mcrpc_rna)[colnames(mcrpc_rna) %in% adeno_sig], "Adeno", "Other")   ))
-
-
-
-dplyr::filter(nepc, Sig %in% c("Small cell","Adeno"))  %>% ggplot(aes(x = Sig, y= Diff)) + geom_violin(draw_quantiles = 0.5) + geom_jitter(width = 0.1) 
 
 
 ```
