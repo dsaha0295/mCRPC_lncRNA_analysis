@@ -6,7 +6,7 @@ output: html_notebook
 ```{r}
 library(dittoSeq)
 
-?dittoDotPlot
+
 ```
 
 

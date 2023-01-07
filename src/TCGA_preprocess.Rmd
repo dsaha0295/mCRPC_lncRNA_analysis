@@ -81,7 +81,6 @@ colnames(nrml_rna) <- colnames(nrml_rna) %>% gsub(pattern = "\\.", replacement =
 
 
 nrml_rna <-  edgeR::cpm(nrml_rna, log = T) %>% t() %>% data.frame()#Log normalize
-#nrml_rna <- nrml_rna %>% t() %>% data.frame()
 
 nrml_rna <- nrml_rna %>% mutate(id = row.names(.), batch = "Normal") %>% merge(dplyr::select(nrml_meta , c(id, cases.submitter_id) ))
 nrml_rna <- nrml_rna %>% mutate(cases = cases.submitter_id, Purity = NA, Grade_Mutational_status =NA)
@@ -140,7 +139,6 @@ colnames(prad_rna) <- colnames(prad_rna) %>% gsub(pattern = "^X*", replacement =
 colnames(prad_rna) <- colnames(prad_rna) %>% gsub(pattern = "\\.", replacement = "-")
 
 prad_rna <- edgeR::cpm(prad_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
-#prad_rna <- prad_rna %>% t() %>% data.frame()#Counts for DEG analysis
 
 
 
@@ -188,7 +186,6 @@ mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
 row.names(mcrpc_rna) <- mcrpc_rna$Genename
 mcrpc_rna <- mcrpc_rna[,-1]
 mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
-#mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
 row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
 
 
@@ -202,19 +199,6 @@ mcrpc_rna <- mcrpc_rna %>% merge(anno_mcrpc)
 
 ```
 
-#Merge PRAD and mCRPC datasets (DEG analysis)
-```{r}
-
-query <- intersect(colnames(prad_rna), colnames(mcrpc_rna))#Get lncRNAs in common + cases + purity
-
-(length(query)-2)/length( linc$gene.name) #% of lncRNAs common across datasets
-
-#Combine PRAD and mCRPC - rows are samples and columns are lncRNAs + RNA purity
-rna <- rbind(prad_rna[,query], mcrpc_rna[,query])
-
-
-prad_rna$Grade_Mutational_status
-```
 
 #Merge PRAD, Normal, and mCRPC datasets (Heatmap)
 ```{r}
@@ -225,9 +209,9 @@ query <- intersect(colnames(prad_rna), colnames(mcrpc_rna)) %>% intersect( colna
 comb_rna <- rbind( nrml_rna[,query], arrange(prad_rna[,query],Grade_Mutational_status), arrange(mcrpc_rna[,query],Grade_Mutational_status))
 
 
-#comb_rna <- data.frame(comb_rna[,c("batch", "Purity", "cases", "Grade_Mutational_status")], comb_rna[,colnames(comb_rna) %in% c(pca_lncrna, notpca_lncrna)])
+comb_rna <- data.frame(comb_rna[,c("batch", "Purity", "cases", "Grade_Mutational_status")], comb_rna[,colnames(comb_rna) %in% c(pca_lncrna, notpca_lncrna)])
 
-comb_rna <- data.frame(comb_rna[,c("batch", "Purity", "cases", "Grade_Mutational_status")], comb_rna[,colnames(comb_rna) %in% c(pca_lncrna, notpca_lncrna, "AR", "KLK3", "TMPRSS2", "FOXA1")])
+#comb_rna <- data.frame(comb_rna[,c("batch", "Purity", "cases", "Grade_Mutational_status")], comb_rna[,colnames(comb_rna) %in% c(pca_lncrna, notpca_lncrna, "AR", "KLK3", "TMPRSS2", "FOXA1")])
 
 comb_rna <- comb_rna %>% mutate(cases = paste0(cases, ":", 1:nrow(comb_rna)))
 
@@ -282,11 +266,11 @@ mat <- apply(mat, 2, FUN = function(x){x - norm_meds  })
 # 
 
 column_ha = HeatmapAnnotation( RNA.Tumor.Purity = anno_col$RNA.Tumor.Purity, Batch = anno_col$Batch, GS.Mutational.status = anno_col$GS.Mutational.status)
-row_ha <- rowAnnotation(Cell.type = anno_row$Cell.type)
+row_ha <- rowAnnotation(Cell.type = anno_row$Cell.type, col = list(Cell.type = c("B lineage" = "darkred", "erythroid"= "black", "monocyte/macrophage" = "purple", "tumor" = "navy", "NK/T"= "darkgreen", "neutrophil" = "orange"))) 
+anno_row$Cell.type %>% unique()
 
-
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 15)
-Heatmap(matrix = mat, show_column_names = F, col  = colorRampPalette(c('navy',"white", "red"))(10), top_annotation = column_ha, cluster_columns = F,left_annotation = row_ha, row_names_gp = gpar(fontsize = 10,col = ifelse(rownames(mat) %in% c(unique(up$Genes)) , "red", ifelse(rownames(mat)  %in% c(unique(down$Genes)), "blue", "black"))), row_split = anno_row$Cell.type, name = "logFC")
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 20)
+Heatmap(matrix = mat, show_column_names = F, col  = colorRampPalette(c('navy',"white", "red"))(10), top_annotation = column_ha, cluster_columns = F,left_annotation = row_ha, row_names_gp = gpar(fontsize = 15,col = ifelse(rownames(mat) %in% c(unique(up$Genes)) , "red", ifelse(rownames(mat)  %in% c(unique(down$Genes)), "blue", "black"))), row_split = anno_row$Cell.type, name = "logFC")
 dev.off()
 
 
@@ -296,7 +280,6 @@ dev.off()
 
 ```{r}
 
-bmet$cluster.dominant.cell.type
 nk.t <- subset(bmet, supercluster.for.LDSC.SEG == 'NK/T')
 Idents(nk.t) <- "cluster.dominant.cell.type"
 
@@ -304,88 +287,29 @@ nk.t.markers <- FindAllMarkers(object = nk.t[row.names(nk.t) %in% linc$gene.name
 
 nk.t.markers  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1)  %>% dplyr::filter(cluster == 'CD8+ PDCD1+ T cell')
 
-p1 <- DotPlot(object = nk.t, features = c( 'AL135999.1', 'PVT1', 'MIAT', 'LINC00861' , 'AC008105.3', 'AL109811.2', 'FTX', 'AC116366.1', 'MIATNB', 'AC020916.1', 'CYTOR', 'LINC00954', 'BISPR', 'AC026979.2'), group.by ="cluster.dominant.cell.type" ) + coord_flip() + theme(axis.text.x = element_text(size = 8, angle = 90))
+
+query <- up %>% dplyr::filter(Cluster == "NK/T") %>% .$Genes
+p1 <- DotPlot(object = nk.t, features = query, group.by ="cluster.dominant.cell.type" ) + coord_flip() + theme(axis.text.x = element_text(size = 8, angle = 90))
+ex <- c("PDCD1", "HAVCR2", "TOX", "TIGIT", "ICOS", "FASLG", "LAG3", "ENTPD1","ITGAE")
+p1
 
 
-exhaust <- mcrpc_rna[, colnames(mcrpc_rna) %in% c("PDCD1", "HAVCR2", "TOX", "TIGIT", "ICOS", "FASLG", "LAG3", "ENTPD1","ITGAE"), drop = F] %>% rowMeans()      
+exhaust =  gsva(t(mcrpc_rna), gset.idx.list = list(ex), method = 'zscore')
+gex = gsva(t(mcrpc_rna), gset.idx.list = list(c("CYTOR", "MIAT")), method = 'zscore')
+#exhaust <- mcrpc_rna[, colnames(mcrpc_rna) %in% c("PDCD1", "HAVCR2", "TOX", "TIGIT", "ICOS", "FASLG", "LAG3", "ENTPD1","ITGAE"), drop = F] %>% rowMeans()      
 
-p2 <- data.frame(GEX=rowMeans(mcrpc_rna[,c("MIAT", "CYTOR"), drop = F] ),Exhausted.markers=exhaust ) %>% ggplot(aes(x = GEX, y = Exhausted.markers)) + geom_point() + geom_smooth(method = 'lm') + stat_cor() + xlab("CYTOR/MIAT") + theme_classic()
+p2 <- data.frame(GEX= t(gex),Exhausted.markers=t(exhaust) ) %>% ggplot(aes(x = GEX, y = Exhausted.markers)) + geom_point() + geom_smooth(method = 'lm') + stat_cor() + xlab("CYTOR + MIAT") + theme_classic()
 
 p2
 
 
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 15)
-p1 + p2
+
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 5)
+p2
 dev.off()
 
 ```
 
-
-```{r}
-df1 <- comb_rna %>% group_by(batch) %>% arrange(AR, .by_group = T)  %>% dplyr::filter(batch == "Normal")
-
-df2 <- comb_rna %>% group_by(batch) %>% arrange(AR, .by_group = T)  %>% dplyr::filter(batch == "PRAD")
-df3 <- comb_rna %>% group_by(batch) %>% arrange(AR, .by_group = T)  %>% dplyr::filter(batch == "mCRPC")
-```
-
-
-```{r}
-df <- rbind(df1, df2, df3) %>% ungroup() %>% mutate(Index = 1:n()) 
-
-
-#lm(AR ~ Purity, data = dplyr::filter(comb_rna, batch != 'Normal')) %>% residuals() %>% data.frame(AR = .)
-
-#df <- dplyr::filter(df, batch != 'Normal') 
-
-
-df <- df%>% dplyr::select(-c(cases, Grade_Mutational_status)) %>% gather(key = "Gene", value = "GEX", -c(batch, Purity, Index)) %>% dplyr::filter(Gene %in% c("AR", "KLK3", "TMPRSS2", "FOXA1",pca_lncrna))
-
-
-
-
-# res <- do.call(rbind, lapply(unique(df$Gene), function(g){
-# 
-#   d <- dplyr::filter(df, Gene == g)
-#   
-#   r <- lm(d$GEX~ d$Purity) %>% residuals()
-#   
-#   data.frame(batch = d$batch, Index = d$Index, Gene = d$Gene, Corrected_GEX = r) %>% return()
-#   
-#   
-# }))
-# df[,'PART1']
-# 
-# res <- do.call(rbind, lapply(colnames(df)[!colnames(df) %in% c('batch', 'Purity', 'cases', 'Index', 'Grade_Mutational_status')], function(g){
-#   print(g)
-#   r <- lm(df[,g, drop = T]~ df$Purity) %>% residuals()
-#   
-#   data.frame(batch = df$batch, Gene = g, Corrected_GEX = r, Cases = df$cases) %>% return()
-#   
-#   
-# }))
-# res %>% dplyr::filter(Gene == "AR") %>% group_by(batch) %>% arrange(Corrected_GEX, .by_group = T)
-res <-df
-
-
-
-
-res<- mutate(res,Group = ifelse(Gene == "AR", "AR", ifelse(Gene == "SCHLAP1", "SCHLAP1", ifelse(Gene == "PCAT14", "PCAT14", ifelse(Gene == "KLK3", "KLK3", ifelse(Gene == "TMPRSS2", "TMPRSS2", ifelse(Gene == "FOXA1", "FOXA1", "Other PCa lncRNA"))))))) 
-
-
-res
-
-
-res%>% ggplot(aes(x = Index, y = GEX, group = Gene, color = Group, label = Gene, alpha = Group)) + geom_line(stat = 'smooth', method = 'loess', se=FALSE, span = 0.25) + scale_color_manual(values = c("darkred", "navy", "darkgreen", 'grey', 'blue', 'orange', 'red')) + geom_vline(xintercept = c(53,389), linetype = 'dotted')  + theme_classic() + scale_alpha_manual(values = c(1,1,1, 0.5, 1, 1, 1), labels =c("AR", "Other PCa lncRNA", "PCAT14", "SCHLAP1", "FOXA1", "KLK3", "TMPRSS2"))
-
-res
-
-dplyr::filter(res, Gene == "AR") %>% ggplot(aes(x  = Index, y = GEX, color = batch)) + geom_point()+ geom_vline(xintercept = c(53,389), linetype = 'dotted')
-
-res
-#+ annotate("rect", xmin = 389, xmax = 500, ymin = -4, ymax = 4, alpha = 0.1)
-
-#ggsave(filename = "/Users/ds/Desktop/plot.pdf", width = 10, plot = p)
-
-```
 

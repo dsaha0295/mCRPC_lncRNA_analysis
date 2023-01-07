@@ -48,9 +48,12 @@ ids <- intersect(row.names(anno), sampleid)
 bsfiles <- bsfiles[sampleid %in% ids] #Uses partial string matching
 sampleid <- sampleid[sampleid %in% ids]
 anno <- anno[row.names(anno) %in% ids,, drop = F]
+# 
+# group1 <- row.names(anno)[anno$Histology == "small_cell"]
+# group2 <- row.names(anno)[anno$Histology == "adeno"]
 
-group1 <- row.names(anno)[anno$Histology == "small_cell"]
-group2 <- row.names(anno)[anno$Histology == "adeno"]
+group1 <- row.names(anno)[anno$Histology == "tSCNC"]
+group2 <- row.names(anno)[anno$Histology != "tSCNC"]
 
 
 ################################ Read in CpG files and format ########################################################
@@ -92,7 +95,7 @@ dmlTest.sm = DMLtest(bsobj, group1=group1, group2=group2, smoothing=TRUE)
 
 #Test if coef of interest is different from 0 (first term is intercept) for each DML  - return significant DML
 #DMLtest.cell = DMLtest.multiFactor(DMLfit, coef=2)
-dmr = callDMR(dmlTest.sm, p.threshold=0.01)
+dmr = callDMR(dmlTest.sm)
 
 #Aggregate significant DML into DMR
 #dmr <- callDMR(DMLresult = DMLtest.cell, p.threshold = 1e-2) #Adjust pvalue threshold ***

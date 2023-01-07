@@ -3,6 +3,129 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+#Download TCGA PRAD sample list
+```{r}
+
+prad_meta<- mrna_query$results[[1]] %>% dplyr::filter(sample_type == "Primary Tumor")
+#GDCdownload(mrna_query, method = "api", directory = "/Users/ds/Desktop")
+```
+
+
+
+#Process PRAD counts
+```{r}
+full_path <- "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/"
+
+prad_rna <- do.call(cbind, lapply(list.files(path = full_path), FUN = function(f){
+  print(paste0("processing: ",list.files(path = paste0(full_path, f))))
+  counts <- read_tsv(file = list.files(path = paste0(full_path, f), full.names = T), skip = 6, col_names = F )
+  
+  return(data.frame(f = counts[,4]))
+  
+  
+}))
+#prad_rna <- cpm(prad_rna, log = T, prior.count = 1) %>% data.frame()
+colnames(prad_rna) <- list.files(path = full_path)
+
+symbols <- read_tsv(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/harmonized/Transcriptome_Profiling/Gene_Expression_Quantification/0007888f-8d96-4c01-8251-7fef6cc71596/88215dd0-5841-44f1-9393-eefd8238cbb3.rna_seq.augmented_star_gene_counts.tsv", skip = 6, col_names = F)[,2]
+
+prad_rna$Gene <- symbols$X2
+
+
+#write.table(x = prad_rna, file = "/Users/ds/Desktop/TCGA/TCGA-PRAD-Tumor/prad_rna_cpm.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+
+write.table(x = prad_rna, file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+```
+
+
+
+
+```{r}
+
+prad_rna <- read.table(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_rna_counts.txt", header = T)
+prad_rna <- prad_rna[!duplicated(prad_rna$Gene),]
+
+
+row.names(prad_rna) <- prad_rna$Gene 
+
+prad_rna <- dplyr::select(prad_rna, -Gene)
+
+colnames(prad_rna) <- colnames(prad_rna) %>% gsub(pattern = "^X*", replacement = "")
+
+colnames(prad_rna) <- colnames(prad_rna) %>% gsub(pattern = "\\.", replacement = "-")
+
+prad_rna <- prad_rna %>% t() %>% data.frame()#Counts for DEG analysis
+
+
+
+prad_rna <- prad_rna %>% mutate(id = row.names(.), batch = "PRAD") %>% merge(dplyr::select(prad_meta , c(id, cases.submitter_id) ))
+
+
+
+
+```
+
+
+
+#Add PRAD purity from GDC website
+```{r}
+anno_prad <- read.csv(file = "/Users/ds/Desktop/projects/TCGA/TCGA-PRAD-Tumor/prad_supp.csv", header = T)
+anno_prad <- anno_prad %>% dplyr::select(avgRNA_purity, PATIENT_ID, Reviewed_Gleason_sum)
+
+prad_rna <- inner_join(prad_rna, anno_prad, by = c("cases.submitter_id" = "PATIENT_ID")) %>% mutate(Purity = avgRNA_purity * 100, cases = cases.submitter_id, Grade_Mutational_status = Reviewed_Gleason_sum)
+
+
+```
+
+```{r}
+anno_mcrpc <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
+
+
+
+
+anno_mcrpc <- anno_mcrpc %>% dplyr::select(c(sample_id, wgs_id, biopsy_site,tumor_purity_wgs, tumor_purity_rna , tumor_purity_hist, AR))
+
+
+anno_mcrpc <- anno_mcrpc %>% mutate(cases =  sample_id, Purity = tumor_purity_rna, Grade_Mutational_status =AR) %>% dplyr::select(cases, Purity, Grade_Mutational_status)
+
+
+
+mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
+mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
+
+
+
+
+row.names(mcrpc_rna) <- mcrpc_rna$Genename
+mcrpc_rna <- mcrpc_rna[,-1]
+mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
+row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
+
+
+
+mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
+
+#Add mCRPC purity
+mcrpc_rna <- mcrpc_rna %>% merge(anno_mcrpc)
+
+
+```
+
+#Merge PRAD and mCRPC datasets (DEG analysis)
+```{r}
+
+query <- intersect(colnames(prad_rna), colnames(mcrpc_rna))#Get lncRNAs in common + cases + purity
+
+(length(query)-2)/length( linc$gene.name) #% of lncRNAs common across datasets
+
+#Combine PRAD and mCRPC - rows are samples and columns are lncRNAs + RNA purity
+rna <- rbind(prad_rna[,query], mcrpc_rna[,query])
+
+
+
+```
+
+
 
 ```{r}
 counts <- dplyr::select(rna, -c(cases, Purity, batch, Grade_Mutational_status)) %>% t() %>% data.frame()
@@ -17,7 +140,7 @@ x <- DGEList(counts = counts)
 x$samples <- cbind(x$samples, dplyr::select(rna, c( Purity, batch )))
 
 #Remove genes with low expression across samples
-keep.exprs <- filterByExpr(x)
+keep.exprs <- filterByExpr(x, min.count = 5)
 x <- x[keep.exprs,, keep.lib.size = F]
 
 #Calculate effective library size using EdgeR TMM method
@@ -64,12 +187,9 @@ bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
                                           
                                    
-plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.1 & Genes %in% c(na.omit(up)$Genes, na.omit(down)$Genes) ), force = 0.8, size = 2) + scale_alpha(range = c(0.8,1))
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.1  & Cluster !="Unknown" ), force = 0.8, size = 2) + scale_alpha(range = c(0.8,1)) + theme_classic()
                                    
-bulk_deg$Genes
-bulk_deg %>% dplyr::filter(logFC < -1 & adj.P.Val < 0.1)   %>% arrange(-logFC)                   
-                               
-  bulk_deg
+bulk_deg %>% dplyr::filter(Genes == "SCHLAP1")
 
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 plot
@@ -83,12 +203,14 @@ write.table(x = bulk_deg, file = "/Users/ds/Desktop/projects/lncRNA/results/mCRP
 
 write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table2.csv",quote = F, row.names = F)
 
-
+bulk_deg
 
 bulk_deg <- read.table(file = "//Users/ds/Desktop/projects/lncRNA/results/mCRPC_PRAD_deg.txt", header = T)
 #Map up and down regulated genes to clusters
-up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
-down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1)  %>% arrange(logFC) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1 & Cluster != "Unknown") 
+
+
+down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1 & Cluster != "Unknown")  
 
 
 bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
@@ -103,7 +225,7 @@ bulk_deg %>% dplyr::filter(Genes %in% c("CYTOR", "MIAT"))
 #Methylation analysis
 ```{r}
 
-nepc
+
 
 dss <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/results/DSS_mCPRC_PRAD.bed", col_names = c("chrom", "start", "end", "Diff", "Stat"))
 
@@ -123,7 +245,7 @@ plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= ge
 plot
 
 
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot)
 
 
 ```

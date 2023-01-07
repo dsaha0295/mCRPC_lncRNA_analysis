@@ -18,6 +18,15 @@ library(rstatix)
 
 ```
 
+
+```{r}
+paste0(pca_lncrna, collapse = " ")
+
+mean(c(24,8,5,5,5,4,4,4,3,3,2.3,1.4,1.2))
+
+```
+
+
 #Download ARBS/HMR/ATAC datasets
 ```{r}
 arbs <- read_tsv(file = "/Users/ds/Desktop/projects/lncRNA/data/AR.chip.hg38.bed", col_names = c("chr", "start", "end"))
@@ -106,7 +115,7 @@ df$Order <- rep(c(1,1,2,2,3,3), by = 4)
 dplyr::filter(df, Category == "Overlap") %>% dplyr::filter(Group == "TME-lncRNAs\n n=298")
 
 
-p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 ) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45))
+p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 ) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 20))
 
 p
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
@@ -172,7 +181,6 @@ data.frame(overlaps) %>% dplyr::select(c("seqnames", "start", "end"))%>% write.t
 
 
 })
-
 
 
 ```
@@ -272,7 +280,7 @@ motif
 
 motif <- read_tsv(file = "/Users/ds/Desktop/centrimo (5).tsv", col_names = T)
 
-filter <- pcg_markers %>% dplyr::filter(cluster == 'tumor') %>% .$gene
+filter <- pTM4SF19-AS1cg_markers %>% dplyr::filter(cluster == 'tumor') %>% .$gene
 
 pca_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(TF %in% c("ANDR","NKX31", filter)) %>% head(n=20) 
 pca_motif
@@ -289,5 +297,21 @@ p <- rbind(pca_motif, mutate(tme_motif, Sig = Sig * -1)) %>% mutate(Group = ifel
 
 
 p
+```
+
+
+```{r}
+
+lapply(c("otherlinc.tab", "tmelinc.tab", "pcalinc.tab"), FUN = function(i){
+  
+  dp <- read_table(file = paste0("/Users/ds/Desktop/projects/lncRNA/results/Deeptools/", i), skip = 1 )
+
+  dp[5:ncol(dp)] %>% apply(2, min) %>% min() %>% return()
+
+})
+
+
+
+
 ```
 

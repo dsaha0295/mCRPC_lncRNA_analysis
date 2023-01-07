@@ -18,7 +18,7 @@ library(tidytext)
 library(cowplot)
 library(ComplexHeatmap)
 library(circlize)
-
+library(harmony)
 options(ggrepel.max.overlaps = Inf)
 
 
@@ -82,7 +82,16 @@ id <- intersect(row.names(mat), linc$gene.name)
 
 
 
-dim(mat[id,])[1] / dim(linc)[1]
+a <- dim(mat[id,])[1] / dim(linc)[1]
+
+id <- intersect(row.names(mat), pcg$gene.name)
+b <- dim(mat[id,])[1] / dim(pcg)[1]
+p <- rbind(LncRNA.annotated = a, LncRNA.unannotated = 1-a, Pc.annotated = b, Pc.unnanotated = 1-b) %>% data.frame(Fraction = .) %>% mutate(Type = c("lncRNA", "lncRNA", "Protein.coding", "Protein.coding")) %>% mutate(Group= c("Annotated", "Unannotated", 'Annotated', "Unannotated")) %>% ggplot(aes(x = Type, y = Fraction, fill = Group)) + geom_col(width = 0.5) + scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
+
+a
+b
+
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
 
 bmet$organ__ontology_label
 mat["PCAT14",]
@@ -90,7 +99,12 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
 View(dss)
 
-bmet
+a <- bmet[linc$gene.name,] %>% GetAssayData() %>% colMeans() 
+
+b <- bmet[pcg$gene.name,] %>% GetAssayData() %>% colMeans() 
+
+p <- data.frame(LncRNA = a, Protein.coding = b) %>% gather(key = "Type", value = "Average.expression") %>% ggplot(aes(x = Average.expression, color = Type)) + stat_ecdf() + scale_color_manual(values  = c("navy", "darkred")) + theme_classic()
+
 ```
 
 
@@ -99,6 +113,9 @@ bmet
 ```{r}
 
 markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% linc$gene.name,], only.pos = T, verbose = T)
+
+markers <- FindAllMarkers(object = bmet, only.pos = T, verbose = T)
+
 pcg_markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% pcg$gene.name], only.pos = T, verbose = T)
 
 markers %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1)  %>% dplyr::filter(cluster == 'tumor')
@@ -116,9 +133,7 @@ pcg_markers <- pcg_markers %>%  arrange(-avg_log2FC) %>% group_by(cluster) %>% s
 
 pcg_markers <- pcg_markers[!duplicated(pcg_markers$gene),]#Filter duplicates
 
-View(final_markers)
-
-bmet@assays$RNA@counts
+markers <- pcg_markers
 
 ```
 
@@ -188,8 +203,11 @@ bmcrpc <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/seurat/Kfoury_bmCRPC_
 
 
 Idents(bmcrpc) <- "cells"
-valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
+#valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
 
+#valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% pcg$gene.name,], only.pos = T, verbose = T)
+
+valid_kfoury <-FindAllMarkers(object = bmcrpc, only.pos = T, verbose = T)
 
 
 valid_kfoury <- valid_kfoury  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) %>%  arrange(-avg_log2FC) 
@@ -231,12 +249,15 @@ View(final_markers)
 
 
 ```{r}
-compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), a,dplyr::filter(pcg_markers, cluster == "B lineage") , c,dplyr::filter(pcg_markers, cluster == "NK/T"),b,dplyr::filter(pcg_markers, cluster == "neutrophil"),f,dplyr::filter(pcg_markers, cluster == "monocyte/macrophage"),d,dplyr::filter(pcg_markers, cluster == "erythroid"),e)
+
+select_pcg_markers <- pcg_markers %>%  arrange(-avg_log2FC) %>% group_by(cluster) %>% slice_head(n = 2)
 
 
-compare_markers <- rbind(dplyr::filter(pcg_markers, cluster == 'tumor'), dplyr::filter(final_markers, cluster == 'tumor'),dplyr::filter(pcg_markers, cluster == "B lineage") , dplyr::filter(final_markers, cluster == 'B lineage'),dplyr::filter(pcg_markers, cluster == "NK/T"),dplyr::filter(final_markers, cluster == 'NK/T'),dplyr::filter(pcg_markers, cluster == "neutrophil"),dplyr::filter(final_markers, cluster == 'neutrophil'),dplyr::filter(pcg_markers, cluster == "monocyte/macrophage"),dplyr::filter(final_markers, cluster == 'monocyte/macrophage'),dplyr::filter(pcg_markers, cluster == "erythroid"),dplyr::filter(final_markers, cluster == 'erythroid'))
 
 
+compare_markers <- rbind(dplyr::filter(select_pcg_markers, cluster == 'tumor'), dplyr::filter(final_markers, cluster == 'tumor'),dplyr::filter(select_pcg_markers, cluster == "B lineage") , dplyr::filter(final_markers, cluster == 'B lineage'),dplyr::filter(select_pcg_markers, cluster == "NK/T"),dplyr::filter(final_markers, cluster == 'NK/T'),dplyr::filter(select_pcg_markers, cluster == "neutrophil"),dplyr::filter(final_markers, cluster == 'neutrophil'),dplyr::filter(select_pcg_markers, cluster == "monocyte/macrophage"),dplyr::filter(final_markers, cluster == 'monocyte/macrophage'),dplyr::filter(select_pcg_markers, cluster == "erythroid"),dplyr::filter(final_markers, cluster == 'erythroid'))
+
+pcg_markers
 ```
 
 
@@ -248,13 +269,12 @@ pca_lncrna <- final_markers %>%  dplyr::filter(cluster == "tumor") %>% arrange(-
 
 notpca_lncrna <- final_markers %>% dplyr::filter(!gene %in% pca_lncrna) %>% arrange(-avg_log2FC) %>% .$gene
 notpca_lncrna_ds <- sample(notpca_lncrna, length(pca_lncrna))
-notpca_lncrna_ds <- sample(notpca_lncrna, length(notpca_lncrna))
+#notpca_lncrna_ds <- sample(notpca_lncrna, length(notpca_lncrna))
 
 other_lncrna <- linc %>% dplyr::filter(!gene.name %in% final_markers$gene) %>% .$gene.name
 
 other_lncrna_ds <- sample(other_lncrna, length(pca_lncrna))
-other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
-
+#other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
 
 
 
@@ -265,37 +285,43 @@ other_lncrna_ds <- sample(other_lncrna, length(notpca_lncrna))
 ```{r}
 
 bmet <- ScaleData(object = bmet, features = final_markers$gene)
+bmet <- ScaleData(object = bmet, features = pcg_markers$gene)
 
 
 pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
 
-DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0)) 
+DoHeatmap(object = bmet, features = pcg_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0)) 
 dev.off()
 
+pcg_markers
 
+pcg_markers
 ```
 
 #Compare lncRNA markers with PCG markers
 ```{r}
-top <-compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:7) %>% .$gene
+top <-compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:4) %>% .$gene
 
 
-
-names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:7) %>% .$cluster
-
+names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:4) %>% .$cluster
 
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 15, height = 15)
-DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue', 'blue', 'blue', 'blue'), 5)))
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue'), 5)))
 dev.off()
+```
 
 
-
-
+```{r}
 write.table(x = final_markers, file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", quote = F, sep = "\t", row.names = F, col.names = T)
+
+write.table(x = final_markers, file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_pcg_mCRPC_He.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 
 
 final_markers <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
+pcg_markers <- read.table(file = "/Users/ds/Desktop/projects/lncRNA/results/final_markers_pcg_mCRPC_He.txt", header = T, sep = "\t")
+
+
 write.csv(x = final_markers, file = "/Users/ds/Desktop/Supplementary.Table1.csv",quote = F, row.names = F)
 
 
@@ -307,21 +333,10 @@ final_markers %>% dplyr::filter(gene %in% c("SCHLAP1", "PCAT1"))
 ```{r}
 
 
-seurat_pipeline <- function(object, ndims, seed, resolution){
-  
-  #Data already normalized 
-    FindVariableFeatures(object = object, nfeatures = 2000) %>% 
-    ScaleData() %>%
-    RunPCA() %>% 
-    RunUMAP(dims = 1:ndims, reduction = "pca") %>% 
-    FindNeighbors(reduction = "pca", dims = 1:ndims) %>% 
-    FindClusters(resolution = resolution, algorithm = 1, random.seed =seed) %>% 
-    return()
-  
-}
 
-tumor <- subset(bmet, supercluster.for.LDSC.SEG == 'tumor')
-bmet <- seurat_pipeline(object = bmet, ndims = 40, seed = 123, 0.5)
+bmet <-bmet %>% FindVariableFeatures( nfeatures = 2000) %>% ScaleData() %>%RunPCA() %>%  RunHarmony( "biosample_id", seed = 123)
+
+bmet <- RunUMAP(bmet, reduction = "harmony", dims = 1:40) %>% FindNeighbors(reduction = "harmony", dims = 1:40) %>% FindClusters(resolution = 0.6, algorithm = 1, random.seed =123) 
 
 
 tumor <- seurat_pipeline(object = tumor, ndims = 40, seed = 123, 0.5)
@@ -330,12 +345,11 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 top
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-FeaturePlot(object = bmet, features =c("PCAT14", "MIAT"), label = T, repel = T, label.size = 3)
+FeaturePlot(object = bmet, features =c("SCHLAP1", "SMIM25"), label = T, repel = T, label.size = 3)
 dev.off()
 final_markers
 
 UMAPPlot(object = tumor, label = T, repel = T)
-#tumor$Androgen.response <- tumor[tni.get(object = rtni,what = "regulons" )$AR,] %>% GetAssayData() %>% colMeans()
 
 
 gs
@@ -346,150 +360,11 @@ dev.off()
 tumor$organ__ontology_label
 UMAPPlot(object = tumor, group.by = "organ__ontology_label")
 
-```
 
 
-
-
-
-#Plot heatmaps for specific lncRNAs
-```{r}
-mcrpc_rna <- read.table(file = "/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt", header = T)
-mcrpc_rna <- mcrpc_rna[!duplicated(mcrpc_rna$Genename),]
-
-
-
-
-row.names(mcrpc_rna) <- mcrpc_rna$Genename
-mcrpc_rna <- mcrpc_rna[,-1]
-mcrpc_rna <- edgeR::cpm(mcrpc_rna, log = T) %>% t() %>% data.frame()#Log normalize for heatmap
-#mcrpc_rna <- mcrpc_rna %>% t() %>% data.frame()#Counts for DEG analysis
-row.names(mcrpc_rna) <- gsub("\\.", "-",  x = row.names(mcrpc_rna))
-mcrpc_rna <- mcrpc_rna %>% mutate(cases = row.names(.), batch = "mCRPC")
-
-
-
-anno <- read.table("/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt", header =T)
-
-
-anno
-anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR,tumor_purity_rna, RB1 )) 
-
-
-cf <- read.table("/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt", sep = "\t", header = T)
-cf$sample_id <- gsub("\\.", "-", cf$Mixture)
-row.names(cf) <- cf$Mixture
-
-cf <- inner_join(x = cf, y = anno, by  = c("sample_id" = "sample_id"))
-
-
-
-row.names(cf) <- cf$sample_id
-
-
-cf <- na.omit(cf)#Omit samples without WGS data
-cf <- cf %>% dplyr::filter(disease_type_SIG_GEX =='adeno')
-
-
-ehmr <- read_csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv", col_names = T)
-ehmr <- ehmr %>% dplyr::filter(type == "HMR")%>% group_by(symbol) %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1)
-
-ehmr <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna) %>% mutate(Coord = paste0(chrom, ".", start, ".", end))
-
-
-
-
-hmr <- read.table(file = "/Users/ds/Desktop/projects/data/bs/all.mcrpc.hmr.txt", header = T)
-hmr <- hmr[!duplicated(hmr$Coord),]
-
-
-
-hmr <- hmr %>% merge(ehmr) %>% mutate(HMR = paste0(symbol, ".", type)) %>% dplyr::select(c(HMR, starts_with("DTB")))
-row.names(hmr) <- hmr$HMR
-hmr <- hmr[-1] %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
-
-
-cna <- read.table(file = "/Users/ds/Desktop/projects/data/wgs/2018_04_15_matrix_CN_integer_symbol_copycat.txt", header = T)
-
-cna <- cna %>% dplyr::filter(IDENTIFIER %in% pca_lncrna) %>% mutate(CopyNumber = paste0(IDENTIFIER, ".CN"))
-row.names(cna) <- cna$CopyNumber
-cna <- dplyr::select(cna, -c(CopyNumber, IDENTIFIER)) %>% t() %>% data.frame() %>% mutate(wgs_id  = gsub(pattern = "\\.", replacement = "-", x = row.names(.)))
-
-
-
+bmet@meta.data
 
 ```
 
 
-```{r}
-df <- data.frame(mcrpc_rna[, "cases", drop = F],mcrpc_rna[,c(colnames(mcrpc_rna) %in% pca_lncrna)]) %>% inner_join(cf, by = c("cases" = "sample_id")) %>% merge(hmr) %>% merge(cna)
-
-
-
-
-goi <- c("PCAT14", "SCHLAP1", "COLCA1", "PART1", "PCAT1")
-df
-
-df <- df[,c(goi, "cases", "AR", paste0(goi, ".HMR"), paste0(goi, ".CN"))]  %>% mutate(AR = ifelse(AR == 3, "Gain", "WT")) 
-df
-```
-
-
-```{r}
-
-
-df <- df %>% arrange(PCAT14)  
-
-row.names(df) <- df$cases
-
-col_fun1 = colorRamp2(c(0, 100), c("grey", "blue"))
-
-col_fun2 = colorRamp2(c(0, 3), c("grey", "purple"))
-
-column_ha = HeatmapAnnotation( PCAT14 = anno_barplot(df[,"PCAT14"]  ), HMR = df[,"PCAT14.HMR"], CNA = df[,"PCAT14.CN"], simple_anno_size = unit(2, "cm"), height = unit(8,"cm"), col = list(PCAT14 = "black", HMR = col_fun1, CNA = col_fun2 ))
-
-pdf("/Users/ds/Desktop/plot.pdf")
-Heatmap(matrix = t(df[,c( "AR"), drop = F]), top_annotation = column_ha, height = unit(2, "cm"), col = colorRampPalette(c("navy", "grey"))(2), show_column_names = F, name = "Mutational.status")
-dev.off()
-
-
-
-```
-
-
-```{r}
-df
-df <- df %>% arrange(COLCA1)  
-
-row.names(df) <- df$cases
-
-col_fun1 = colorRamp2(c(0, 100), c("grey", "blue"))
-
-col_fun2 = colorRamp2(c(0, 3), c("grey", "purple"))
-
-column_ha = HeatmapAnnotation( COLCA1 = anno_barplot(df[,"COLCA1"]  ), HMR = df[,"COLCA1.HMR"], simple_anno_size = unit(2, "cm"), height = unit(5,"cm"), col = list(COLCA1 = "black", HMR = col_fun1))
-
-pdf("/Users/ds/Desktop/plot.pdf")
-Heatmap(matrix = t(df[,c( "AR"), drop = F]), top_annotation = column_ha, height = unit(2, "cm"), show_column_names = F, name = "Mutational.status", col = colorRampPalette(c("navy", "grey"))(2))
-dev.off()
-
-df
-```
-
-```{r}
-
-
-m1 <- lm(COLCA1 ~ COLCA1.HMR, data = df)
-m2 <- lm(COLCA1 ~ AR + COLCA1.HMR, data = df)
-
-lm(SCHLAP1 ~ AR + SCHLAP1.HMR, data = df) %>% summary()
-
-lm(PCAT14 ~ AR + PCAT14.HMR + PCAT14.CN, data = df) %>% summary()
-
-ggplot(df, aes(x = COLCA1.HMR, y = COLCA1, color = AR)) + geom_smooth(method = 'lm') + ggpubr::stat_cor() + geom_point()
-
-anova(m1,m2)
-
-
-```
 
