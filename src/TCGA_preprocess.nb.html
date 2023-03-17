@@ -1758,163 +1758,17 @@ pre code {
 <p>#Load libraries</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5cbmxpYnJhcnkoVENHQVdvcmtmbG93RGF0YSlcbmxpYnJhcnkoVENHQWJpb2xpbmtzKVxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5cbmxpYnJhcnkoVENHQVdvcmtmbG93RGF0YSlcbmxpYnJhcnkoVENHQWJpb2xpbmtzKVxubGlicmFyeShTdW1tYXJpemVkRXhwZXJpbWVudClcbmxpYnJhcnkoZWRnZVIpXG5saWJyYXJ5KEVuaGFuY2VkVm9sY2FubylcbmxpYnJhcnkoU2V1cmF0KVxubGlicmFyeShsdW1pKVxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncmVwZWwpXG5vcHRpb25zKGdncmVwZWwubWF4Lm92ZXJsYXBzID0gSW5mKVxuXG5gYGAifQ== -->
 <pre class="r"><code>
 
 library(TCGAWorkflowData)
-library(TCGAbiolinks)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSDigJhUQ0dBYmlvbGlua3PigJkgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiA0LjEuMlxuIn0= -->
-<pre><code>package ‘TCGAbiolinks’ was built under R version 4.1.2</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShTdW1tYXJpemVkRXhwZXJpbWVudClcbmBgYCJ9 -->
-<pre class="r"><code>library(SummarizedExperiment)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBNYXRyaXhHZW5lcmljc1xuTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBtYXRyaXhTdGF0c1xucGFja2FnZSDigJhtYXRyaXhTdGF0c+KAmSB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDQuMS4yXG5BdHRhY2hpbmcgcGFja2FnZTog4oCYbWF0cml4U3RhdHPigJlcblxuVGhlIGZvbGxvd2luZyBvYmplY3QgaXMgbWFza2VkIGZyb20g4oCYcGFja2FnZTpkcGx5cuKAmTpcblxuICAgIGNvdW50XG5cblxuQXR0YWNoaW5nIHBhY2thZ2U6IOKAmE1hdHJpeEdlbmVyaWNz4oCZXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0cyBhcmUgbWFza2VkIGZyb20g4oCYcGFja2FnZTptYXRyaXhTdGF0c+KAmTpcblxuICAgIGNvbEFsbHMsIGNvbEFueU5BcywgY29sQW55cywgY29sQXZnc1BlclJvd1NldCwgY29sQ29sbGFwc2UsIGNvbENvdW50cywgY29sQ3VtbWF4cyxcbiAgICBjb2xDdW1taW5zLCBjb2xDdW1wcm9kcywgY29sQ3Vtc3VtcywgY29sRGlmZnMsIGNvbElRUkRpZmZzLCBjb2xJUVJzLCBjb2xMb2dTdW1FeHBzLFxuICAgIGNvbE1hZERpZmZzLCBjb2xNYWRzLCBjb2xNYXhzLCBjb2xNZWFuczIsIGNvbE1lZGlhbnMsIGNvbE1pbnMsIGNvbE9yZGVyU3RhdHMsIGNvbFByb2RzLFxuICAgIGNvbFF1YW50aWxlcywgY29sUmFuZ2VzLCBjb2xSYW5rcywgY29sU2REaWZmcywgY29sU2RzLCBjb2xTdW1zMiwgY29sVGFidWxhdGVzLFxuICAgIGNvbFZhckRpZmZzLCBjb2xWYXJzLCBjb2xXZWlnaHRlZE1hZHMsIGNvbFdlaWdodGVkTWVhbnMsIGNvbFdlaWdodGVkTWVkaWFucyxcbiAgICBjb2xXZWlnaHRlZFNkcywgY29sV2VpZ2h0ZWRWYXJzLCByb3dBbGxzLCByb3dBbnlOQXMsIHJvd0FueXMsIHJvd0F2Z3NQZXJDb2xTZXQsXG4gICAgcm93Q29sbGFwc2UsIHJvd0NvdW50cywgcm93Q3VtbWF4cywgcm93Q3VtbWlucywgcm93Q3VtcHJvZHMsIHJvd0N1bXN1bXMsIHJvd0RpZmZzLFxuICAgIHJvd0lRUkRpZmZzLCByb3dJUVJzLCByb3dMb2dTdW1FeHBzLCByb3dNYWREaWZmcywgcm93TWFkcywgcm93TWF4cywgcm93TWVhbnMyLFxuICAgIHJvd01lZGlhbnMsIHJvd01pbnMsIHJvd09yZGVyU3RhdHMsIHJvd1Byb2RzLCByb3dRdWFudGlsZXMsIHJvd1Jhbmdlcywgcm93UmFua3MsXG4gICAgcm93U2REaWZmcywgcm93U2RzLCByb3dTdW1zMiwgcm93VGFidWxhdGVzLCByb3dWYXJEaWZmcywgcm93VmFycywgcm93V2VpZ2h0ZWRNYWRzLFxuICAgIHJvd1dlaWdodGVkTWVhbnMsIHJvd1dlaWdodGVkTWVkaWFucywgcm93V2VpZ2h0ZWRTZHMsIHJvd1dlaWdodGVkVmFyc1xuXG5Mb2FkaW5nIHJlcXVpcmVkIHBhY2thZ2U6IEdlbm9taWNSYW5nZXNcbnBhY2thZ2Ug4oCYR2Vub21pY1Jhbmdlc+KAmSB3YXMgYnVpbHQgdW5kZXIgUiB2ZXJzaW9uIDQuMS4yTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBzdGF0czRcbkxvYWRpbmcgcmVxdWlyZWQgcGFja2FnZTogQmlvY0dlbmVyaWNzXG5cbkF0dGFjaGluZyBwYWNrYWdlOiDigJhCaW9jR2VuZXJpY3PigJlcblxuVGhlIGZvbGxvd2luZyBvYmplY3RzIGFyZSBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmRwbHly4oCZOlxuXG4gICAgY29tYmluZSwgaW50ZXJzZWN0LCBzZXRkaWZmLCB1bmlvblxuXG5UaGUgZm9sbG93aW5nIG9iamVjdCBpcyBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmxpbW1h4oCZOlxuXG4gICAgcGxvdE1BXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0cyBhcmUgbWFza2VkIGZyb20g4oCYcGFja2FnZTpzdGF0c+KAmTpcblxuICAgIElRUiwgbWFkLCBzZCwgdmFyLCB4dGFic1xuXG5UaGUgZm9sbG93aW5nIG9iamVjdHMgYXJlIG1hc2tlZCBmcm9tIOKAmHBhY2thZ2U6YmFzZeKAmTpcblxuICAgIGFueUR1cGxpY2F0ZWQsIGFwcGVuZCwgYXMuZGF0YS5mcmFtZSwgYmFzZW5hbWUsIGNiaW5kLCBjb2xuYW1lcywgZGlybmFtZSwgZG8uY2FsbCxcbiAgICBkdXBsaWNhdGVkLCBldmFsLCBldmFscSwgRmlsdGVyLCBGaW5kLCBnZXQsIGdyZXAsIGdyZXBsLCBpbnRlcnNlY3QsIGlzLnVuc29ydGVkLFxuICAgIGxhcHBseSwgTWFwLCBtYXBwbHksIG1hdGNoLCBtZ2V0LCBvcmRlciwgcGFzdGUsIHBtYXgsIHBtYXguaW50LCBwbWluLCBwbWluLmludCxcbiAgICBQb3NpdGlvbiwgcmFuaywgcmJpbmQsIFJlZHVjZSwgcm93bmFtZXMsIHNhcHBseSwgc2V0ZGlmZiwgc29ydCwgdGFibGUsIHRhcHBseSwgdW5pb24sXG4gICAgdW5pcXVlLCB1bnNwbGl0LCB3aGljaC5tYXgsIHdoaWNoLm1pblxuXG5Mb2FkaW5nIHJlcXVpcmVkIHBhY2thZ2U6IFM0VmVjdG9yc1xucGFja2FnZSDigJhTNFZlY3RvcnPigJkgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiA0LjEuM1xuQXR0YWNoaW5nIHBhY2thZ2U6IOKAmFM0VmVjdG9yc+KAmVxuXG5UaGUgZm9sbG93aW5nIG9iamVjdHMgYXJlIG1hc2tlZCBmcm9tIOKAmHBhY2thZ2U6TWF0cml44oCZOlxuXG4gICAgZXhwYW5kLCB1bm5hbWVcblxuVGhlIGZvbGxvd2luZyBvYmplY3RzIGFyZSBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmRwbHly4oCZOlxuXG4gICAgZmlyc3QsIHJlbmFtZVxuXG5UaGUgZm9sbG93aW5nIG9iamVjdCBpcyBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOnRpZHly4oCZOlxuXG4gICAgZXhwYW5kXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0cyBhcmUgbWFza2VkIGZyb20g4oCYcGFja2FnZTpiYXNl4oCZOlxuXG4gICAgZXhwYW5kLmdyaWQsIEksIHVubmFtZVxuXG5Mb2FkaW5nIHJlcXVpcmVkIHBhY2thZ2U6IElSYW5nZXNcblxuQXR0YWNoaW5nIHBhY2thZ2U6IOKAmElSYW5nZXPigJlcblxuVGhlIGZvbGxvd2luZyBvYmplY3RzIGFyZSBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOmRwbHly4oCZOlxuXG4gICAgY29sbGFwc2UsIGRlc2MsIHNsaWNlXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0IGlzIG1hc2tlZCBmcm9tIOKAmHBhY2thZ2U6cHVycnLigJk6XG5cbiAgICByZWR1Y2VcblxuVGhlIGZvbGxvd2luZyBvYmplY3QgaXMgbWFza2VkIGZyb20g4oCYcGFja2FnZTpyc3RhdGl44oCZOlxuXG4gICAgZGVzY1xuXG5Mb2FkaW5nIHJlcXVpcmVkIHBhY2thZ2U6IEdlbm9tZUluZm9EYlxucGFja2FnZSDigJhHZW5vbWVJbmZvRGLigJkgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiA0LjEuMkxvYWRpbmcgcmVxdWlyZWQgcGFja2FnZTogQmlvYmFzZVxuV2VsY29tZSB0byBCaW9jb25kdWN0b3JcblxuICAgIFZpZ25ldHRlcyBjb250YWluIGludHJvZHVjdG9yeSBtYXRlcmlhbDsgdmlldyB3aXRoICdicm93c2VWaWduZXR0ZXMoKScuIFRvIGNpdGVcbiAgICBCaW9jb25kdWN0b3IsIHNlZSAnY2l0YXRpb24oXCJCaW9iYXNlXCIpJywgYW5kIGZvciBwYWNrYWdlcyAnY2l0YXRpb24oXCJwa2duYW1lXCIpJy5cblxuXG5BdHRhY2hpbmcgcGFja2FnZTog4oCYQmlvYmFzZeKAmVxuXG5UaGUgZm9sbG93aW5nIG9iamVjdCBpcyBtYXNrZWQgZnJvbSDigJhwYWNrYWdlOk1hdHJpeEdlbmVyaWNz4oCZOlxuXG4gICAgcm93TWVkaWFuc1xuXG5UaGUgZm9sbG93aW5nIG9iamVjdHMgYXJlIG1hc2tlZCBmcm9tIOKAmHBhY2thZ2U6bWF0cml4U3RhdHPigJk6XG5cbiAgICBhbnlNaXNzaW5nLCByb3dNZWRpYW5zXG4ifQ== -->
-<pre><code>Loading required package: MatrixGenerics
-Loading required package: matrixStats
-package ‘matrixStats’ was built under R version 4.1.2
-Attaching package: ‘matrixStats’
-
-The following object is masked from ‘package:dplyr’:
-
-    count
-
-
-Attaching package: ‘MatrixGenerics’
-
-The following objects are masked from ‘package:matrixStats’:
-
-    colAlls, colAnyNAs, colAnys, colAvgsPerRowSet, colCollapse, colCounts, colCummaxs,
-    colCummins, colCumprods, colCumsums, colDiffs, colIQRDiffs, colIQRs, colLogSumExps,
-    colMadDiffs, colMads, colMaxs, colMeans2, colMedians, colMins, colOrderStats, colProds,
-    colQuantiles, colRanges, colRanks, colSdDiffs, colSds, colSums2, colTabulates,
-    colVarDiffs, colVars, colWeightedMads, colWeightedMeans, colWeightedMedians,
-    colWeightedSds, colWeightedVars, rowAlls, rowAnyNAs, rowAnys, rowAvgsPerColSet,
-    rowCollapse, rowCounts, rowCummaxs, rowCummins, rowCumprods, rowCumsums, rowDiffs,
-    rowIQRDiffs, rowIQRs, rowLogSumExps, rowMadDiffs, rowMads, rowMaxs, rowMeans2,
-    rowMedians, rowMins, rowOrderStats, rowProds, rowQuantiles, rowRanges, rowRanks,
-    rowSdDiffs, rowSds, rowSums2, rowTabulates, rowVarDiffs, rowVars, rowWeightedMads,
-    rowWeightedMeans, rowWeightedMedians, rowWeightedSds, rowWeightedVars
-
-Loading required package: GenomicRanges
-package ‘GenomicRanges’ was built under R version 4.1.2Loading required package: stats4
-Loading required package: BiocGenerics
-
-Attaching package: ‘BiocGenerics’
-
-The following objects are masked from ‘package:dplyr’:
-
-    combine, intersect, setdiff, union
-
-The following object is masked from ‘package:limma’:
-
-    plotMA
-
-The following objects are masked from ‘package:stats’:
-
-    IQR, mad, sd, var, xtabs
-
-The following objects are masked from ‘package:base’:
-
-    anyDuplicated, append, as.data.frame, basename, cbind, colnames, dirname, do.call,
-    duplicated, eval, evalq, Filter, Find, get, grep, grepl, intersect, is.unsorted,
-    lapply, Map, mapply, match, mget, order, paste, pmax, pmax.int, pmin, pmin.int,
-    Position, rank, rbind, Reduce, rownames, sapply, setdiff, sort, table, tapply, union,
-    unique, unsplit, which.max, which.min
-
-Loading required package: S4Vectors
-package ‘S4Vectors’ was built under R version 4.1.3
-Attaching package: ‘S4Vectors’
-
-The following objects are masked from ‘package:Matrix’:
-
-    expand, unname
-
-The following objects are masked from ‘package:dplyr’:
-
-    first, rename
-
-The following object is masked from ‘package:tidyr’:
-
-    expand
-
-The following objects are masked from ‘package:base’:
-
-    expand.grid, I, unname
-
-Loading required package: IRanges
-
-Attaching package: ‘IRanges’
-
-The following objects are masked from ‘package:dplyr’:
-
-    collapse, desc, slice
-
-The following object is masked from ‘package:purrr’:
-
-    reduce
-
-The following object is masked from ‘package:rstatix’:
-
-    desc
-
-Loading required package: GenomeInfoDb
-package ‘GenomeInfoDb’ was built under R version 4.1.2Loading required package: Biobase
-Welcome to Bioconductor
-
-    Vignettes contain introductory material; view with &#39;browseVignettes()&#39;. To cite
-    Bioconductor, see &#39;citation(&quot;Biobase&quot;)&#39;, and for packages &#39;citation(&quot;pkgname&quot;)&#39;.
-
-
-Attaching package: ‘Biobase’
-
-The following object is masked from ‘package:MatrixGenerics’:
-
-    rowMedians
-
-The following objects are masked from ‘package:matrixStats’:
-
-    anyMissing, rowMedians</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShlZGdlUilcbmxpYnJhcnkoRW5oYW5jZWRWb2xjYW5vKVxuYGBgIn0= -->
-<pre class="r"><code>library(edgeR)
-library(EnhancedVolcano)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiTG9hZGluZyByZXF1aXJlZCBwYWNrYWdlOiBnZ3JlcGVsXG5SZWdpc3RlcmVkIFMzIG1ldGhvZHMgb3ZlcndyaXR0ZW4gYnkgJ2dnYWx0JzpcbiAgbWV0aG9kICAgICAgICAgICAgICAgICAgZnJvbSAgICAgXG4gIGZvcnRpZnkudGFibGUgICAgICAgICAgIGdnZm9ydGlmeVxuICBncmlkLmRyYXcuYWJzb2x1dGVHcm9iICBnZ3Bsb3QyICBcbiAgZ3JvYkhlaWdodC5hYnNvbHV0ZUdyb2IgZ2dwbG90MiAgXG4gIGdyb2JXaWR0aC5hYnNvbHV0ZUdyb2IgIGdncGxvdDIgIFxuICBncm9iWC5hYnNvbHV0ZUdyb2IgICAgICBnZ3Bsb3QyICBcbiAgZ3JvYlkuYWJzb2x1dGVHcm9iICAgICAgZ2dwbG90MiAgXG4ifQ== -->
-<pre><code>Loading required package: ggrepel
-Registered S3 methods overwritten by &#39;ggalt&#39;:
-  method                  from     
-  fortify.table           ggfortify
-  grid.draw.absoluteGrob  ggplot2  
-  grobHeight.absoluteGrob ggplot2  
-  grobWidth.absoluteGrob  ggplot2  
-  grobX.absoluteGrob      ggplot2  
-  grobY.absoluteGrob      ggplot2  </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShTZXVyYXQpXG5gYGAifQ== -->
-<pre class="r"><code>library(Seurat)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoicGFja2FnZSDigJhTZXVyYXTigJkgd2FzIGJ1aWx0IHVuZGVyIFIgdmVyc2lvbiA0LjEuMkF0dGFjaGluZyBTZXVyYXRPYmplY3RcbkF0dGFjaGluZyBzcFxuXG5BdHRhY2hpbmcgcGFja2FnZTog4oCYU2V1cmF04oCZXG5cblRoZSBmb2xsb3dpbmcgb2JqZWN0IGlzIG1hc2tlZCBmcm9tIOKAmHBhY2thZ2U6U3VtbWFyaXplZEV4cGVyaW1lbnTigJk6XG5cbiAgICBBc3NheXNcbiJ9 -->
-<pre><code>package ‘Seurat’ was built under R version 4.1.2Attaching SeuratObject
-Attaching sp
-
-Attaching package: ‘Seurat’
-
-The following object is masked from ‘package:SummarizedExperiment’:
-
-    Assays</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShsdW1pKVxuYGBgIn0= -->
-<pre class="r"><code>library(lumi)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiU2V0dGluZyBvcHRpb25zKCdkb3dubG9hZC5maWxlLm1ldGhvZC5HRU9xdWVyeSc9J2F1dG8nKVxuU2V0dGluZyBvcHRpb25zKCdHRU9xdWVyeS5pbm1lbW9yeS5ncGwnPUZBTFNFKVxuTm8gbWV0aG9kcyBmb3VuZCBpbiBwYWNrYWdlIOKAmFJTUUxpdGXigJkgZm9yIHJlcXVlc3Q6IOKAmGRiTGlzdEZpZWxkc+KAmSB3aGVuIGxvYWRpbmcg4oCYbHVtaeKAmVxuIn0= -->
-<pre><code>Setting options(&#39;download.file.method.GEOquery&#39;=&#39;auto&#39;)
-Setting options(&#39;GEOquery.inmemory.gpl&#39;=FALSE)
-No methods found in package ‘RSQLite’ for request: ‘dbListFields’ when loading ‘lumi’</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncmVwZWwpXG5vcHRpb25zKGdncmVwZWwubWF4Lm92ZXJsYXBzID0gSW5mKVxuXG5gYGAifQ== -->
-<pre class="r"><code>library(tidyverse)
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(edgeR)
+library(EnhancedVolcano)
+library(Seurat)
+library(lumi)
+library(tidyverse)
 library(ggrepel)
 options(ggrepel.max.overlaps = Inf)
 </code></pre>

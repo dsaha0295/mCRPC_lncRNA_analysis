@@ -145,7 +145,7 @@ x <- x[keep.exprs,, keep.lib.size = F]
 
 #Calculate effective library size using EdgeR TMM method
 x <- calcNormFactors(x, method = "TMM")
-x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 ###############
+#x <- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 ###############
 
 
 
@@ -188,9 +188,9 @@ bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
                                           
                                    
 plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 & adj.P.Val < 0.1  & Cluster !="Unknown" ), force = 0.8, size = 2) + scale_alpha(range = c(0.8,1)) + theme_classic()
-                                   
+plot                                   
 bulk_deg %>% dplyr::filter(Genes == "SCHLAP1")
-
+bulk_deg %>% dplyr::filter(Cluster != "Unknown")
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 plot
 
@@ -212,13 +212,14 @@ up <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC > 1 & Cluster != "Unkno
 
 down <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & logFC < -1 & Cluster != "Unknown")  
 
-
+View(up)
+down
 bulk_deg <- bulk_deg %>% left_join( y = final_markers, by = c("Genes" = "gene")) %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster))
 bulk_deg <- bulk_deg %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.1, 1))
 
 bulk_deg %>% dplyr::filter(Genes %in% c("CYTOR", "MIAT"))
 
-
+View(bulk_deg)
 ```
 
 
@@ -244,7 +245,7 @@ plot <- dss %>% ggplot(aes(x = Diff * 100, y = logFC, color = Cluster, label= ge
 
 plot
 
-
+up
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot)
 
 

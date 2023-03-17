@@ -306,7 +306,7 @@ top <-compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr
 names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %>% dplyr::slice(1:4) %>% .$cluster
 
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+pdf("/Users/ds/Desktop/plot.pdf", width = 15, height = 10)
 DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue'), 5)))
 dev.off()
 ```

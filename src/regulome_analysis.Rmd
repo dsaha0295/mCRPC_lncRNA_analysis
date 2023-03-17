@@ -105,7 +105,7 @@ return(df)
 
 ```{r}
   
-res
+
 df <- res %>% mutate(Region = rep(c("AR", "FOXA1", "H3K27ac", "HMR"), each = 6))  %>% mutate(Adj.Pval = rep(p.adjust(unique(Pval)), each = 2)) %>% mutate(Sig = ifelse(Adj.Pval< 0.1, 1, 0.1)) %>% mutate(Group = paste0(Group, "\n n=", Total))
 
 
@@ -196,17 +196,17 @@ data.frame(overlaps) %>% dplyr::select(c("seqnames", "start", "end"))%>% write.t
 ehmr <- read.csv(file = "/Users/ds/Desktop/projects/lncRNA/data/ehmr.csv", header = T)
 
 
-a <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "HMR") %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate lncRNAs")
+a <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "HMR") %>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate lncRNAs")
 
-b <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "TME lncRNAs")
+b <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "HMR")%>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "TME lncRNAs")
 
-c <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "HMR")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Other lncRNAs")
+c <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "HMR")%>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Other lncRNAs")
 
-e <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "H3K27AC") %>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate lncRNAs")
+e <- ehmr %>% dplyr::filter(symbol %in% pca_lncrna & type == "H3K27AC") %>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Prostate lncRNAs")
 
-f <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "H3K27AC")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "TME lncRNAs")
+f <- ehmr %>% dplyr::filter(symbol %in% notpca_lncrna & type == "H3K27AC")%>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "TME lncRNAs")
 
-g <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "H3K27AC")%>% arrange(cor) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Other lncRNAs")
+g <- ehmr %>% dplyr::filter(symbol %in% other_lncrna & type == "H3K27AC")%>% arrange(pval) %>% group_by(symbol) %>% dplyr::slice(1) %>% mutate(Group = "Other lncRNAs")
 
 df <- rbind(a,b,c,e,f,g) 
 
@@ -221,7 +221,7 @@ pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 df %>% ggplot(aes(x = cor, fill = Group)) +facet_grid(~ type) + geom_density(alpha = 0.5) + xlab("Correlation between methylation v.s gene expression") + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + theme_classic()
 dev.off()
 
-
+df
 
 ```
 
