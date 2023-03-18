@@ -1,32 +1,62 @@
 ---
-title: "R Notebook"
+title: "Orthogonal evidence of lncRNA markers in other mCRPC/PCa scRNA-seq datasets"
 output: html_notebook
 ---
-
+#LOAD LIBRARIES
 ```{r}
-library(dittoSeq)
+
+library(tidyverse)
+library(Seurat)
+library(Hmisc)
+library(ggrepel)
+library(EnhancedVolcano)
+library(msigdbr)
+library(EnsDb.Hsapiens.v86)
+library(Matrix)
+library(ggpubr)
+library(tidytext)
+library(cowplot)
+library(ComplexHeatmap)
+library(circlize)
+library(harmony)
+options(ggrepel.max.overlaps = Inf)
 
 
 ```
 
 
+#READ IN VALIDATION DATA SETS
 ```{r}
-olap <- intersect(row.names(bmcrpc), final_markers$gene) %>% intersect( row.names(scrna))
+#Read in scRNA-seq data frm He et al. 
+bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
+final_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
+#Read in scRNA-seq data from Kfoury et al. 
+bmcrpc <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/seurat/Kfoury_bmCRPC_scRNA.rds")
+Idents(bmcrpc) <- "cells"
+#Read in scRNA-seq data from Song et al. 
+scrna <- readRDS(file = "/Users/ds/Desktop/dge_pca.rds")
+Idents(scrna) <- "ID_coarse"
 
+```
+
+#FIND OVERLAPPING LNCRNAS ACROSS DATASETS
+```{r}
+#Intersect datasets
+olap <- intersect(row.names(bmcrpc), final_markers$gene) %>% intersect( row.names(scrna))
 olap <- dplyr::filter(final_markers, gene %in% olap)$gene
 
-length(olap)/length(final_markers$gene)
 
-olap %>% length()
 
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-DoHeatmap(object = bmet, features = dplyr::filter(final_markers, gene %in% olap)$gene, slot = "scale.data", )
-dev.off()
+# pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+# DoHeatmap(object = bmet, features = dplyr::filter(final_markers, gene %in% olap)$gene, slot = "scale.data", )
+# dev.off()
 
 ```
 
-
+#PLOT INTERSECTING LNCRNAS IN PSEUDOBULK DATA FROM HE ET AL. 
 ```{r}
+
+#Return average expression of common lncRNA markers per celltype
 res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
   
   
@@ -38,28 +68,21 @@ res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c
   
 } ))
 
-
+#Format
 res <- res %>% mutate(Order = ifelse(Cluster == 'tumor' , 1, ifelse(Cluster == 'B lineage', 2, ifelse(Cluster=='NK/T', 3, ifelse(Cluster == "neutrophil", 4, ifelse(Cluster == "monocyte/macrophage", 5, ifelse(Cluster == "erythroid", 6, 7))  ))))) %>% arrange(Order)
-
 mat <-  dplyr::select(res, -c("Genes", "Cluster", "Order"))
 anno <- dplyr::select(res, c("Genes", "Cluster"))
-
-
 mat <- t(scale(t(mat), scale = T)) 
 #mat <- ramify::clip(x = mat, .min = -3, .max = 3)
 colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
-
 mat[is.na(mat)] <- 0
-anno
 anno_col <- colorRampPalette(c("green", "blue", "red", "black", "grey", "purple"))(6)
 names(anno_col) <- unique(anno$Cluster)
-list(anno_col)
-
 row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 
 
-
+#Plot heatmap
 pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 1),rep("C",1),rep("D", 1), "E" , "F")),row_names_gp = grid::gpar(fontsize = 10) , column_names_gp = gpar(fontsize = 10) ,row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
@@ -69,9 +92,9 @@ dev.off()
 ```
 
 
-#Validate markers
+#PLOT INTERSECTING LNCRNAS IN PSEUDOBULK DATA FROM KFOURY ET AL.
 ```{r}
-
+#Return average expression of common lncRNA markers per celltype
 res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
   
   
@@ -83,31 +106,21 @@ res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c
   
 } ))
 
-
+#Format
 res <- res %>% mutate(Order = ifelse(Cluster == 'tumor' , 1, ifelse(Cluster == 'B lineage', 2, ifelse(Cluster=='NK/T', 3, ifelse(Cluster == "neutrophil", 4, ifelse(Cluster == "monocyte/macrophage", 5, ifelse(Cluster == "erythroid", 6, 7))  ))))) %>% arrange(Order)
-
 mat <-  dplyr::select(res, -c("Genes", "Cluster", "Order"))
 anno <- dplyr::select(res, c("Genes", "Cluster"))
-anno
-
-
-mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Tumor"),c("Mature.B","memBcell" ,"Pro.B","Immature.B.cells"),  c("CTL.1", "CTL.2", "NK", "NKT", "CD4..Naive" ,"Treg.Active","Th1.17","Treg.Resting","CD8..Naive"),c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte.prog"), c("Erythroid")))))
-
-
+mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Tumor"),c("Mature.B","memBcell" ,"Pro.B","Immature.B.cells"),  c("CTL.1", "CTL.2", "NK", "NKT", "CD4..Naive" ,"Treg.Active","Th1.17","Treg.Resting","CD8..Naive"),c("Mono3" , "mDC"  ,"TIM" ,"TAM" ,"Mono2"  ,"Mono1","Monocyte.prog"), c("Erythroid")))))#Group similar celltypes together
 mat <- t(scale(t(mat), scale = T)) 
 mat <- ramify::clip(x = mat, .min = -2, .max = 2)
 colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
-
 mat[is.na(mat)] <- 0
-anno
 anno_col <- colorRampPalette(c("green", "blue", "red", "black", "grey", "purple"))(6)
 names(anno_col) <- unique(anno$Cluster)
-list(anno_col)
-
 row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 
-anno_col
+#plot heatmap
 pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E" )), row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
@@ -116,7 +129,10 @@ dev.off()
 
 ```
 
+
+#PLOT INTERSECTING LNCRNAS IN PSEUDOBULK DATA FROM SONG ET AL.
 ```{r}
+#Return average expression of common lncRNA markers per celltype
 res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c){
   
   
@@ -129,32 +145,20 @@ res <- do.call(rbind, lapply(X = unique(final_markers$cluster), FUN = function(c
 } ))
 
 
-
-
-
+#Format
 res <- res %>% mutate(Order = ifelse(Cluster == 'tumor' , 1, ifelse(Cluster == 'B lineage', 2, ifelse(Cluster=='NK/T', 3, ifelse(Cluster == "neutrophil", 4, ifelse(Cluster == "monocyte/macrophage", 5, ifelse(Cluster == "erythroid", 6, 7))  ))))) %>% arrange(Order)
-
-
-
 mat <-  dplyr::select(res, -c("Genes", "Cluster", "Order"))
 anno <- dplyr::select(res, c("Genes", "Cluster"))
-
-mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Epithelial"),c("B.cell", "Plasma"),  c("T.cell"),c("Myeloid")))))
-
-
+mat <- mat %>% dplyr::select(c(paste0("RNA.", c(c("Epithelial"),c("B.cell", "Plasma"),  c("T.cell"),c("Myeloid")))))#Group similar cell types
 mat <- t(scale(t(mat), scale = T)) 
 mat <- ramify::clip(x = mat, .min = -2, .max = 2)
 colnames(mat) <- gsub(pattern = "RNA.", replacement = "", x = colnames(mat))
-
 mat[is.na(mat)] <- 0
-
 anno_col <- colorRampPalette(c("green", "blue", "red", "black", "grey", "purple"))(6)
 names(anno_col) <- unique(anno$Cluster)
-list(anno_col)
-
 row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
-
+#Plot heatmap
 pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 2),rep("C",1),rep("D", 1))),row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
@@ -162,6 +166,8 @@ dev.off()
 
 ```
 
+
+############Optional validation using CIBERSORTX ##########################
 
 #Create reference for CIBERSORTX GEP estimation (S mode)
 ```{r}
@@ -176,7 +182,6 @@ colnames(tpm) <- meta$ID
 reference <- data.frame(Genes = row.names(tpm), tpm)
 colnames(reference) <- c("Genes", gsub(x = colnames(reference)[-1], pattern = ".[0-9]*$", replacement = ""))
 
-head(reference)
 
 write.table(reference, file = "/Users/ds/Desktop/He_bulk_reference.txt", quote = F, row.names = F, sep = "\t" )
 
