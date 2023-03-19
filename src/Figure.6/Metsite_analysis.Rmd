@@ -89,7 +89,7 @@ DoHeatmap(object =liver,features = c(order$gene[-1], order$gene[1],sc_sig[! sc_s
 dev.off()
 ```
 
-#PATHWAY ANALYSIS OF LNCRNAS ASSOCIATED WITH RB1 LOSS
+#PATHWAY ANALYSIS OF LNCRNAS ASSOCIATED WITH HISTOLOGY
 ```{r}
 #Obtain Hallmark pathways
 all_gene_sets = msigdbr(species = "Homo sapiens")
