@@ -11,6 +11,7 @@ library(rstatix)
 library(org.Hs.eg.db)
 library(GSVA)
 library(ComplexHeatmap)
+library(ggrepel)
 ```
 
 
@@ -100,11 +101,11 @@ bulk_deg$cluster <- bulk_deg$cluster %>% as.character()
 bulk_deg <- bulk_deg %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", cluster)) %>% mutate(Alpha = ifelse(Cluster == "Unknown", 0.8, 1))
 
 #Plot
-plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "navy","grey" , "navy")) + geom_hline(yintercept = -log10(0.25), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.25 & Cluster !="Unknown" ), force = 0.8, size = 2.5) + ggtitle(label = "lncRNAs associated with AR gain") + theme_classic()
-ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 10)
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "black", "navy","grey" , "navy")) + geom_hline(yintercept = -log10(0.25), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.25 & Cluster !="Unknown" ), force = 0.8, size = 2.5) + ggtitle(label = "lncRNAs associated with AR region amplifications") + theme_classic()
+ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", height = 5)
 
 #Write to disk
-write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table4.csv",quote = F, row.names = F)
+#write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table4.csv",quote = F, row.names = F)
 
 #AR-upregulated pca-lncRNAs
 ar_lncrna <- bulk_deg %>% dplyr::filter( (logFC >0) & cluster == 'tumor') %>% .$Genes
@@ -115,7 +116,7 @@ ar_lncrna <- bulk_deg %>% dplyr::filter( (logFC >0) & cluster == 'tumor') %>% .$
 
 #LCM-RNA-SEQ FROM WESTBROOK ET AL. 2022 NAT COMM
 ```{r}
-
+set.seed(111)
 #Read in LCM-RNA-seq data
 lcm <- read_csv(file = "/Users/ds/Desktop/projects/data/rna/LCM_enza_WCDT_TPM.csv", col_names = T)
 colnames(lcm)[1] <- "Gene"
@@ -171,7 +172,7 @@ df <- gsva.es %>% t() %>% data.frame(Patient.ID = row.names(.), Pca.lncrna = .) 
 row.names(df) <- df$Patient.ID
 df$AR.GEX <- as.numeric(df$AR.GEX)
 df$AR.VIPER <- as.numeric(df$AR.VIPER)
-p1 <- df %>% dplyr::select(c(Pca.lncrna,AR.VIPER, AR.GEX)) %>% gather(key = "Signature", value = "GEX", -Pca.lncrna) %>% ggplot(aes(x = Pca.lncrna, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = "lm") + stat_cor() + scale_color_manual(values = c("navy", "darkred")) + theme_classic() + xlab("AR upregulated Pca-lncRNAs")
+p1 <- df %>% dplyr::select(c(Pca.lncrna,AR.VIPER, AR.GEX)) %>% gather(key = "Signature", value = "GEX", -Pca.lncrna) %>% ggplot(aes(x = Pca.lncrna, y = GEX, color = Signature)) %>% facet(facet.by = "Signature", panel.labs.font = list(face = "bold", size = 20), scales = 'free') + geom_point() + geom_smooth(method = "lm") + stat_cor() + scale_color_manual(values = c("navy", "darkred")) + theme_classic() + xlab("AR upregulated Pca-lncRNAs") + theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 20))
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 p1
 dev.off()

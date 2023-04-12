@@ -83,7 +83,7 @@ atactrack <- AnnotationTrack(h3ac, name = "K27ac", background.title = "black" , 
 gtrack <- GenomeAxisTrack()
 itrack <- IdeogramTrack(genome = "hg38", chromosome = chr)
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-plotTracks(list(itrack,gtrack, dTrack,arbtrack,frbtrack, atactrack, atrack,grtrack), from = start(target) -10000, to = end(target) + 10000, type = "histogram",ylim = c(-30,0))
+plotTracks(list(gtrack, dTrack,arbtrack,frbtrack, atactrack, atrack,grtrack), from = start(target) -10000, to = end(target) + 10000, type = "histogram",ylim = c(-30,0)) + 
 dev.off()
 
 

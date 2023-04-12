@@ -1758,110 +1758,54 @@ pre code {
 <p>#LOAD LIBRARIES</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncHVicilcbmxpYnJhcnkocnN0YXRpeClcbmxpYnJhcnkob3JnLkhzLmVnLmRiKVxuYGBgXG5gYGByXG5saWJyYXJ5KEdTVkEpXG5saWJyYXJ5KENvbXBsZXhIZWF0bWFwKVxuYGBgXG5gYGAifQ== -->
-<pre class="r"><code>```r
-library(tidyverse)
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KGdncHVicilcbmxpYnJhcnkocnN0YXRpeClcbmxpYnJhcnkob3JnLkhzLmVnLmRiKVxubGlicmFyeShHU1ZBKVxubGlicmFyeShDb21wbGV4SGVhdG1hcClcbmxpYnJhcnkoZ2dyZXBlbClcbmBgYCJ9 -->
+<pre class="r"><code>library(tidyverse)
 library(ggpubr)
 library(rstatix)
-library(org.Hs.eg.db)</code></pre>
-<pre class="r"><code>library(GSVA)
-library(ComplexHeatmap)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-#READ IN METADATA FOR RNA-SEQ
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuYW5ubyA8LSByZWFkLnRhYmxlKFxcL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9hbm5vLzIwMjAwOV9kZWVwUk5Bc2VxX3NhbXBsZV9mdWxsLnR4dFxcLCBoZWFkZXIgPVQpXG5cblxuXG5hbm5vIDwtIGFubm8gJT4lIGRwbHlyOjpzZWxlY3QoYyhzYW1wbGVfaWQsIHdnc19pZCwgYmlvcHN5X3NpdGUsIGRpc2Vhc2VfdHlwZV9TSUdfR0VYLCBJRF9wYXRpZW50LCBBUix0dW1vcl9wdXJpdHlfcm5hKSkgXG5jZiA8LSByZWFkLnRhYmxlKFxcL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvQk1FX2FuYWx5c2lzL3Jlc3VsdHMvQ0lCRVJTT1JUeF9Kb2IzM19BZGp1c3RlZC50eHRcXCwgc2VwID0gXFxcXHRcXCwgaGVhZGVyID0gVClcbmNmJHNhbXBsZV9pZCA8LSBnc3ViKFxcXFxcXC5cXCwgXFwtXFwsIGNmJE1peHR1cmUpXG5yb3cubmFtZXMoY2YpIDwtIGNmJE1peHR1cmVcblxuY2YgPC0gaW5uZXJfam9pbih4ID0gY2YsIHkgPSBhbm5vLCBieSAgPSBjKFxcc2FtcGxlX2lkXFwgPSBcXHNhbXBsZV9pZFxcKSlcblxuXG5cbnJvdy5uYW1lcyhjZikgPC0gY2Ykc2FtcGxlX2lkXG5cblxuY2YgPC0gbmEub21pdChjZikjT21pdCBzYW1wbGVzIHdpdGhvdXQgV0dTIGRhdGFcblxuXG5jZiRBUiA8LSBpZmVsc2UoY2YkQVIgPT0gMywgXFxHYWluXFwsIFxcV1RcXClcblxuY2YkQVIgJT4lIHRhYmxlKClcbmBgYFxuYGBgIn0= --&gt;
-
-```r
-```r
-anno &lt;- read.table(\/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt\, header =T)
-
-
-
+library(org.Hs.eg.db)
+library(GSVA)
+library(ComplexHeatmap)
+library(ggrepel)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>#READ IN METADATA FOR RNA-SEQ</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jTWV0YSBkYXRhIGZvciBEZWVwIFJOQS1zZXFcbmFubm8gPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvYW5uby8yMDIwMDlfZGVlcFJOQXNlcV9zYW1wbGVfZnVsbC50eHRcIiwgaGVhZGVyID1UKVxuYW5ubyA8LSBhbm5vICU+JSBkcGx5cjo6c2VsZWN0KGMoc2FtcGxlX2lkLCB3Z3NfaWQsIGJpb3BzeV9zaXRlLCBkaXNlYXNlX3R5cGVfU0lHX0dFWCwgSURfcGF0aWVudCwgQVIsdHVtb3JfcHVyaXR5X3JuYSkpIFxuY2YgPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL21DUlBDX2xuY1JOQV9hbmFseXNpcy9kYXRhL0NJQkVSU09SVHhfSm9iMzNfQWRqdXN0ZWQudHh0XCIsIHNlcCA9IFwiXFx0XCIsIGhlYWRlciA9IFQpXG5jZiRzYW1wbGVfaWQgPC0gZ3N1YihcIlxcXFwuXCIsIFwiLVwiLCBjZiRNaXh0dXJlKVxucm93Lm5hbWVzKGNmKSA8LSBjZiRNaXh0dXJlXG5jZiA8LSBpbm5lcl9qb2luKHggPSBjZiwgeSA9IGFubm8sIGJ5ICA9IGMoXCJzYW1wbGVfaWRcIiA9IFwic2FtcGxlX2lkXCIpKVxucm93Lm5hbWVzKGNmKSA8LSBjZiRzYW1wbGVfaWRcbiNPbWl0IHNhbXBsZXMgd2l0aG91dCBXR1MgZGF0YVxuY2YgPC0gbmEub21pdChjZilcbiNGb3JtYXQgQVIgcmVnaW9uIGFtcGxpZmljYXRpb25zIHYucyBXVFxuY2YkQVIgPC0gaWZlbHNlKGNmJEFSID09IDMsIFwiR2FpblwiLCBcIldUXCIpXG5cbmBgYCJ9 -->
+<pre class="r"><code>
+#Meta data for Deep RNA-seq
+anno &lt;- read.table(&quot;/Users/ds/Desktop/projects/data/anno/202009_deepRNAseq_sample_full.txt&quot;, header =T)
 anno &lt;- anno %&gt;% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SIG_GEX, ID_patient, AR,tumor_purity_rna)) 
-cf &lt;- read.table(\/Users/ds/Desktop/projects/BME_analysis/results/CIBERSORTx_Job33_Adjusted.txt\, sep = \\t\, header = T)
-cf$sample_id &lt;- gsub(\\\.\, \-\, cf$Mixture)
+cf &lt;- read.table(&quot;/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/data/CIBERSORTx_Job33_Adjusted.txt&quot;, sep = &quot;\t&quot;, header = T)
+cf$sample_id &lt;- gsub(&quot;\\.&quot;, &quot;-&quot;, cf$Mixture)
 row.names(cf) &lt;- cf$Mixture
-
-cf &lt;- inner_join(x = cf, y = anno, by  = c(\sample_id\ = \sample_id\))
-
-
-
+cf &lt;- inner_join(x = cf, y = anno, by  = c(&quot;sample_id&quot; = &quot;sample_id&quot;))
 row.names(cf) &lt;- cf$sample_id
-
-
-cf &lt;- na.omit(cf)#Omit samples without WGS data
-
-
-cf$AR &lt;- ifelse(cf$AR == 3, \Gain\, \WT\)
-
-cf$AR %&gt;% table()</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-output-begin eyJkYXRhIjoiLlxuR2FpbiAgIFdUIFxuICA1MyAgIDExIFxuIn0= --&gt;
+#Omit samples without WGS data
+cf &lt;- na.omit(cf)
+#Format AR region amplifications v.s WT
+cf$AR &lt;- ifelse(cf$AR == 3, &quot;Gain&quot;, &quot;WT&quot;)
 </code></pre>
-<p>. Gain WT 53 11</p>
-<pre><code>
-
-
-&lt;!-- rnb-output-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-#EDGER DIFFERENTIAL GENE EXPRESSION ANALYSIS OF LNCRNAS AND AR STATUS
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxuI0xpbW1hIERFIGFuYWx5c2lzIFxuXG5cbiNSZWFkIGluIHJhdyBjb3VudHMsIGNvbnZlcnQgdG8gbWF0cml4IHdpdGggcm93cyBhcyBnZW5lIHN5bWJvbHMsIGNvbHVtbnMgYXMgc2FtcGxlc1xuY291bnRzIDwtIHJlYWQudGFibGUoXFwvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL3JuYS9tQ1JQQ19STkFfY291bnRzX2dlbmVuYW1lLnR4dFxcLCBoZWFkZXIgPSBUKVxuXG5cblxuXG5jb3VudHMgPC0gY291bnRzWyFkdXBsaWNhdGVkKGNvdW50cyRHZW5lbmFtZSksXVxucm93Lm5hbWVzKGNvdW50cykgPC0gY291bnRzJEdlbmVuYW1lXG5jb3VudHMgPC0gY291bnRzWywtMV0gJT4lIGFzLm1hdHJpeCgpXG5jb2xuYW1lcyhjb3VudHMpIDwtIGdzdWIoXFxcXFxcLlxcLCBcXC1cXCwgY29sbmFtZXMoY291bnRzKSkgIFxuXG4jY291bnRzIDwtIGNvdW50c1tyb3cubmFtZXMoY291bnRzKSAlaW4lIGxpbmMkZ2VuZS5uYW1lLF0jU3Vic2V0IGxuY3JuYSBpbiBoZzM4IFxuXG5cbiNLZWVwIG1hdGNoaW5nIHNhbXBsZSBpZHMgb2YgUk5BLXNlcSBhbmQgV0dTIGZvciBjbXAgYW5ub3RhdGlvblxuaWRzIDwtIGludGVyc2VjdChjb2xuYW1lcyhjb3VudHMpLHJvdy5uYW1lcyhjZikpXG5jb3VudHMgPC0gY291bnRzWyxpZHNdXG5jZiA8LSBjZltpZHMsXVxuXG5cblxuI0NyZWF0ZSBkZ2Ugb2JqZWN0IC0gY3JlYXRlIGNvdW50cyBtYXRyaXggYW5kIHNhbXBsZSBhbm5vIGRmIHdpdGggbGlicmFyeSBzaXplc1xueCA8LSBER0VMaXN0KGNvdW50cyA9IGNvdW50cylcblxuI0FkZCBjbHVzdGVyIHZhcmlhYmxlIHRvIGRlc2lnbmF0ZSBncm91cCBtZW1iZXJzaGlwIHRvIHNhbXBsZSBkZlxueCRzYW1wbGVzIDwtIGNiaW5kKHgkc2FtcGxlcywgZHBseXI6OnNlbGVjdChjZiwgYyggYmlvcHN5X3NpdGUsIGRpc2Vhc2VfdHlwZV9TSUdfR0VYLCBBUix0dW1vcl9wdXJpdHlfcm5hICkpKVxuXG4jUmVtb3ZlIGdlbmVzIHdpdGggbG93IGV4cHJlc3Npb24gYWNyb3NzIHNhbXBsZXNcbmtlZXAuZXhwcnMgPC0gZmlsdGVyQnlFeHByKHgsIG1pbi5jb3VudCA9IDUpXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-#Limma DE analysis 
-
-
-#Read in raw counts, convert to matrix with rows as gene symbols, columns as samples
-counts &lt;- read.table(\/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt\, header = T)
-
-
-
-
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>#EDGER DIFFERENTIAL GENE EXPRESSION ANALYSIS OF LNCRNAS AND AR STATUS</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1JlYWQgaW4gcmF3IGNvdW50cywgY29udmVydCB0byBtYXRyaXggd2l0aCByb3dzIGFzIGdlbmUgc3ltYm9scywgY29sdW1ucyBhcyBzYW1wbGVzXG5jb3VudHMgPC0gcmVhZC50YWJsZShcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvcm5hL21DUlBDX1JOQV9jb3VudHNfZ2VuZW5hbWUudHh0XCIsIGhlYWRlciA9IFQpXG5jb3VudHMgPC0gY291bnRzWyFkdXBsaWNhdGVkKGNvdW50cyRHZW5lbmFtZSksXVxucm93Lm5hbWVzKGNvdW50cykgPC0gY291bnRzJEdlbmVuYW1lXG5jb3VudHMgPC0gY291bnRzWywtMV0gJT4lIGFzLm1hdHJpeCgpXG5jb2xuYW1lcyhjb3VudHMpIDwtIGdzdWIoXCJcXFxcLlwiLCBcIi1cIiwgY29sbmFtZXMoY291bnRzKSkgIFxuXG5cbiNLZWVwIG1hdGNoaW5nIHNhbXBsZSBpZHMgb2YgUk5BLXNlcSBhbmQgV0dTIGZvciBjbXAgYW5ub3RhdGlvblxuaWRzIDwtIGludGVyc2VjdChjb2xuYW1lcyhjb3VudHMpLHJvdy5uYW1lcyhjZikpXG5jb3VudHMgPC0gY291bnRzWyxpZHNdXG5jZiA8LSBjZltpZHMsXVxuXG5cbiNDcmVhdGUgZGdlIG9iamVjdCAtIGNyZWF0ZSBjb3VudHMgbWF0cml4IGFuZCBzYW1wbGUgYW5ubyBkZiB3aXRoIGxpYnJhcnkgc2l6ZXNcbnggPC0gREdFTGlzdChjb3VudHMgPSBjb3VudHMpXG5cbiNBZGQgY2x1c3RlciB2YXJpYWJsZSB0byBkZXNpZ25hdGUgZ3JvdXAgbWVtYmVyc2hpcCB0byBzYW1wbGUgZGZcbngkc2FtcGxlcyA8LSBjYmluZCh4JHNhbXBsZXMsIGRwbHlyOjpzZWxlY3QoY2YsIGMoIGJpb3BzeV9zaXRlLCBkaXNlYXNlX3R5cGVfU0lHX0dFWCwgQVIsdHVtb3JfcHVyaXR5X3JuYSApKSlcblxuI1JlbW92ZSBnZW5lcyB3aXRoIGxvdyBleHByZXNzaW9uIGFjcm9zcyBzYW1wbGVzXG5rZWVwLmV4cHJzIDwtIGZpbHRlckJ5RXhwcih4LCBtaW4uY291bnQgPSA1KSNNaW4gY291bnQgb2YgNVxuYGBgIn0= -->
+<pre class="r"><code>#Read in raw counts, convert to matrix with rows as gene symbols, columns as samples
+counts &lt;- read.table(&quot;/Users/ds/Desktop/projects/data/rna/mCRPC_RNA_counts_genename.txt&quot;, header = T)
 counts &lt;- counts[!duplicated(counts$Genename),]
 row.names(counts) &lt;- counts$Genename
 counts &lt;- counts[,-1] %&gt;% as.matrix()
-colnames(counts) &lt;- gsub(\\\.\, \-\, colnames(counts))  
-
-#counts &lt;- counts[row.names(counts) %in% linc$gene.name,]#Subset lncrna in hg38 
+colnames(counts) &lt;- gsub(&quot;\\.&quot;, &quot;-&quot;, colnames(counts))  
 
 
 #Keep matching sample ids of RNA-seq and WGS for cmp annotation
 ids &lt;- intersect(colnames(counts),row.names(cf))
 counts &lt;- counts[,ids]
 cf &lt;- cf[ids,]
-
 
 
 #Create dge object - create counts matrix and sample anno df with library sizes
@@ -1871,36 +1815,20 @@ x &lt;- DGEList(counts = counts)
 x$samples &lt;- cbind(x$samples, dplyr::select(cf, c( biopsy_site, disease_type_SIG_GEX, AR,tumor_purity_rna )))
 
 #Remove genes with low expression across samples
-keep.exprs &lt;- filterByExpr(x, min.count = 5)</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-output-begin eyJkYXRhIjoiQWxsIHNhbXBsZXMgYXBwZWFyIHRvIGJlbG9uZyB0byB0aGUgc2FtZSBncm91cC5cbiJ9 --&gt;
-</code></pre>
-<p>All samples appear to belong to the same group.</p>
-<pre><code>
-
-
-&lt;!-- rnb-output-end --&gt;
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYGBgclxueCA8LSB4W2tlZXAuZXhwcnMsLCBrZWVwLmxpYi5zaXplID0gRl1cblxuI0NhbGN1bGF0ZSBlZmZlY3RpdmUgbGlicmFyeSBzaXplIHVzaW5nIEVkZ2VSIFRNTSBtZXRob2RcbnggPC0gY2FsY05vcm1GYWN0b3JzKHgsIG1ldGhvZCA9IFxcVE1NXFwpXG5cbiN4IDwtIHhbcm93Lm5hbWVzKHgpICVpbiUgbGluYyRnZW5lLm5hbWUsXSNTdWJzZXQgbG5jcm5hIGluIGhnMzggXG5cbiN4IDwtIHhbcm93Lm5hbWVzKHgpICVpbiUgcGNnJGdlbmUubmFtZSxdI1N1YnNldCBwY2cgaW4gaGczOFxuXG4jQ3JlYXRlIGRlc2lnbiBtYXRyaXggKHcvbyBpbnRlcmNlcHQpIHNwZWNpZnlpbmcgZ3JvdXAgbWVtYmVyc2hpcFxuZGVzaWduIDwtIG1vZGVsLm1hdHJpeCh+IDAgKyBBUiArIHR1bW9yX3B1cml0eV9ybmEsIGRhdGEgPSBjZikgXG5cblxuY29sbmFtZXMoZGVzaWduKSA8LSBjKFxcR2FpblxcLCBcXFdUXFwsIFxcUHVyaXR5XFwpIFxuXG4jICNDcmVhdGUgY29udHJhc3RzIHRvIGNhbGN1bGF0ZVxuY29udHIubWF0cml4IDwtIG1ha2VDb250cmFzdHMoR2FpbiAtIFdULCBsZXZlbHMgPSBjb2xuYW1lcyhkZXNpZ24pKVxuXG5cbiNOb3JtYWxpemUgY291bnRzIHRvIGxvZyBDUE0gdXNpbmcgdm9vbVxudiA8LSB2b29tKHgsIGRlc2lnbiA9IGRlc2lnbilcblxuI0ZpdCBMTSBhY2NvcmRpbmcgdG8gZGVzaWduXG52Zml0IDwtIGxtRml0KHYsIGRlc2lnbilcblxuI0NhbGN1bGF0ZSBjb250cmFzdHMgaS5lIGxvZ0ZDIGZvciBnZW5lcyBhY3Jvc3MgZ3JvdXBzXG52Zml0IDwtIGNvbnRyYXN0cy5maXQodmZpdCwgY29udHJhc3RzPWNvbnRyLm1hdHJpeClcblxuI0NhbGN1bGF0ZSB0LXN0YXRzIGFuZCBwIHZhbHMgdXNpbmcgRW1wIGJheWVzIG1ldGhvZFxuZWZpdCA8LSBlQmF5ZXModmZpdClcblxuXG4jR2V0IGxpc3Qgb2YgYWxsIGdlbmVzLCBhcnJhbmdlIGluIGRlY3JlYXNpbmcgb3JkZXJcbmJ1bGtfZGVnIDwtIHRvcFRhYmxlKGVmaXQsIG51bWJlciA9IEluZiwgY29lZiA9IDEpICU+JSBkYXRhLmZyYW1lKEdlbmVzID0gcm93Lm5hbWVzKC4pKSAgJT4lIGFycmFuZ2UoLWxvZ0ZDKSBcblxuXG5idWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSBsZWZ0X2pvaW4oIHkgPSBmaW5hbF9tYXJrZXJzLCBieSA9IGMoXFxHZW5lc1xcID0gXFxnZW5lXFwpKVxuXG5cbiNidWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSBsZWZ0X2pvaW4oIHkgPSBwY2dfbWFya2VycywgYnkgPSBjKFxcR2VuZXNcXCA9IFxcZ2VuZVxcKSlcblxuYXJfbG5jcm5hIDwtIGJ1bGtfZGVnICU+JSBkcGx5cjo6ZmlsdGVyKCAobG9nRkMgPjApICYgY2x1c3RlciA9PSAndHVtb3InKSAlPiUgLiRHZW5lc1xuXG5gYGBcbmBgYCJ9 --&gt;
-
-```r
-```r
-x &lt;- x[keep.exprs,, keep.lib.size = F]
+keep.exprs &lt;- filterByExpr(x, min.count = 5)#Min count of 5</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiQWxsIHNhbXBsZXMgYXBwZWFyIHRvIGJlbG9uZyB0byB0aGUgc2FtZSBncm91cC5cbiJ9 -->
+<pre><code>All samples appear to belong to the same group.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxueCA8LSB4W2tlZXAuZXhwcnMsLCBrZWVwLmxpYi5zaXplID0gRl1cblxuI0NhbGN1bGF0ZSBlZmZlY3RpdmUgbGlicmFyeSBzaXplIHVzaW5nIEVkZ2VSIFRNTSBtZXRob2RcbnggPC0gY2FsY05vcm1GYWN0b3JzKHgsIG1ldGhvZCA9IFwiVE1NXCIpXG5cbiNDcmVhdGUgZGVzaWduIG1hdHJpeCAody9vIGludGVyY2VwdCkgc3BlY2lmeWluZyBncm91cCBtZW1iZXJzaGlwIC0gdHVtb3IgcHVyaXR5IGFzIGNvdmFyaWF0ZVxuZGVzaWduIDwtIG1vZGVsLm1hdHJpeCh+IDAgKyBBUiArIHR1bW9yX3B1cml0eV9ybmEsIGRhdGEgPSBjZikgXG5jb2xuYW1lcyhkZXNpZ24pIDwtIGMoXCJHYWluXCIsIFwiV1RcIiwgXCJQdXJpdHlcIikgXG5cbiMgI0NyZWF0ZSBjb250cmFzdHMgdG8gY2FsY3VsYXRlXG5jb250ci5tYXRyaXggPC0gbWFrZUNvbnRyYXN0cyhHYWluIC0gV1QsIGxldmVscyA9IGNvbG5hbWVzKGRlc2lnbikpXG5cblxuI05vcm1hbGl6ZSBjb3VudHMgdG8gbG9nIENQTSB1c2luZyB2b29tXG52IDwtIHZvb20oeCwgZGVzaWduID0gZGVzaWduKVxuXG4jRml0IExNIGFjY29yZGluZyB0byBkZXNpZ25cbnZmaXQgPC0gbG1GaXQodiwgZGVzaWduKVxuXG4jQ2FsY3VsYXRlIGNvbnRyYXN0cyBpLmUgbG9nRkMgZm9yIGdlbmVzIGFjcm9zcyBncm91cHNcbnZmaXQgPC0gY29udHJhc3RzLmZpdCh2Zml0LCBjb250cmFzdHM9Y29udHIubWF0cml4KVxuXG4jQ2FsY3VsYXRlIHQtc3RhdHMgYW5kIHAgdmFscyB1c2luZyBFbXAgYmF5ZXMgbWV0aG9kXG5lZml0IDwtIGVCYXllcyh2Zml0KVxuXG5cbiNHZXQgbGlzdCBvZiBhbGwgZ2VuZXMsIGFycmFuZ2UgaW4gZGVjcmVhc2luZyBvcmRlclxuYnVsa19kZWcgPC0gdG9wVGFibGUoZWZpdCwgbnVtYmVyID0gSW5mLCBjb2VmID0gMSkgJT4lIGRhdGEuZnJhbWUoR2VuZXMgPSByb3cubmFtZXMoLikpICAlPiUgYXJyYW5nZSgtbG9nRkMpIFxuXG4jREUgbG5jUk5BcyAtIEZEUiAyNSUgYW5kIGFicyBsb2dGQyA+IDFcbmJ1bGtfZGVnIDwtIGJ1bGtfZGVnICU+JSBkcGx5cjo6ZmlsdGVyKGFkai5QLlZhbCA8IDAuMjUgJiBhYnMobG9nRkMpID4gMSkgJT4lIGxlZnRfam9pbiggeSA9IGZpbmFsX21hcmtlcnMsIGJ5ID0gYyhcIkdlbmVzXCIgPSBcImdlbmVcIikpXG4jREUgcHJvdGVpbiBjb2RpbmcgZ2VuZXMgLSBGRFIgMjUlIGFuZCBhYnMgbG9nRkMgPiAxXG4jYnVsa19kZWcgPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoYWRqLlAuVmFsIDwgMC4yNSAmIGFicyhsb2dGQykgPiAxKSAlPiUgbGVmdF9qb2luKCB5ID0gcGNnX21hcmtlcnMsIGJ5ID0gYyhcIkdlbmVzXCIgPSBcImdlbmVcIikpXG5gYGAifQ== -->
+<pre class="r"><code>x &lt;- x[keep.exprs,, keep.lib.size = F]
 
 #Calculate effective library size using EdgeR TMM method
-x &lt;- calcNormFactors(x, method = \TMM\)
+x &lt;- calcNormFactors(x, method = &quot;TMM&quot;)
 
-#x &lt;- x[row.names(x) %in% linc$gene.name,]#Subset lncrna in hg38 
-
-#x &lt;- x[row.names(x) %in% pcg$gene.name,]#Subset pcg in hg38
-
-#Create design matrix (w/o intercept) specifying group membership
+#Create design matrix (w/o intercept) specifying group membership - tumor purity as covariate
 design &lt;- model.matrix(~ 0 + AR + tumor_purity_rna, data = cf) 
-
-
-colnames(design) &lt;- c(\Gain\, \WT\, \Purity\) 
+colnames(design) &lt;- c(&quot;Gain&quot;, &quot;WT&quot;, &quot;Purity&quot;) 
 
 # #Create contrasts to calculate
 contr.matrix &lt;- makeContrasts(Gain - WT, levels = colnames(design))
@@ -1922,63 +1850,55 @@ efit &lt;- eBayes(vfit)
 #Get list of all genes, arrange in decreasing order
 bulk_deg &lt;- topTable(efit, number = Inf, coef = 1) %&gt;% data.frame(Genes = row.names(.))  %&gt;% arrange(-logFC) 
 
-
-bulk_deg &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; abs(logFC) &gt; 1) %&gt;% left_join( y = final_markers, by = c(\Genes\ = \gene\))
-
-
-#bulk_deg &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; abs(logFC) &gt; 1) %&gt;% left_join( y = pcg_markers, by = c(\Genes\ = \gene\))
-
-ar_lncrna &lt;- bulk_deg %&gt;% dplyr::filter( (logFC &gt;0) &amp; cluster == &#39;tumor&#39;) %&gt;% .$Genes
-</code></pre>
-<pre><code>
-&lt;!-- rnb-source-end --&gt;
-
-&lt;!-- rnb-chunk-end --&gt;
-
-
-&lt;!-- rnb-text-begin --&gt;
-
-
-
-#VOLCANO PLOT OF DE LNCRNAS ASSOCIATED WITH AR STATUS
-
-&lt;!-- rnb-text-end --&gt;
-
-
-&lt;!-- rnb-chunk-begin --&gt;
-
-
-&lt;!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0Zvcm1hdCBERSByZXN1bHRzXG5idWxrX2RlZyRjbHVzdGVyIDwtIGJ1bGtfZGVnJGNsdXN0ZXIgJT4lIGFzLmNoYXJhY3RlcigpXG5idWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgbXV0YXRlKENsdXN0ZXIgPSBpZmVsc2UoaXMubmEoY2x1c3RlciksIFwiVW5rbm93blwiLCBjbHVzdGVyKSkgJT4lIG11dGF0ZShBbHBoYSA9IGlmZWxzZShDbHVzdGVyID09IFwiVW5rbm93blwiLCAwLjgsIDEpKVxuXG4jUGxvdFxucGxvdCA8LSBnZ3Bsb3QoYnVsa19kZWcsIGFlcyh4ID0gbG9nRkMsIHkgPSAtbG9nMTAoYWRqLlAuVmFsKSwgY29sb3IgPSBDbHVzdGVyLCBhbHBoYSA9IEFscGhhLCBsYWJlbCA9IEdlbmVzKSApICsgZ2VvbV9wb2ludCgpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoXCJwdXJwbGVcIiwgXCJvcmFuZ2VcIiwgXCJyZWRcIiwgXCJibGFja1wiLCBcIm5hdnlcIixcImdyZXlcIiAsIFwibmF2eVwiKSkgKyBnZW9tX2hsaW5lKHlpbnRlcmNlcHQgPSAtbG9nMTAoMC4yNSksIGxpbmV0eXBlPSAnZGFzaGVkJykgKyBnZW9tX3ZsaW5lKHhpbnRlcmNlcHQgPSBjKC0xLDEpLCBsaW5ldHlwZSA9ICdkYXNoZWQnKSArIGdlb21fdGV4dF9yZXBlbChkYXRhID0gZHBseXI6OmZpbHRlcihidWxrX2RlZywgYWJzKGxvZ0ZDKSA+IDEgJmFkai5QLlZhbCA8IDAuMjUgJiBDbHVzdGVyICE9XCJVbmtub3duXCIgKSwgZm9yY2UgPSAwLjgsIHNpemUgPSAyLjUpICsgZ2d0aXRsZShsYWJlbCA9IFwibG5jUk5BcyBhc3NvY2lhdGVkIHdpdGggQVIgZ2FpblwiKSArIHRoZW1lX2NsYXNzaWMoKVxuZ2dzYXZlKHBsb3QgPSBwbG90LCBmaWxlbmFtZSA9IFwiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGZcIiwgd2lkdGggPSAxMClcblxuI1dyaXRlIHRvIGRpc2tcbndyaXRlLmNzdih4ID0gYnVsa19kZWcsIGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL1N1cHBsZW1lbnRhcnkuVGFibGU0LmNzdlwiLHF1b3RlID0gRiwgcm93Lm5hbWVzID0gRilcblxuI0FSLXVwcmVndWxhdGVkIHBjYS1sbmNSTkFzXG5hcl9sbmNybmEgPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoIChsb2dGQyA+MCkgJiBjbHVzdGVyID09ICd0dW1vcicpICU+JSAuJEdlbmVzXG5cbmBgYCJ9 --&gt;
-
-```r
-#Format DE results
-bulk_deg$cluster &lt;- bulk_deg$cluster %&gt;% as.character()
-bulk_deg &lt;- bulk_deg %&gt;% mutate(Cluster = ifelse(is.na(cluster), &quot;Unknown&quot;, cluster)) %&gt;% mutate(Alpha = ifelse(Cluster == &quot;Unknown&quot;, 0.8, 1))
-
-#Plot
-plot &lt;- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c(&quot;purple&quot;, &quot;orange&quot;, &quot;red&quot;, &quot;black&quot;, &quot;navy&quot;,&quot;grey&quot; , &quot;navy&quot;)) + geom_hline(yintercept = -log10(0.25), linetype= &#39;dashed&#39;) + geom_vline(xintercept = c(-1,1), linetype = &#39;dashed&#39;) + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) &gt; 1 &amp;adj.P.Val &lt; 0.25 &amp; Cluster !=&quot;Unknown&quot; ), force = 0.8, size = 2.5) + ggtitle(label = &quot;lncRNAs associated with AR gain&quot;) + theme_classic()
-ggsave(plot = plot, filename = &quot;/Users/ds/Desktop/plot.pdf&quot;, width = 10)
-
-#Write to disk
-write.csv(x = bulk_deg, file = &quot;/Users/ds/Desktop/Supplementary.Table4.csv&quot;,quote = F, row.names = F)
-
-#AR-upregulated pca-lncRNAs
-ar_lncrna &lt;- bulk_deg %&gt;% dplyr::filter( (logFC &gt;0) &amp; cluster == &#39;tumor&#39;) %&gt;% .$Genes
+#DE lncRNAs - FDR 25% and abs logFC &gt; 1
+bulk_deg &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; abs(logFC) &gt; 1) %&gt;% left_join( y = final_markers, by = c(&quot;Genes&quot; = &quot;gene&quot;))
+#DE protein coding genes - FDR 25% and abs logFC &gt; 1
+#bulk_deg &lt;- bulk_deg %&gt;% dplyr::filter(adj.P.Val &lt; 0.25 &amp; abs(logFC) &gt; 1) %&gt;% left_join( y = pcg_markers, by = c(&quot;Genes&quot; = &quot;gene&quot;))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>#VOLCANO PLOT OF DE LNCRNAS ASSOCIATED WITH AR STATUS</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZ2dzYXZlKHBsb3QgPSBwbG90LCBmaWxlbmFtZSA9IFwiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGZcIiwgaGVpZ2h0ID0gNSlcblxuYGBgIn0= -->
+<pre class="r"><code>ggsave(plot = plot, filename = &quot;/Users/ds/Desktop/plot.pdf&quot;, height = 5)
 </code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiU2F2aW5nIDcgeCA1IGluIGltYWdlXG4ifQ== -->
+<pre><code>Saving 7 x 5 in image</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>#LCM-RNA-SEQ FROM WESTBROOK ET AL. 2022 NAT COMM</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jUmVhZCBpbiBMQ00tUk5BLXNlcSBkYXRhXG5sY20gPC0gcmVhZF9jc3YoZmlsZSA9IFwiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvTENNX2VuemFfV0NEVF9UUE0uY3N2XCIsIGNvbF9uYW1lcyA9IFQpXG5jb2xuYW1lcyhsY20pWzFdIDwtIFwiR2VuZVwiXG4jQWRkIG1ldGFkYXRhXG5tZXRhIDwtIHJlYWRfY3N2KGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvYW5uby9MQ01fZW56YV9XQ0RUX21ldGEuY3N2XCIsIGNvbF9uYW1lcyA9IGMoXCJQYXRpZW50LklEXCIsIFwiVGltZXBvaW50XCIsIFwiQmlvcHN5LnNpdGVcIiwgXCJTYW1lLmxlc2lvblwiLCBcIlBTQVwiLCBcIlRPU1wiLCBcIkFSLlZJUEVSXCIsIFwiQVIuR0VYXCIsIFwiQWdnYXJ3YWxcIiwgXCJMYWJyZWNxdWVcIiApKVxuYSA8LSBkYXRhLmZyYW1lKGxjbSkgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZSAlaW4lIGMoYXJfbG5jcm5hKSkgXG5yb3cubmFtZXMoYSkgPC0gYSRHZW5lXG5hIDwtIGEgJT4lIGRwbHlyOjpzZWxlY3QoLUdlbmUpICU+JSBsb2cxcCgpIFxuZGYgPC0gZGF0YS5mcmFtZShQYXRpZW50LklEID0gY29sbmFtZXMoYSksIHQoYSkpICU+JSBtZXJnZShtZXRhKVxucm93Lm5hbWVzKGRmKSA8LSBkZiRQYXRpZW50LklEXG5kZiRBUi5HRVggPC0gYXMubnVtZXJpYyhkZiRBUi5HRVgpI0FSIGdlbmUgZXhwcmVzc2lvblxuZGYkQVIuVklQRVIgPC0gYXMubnVtZXJpYyhkZiRBUi5WSVBFUikjQVIgVklQRVIgKHJlZ3Vsb24gYWN0aXZpdHkpXG5kZiRTYW1wbGUgPC0gZ3N1YihwYXR0ZXJuID0gXCJEVEJ8X1swLTldKlwiLCByZXBsYWNlbWVudCA9IFwiXCIsIHggPSBkZiRQYXRpZW50LklEKVxuXG4jSGVhdG1hcCBwbG90dGluZ1xucm93X2hhID0gSGVhdG1hcEFubm90YXRpb24oIFBTQSA9IGRmJFBTQSwgQVIuR0VYID0gZGYkQVIuR0VYLCBBUi5WSVBFUiA9IGRmJEFSLlZJUEVSLCBBZ2dhcndhbC5jbHVzdGVyID0gZGYkQWdnYXJ3YWwsIExhYnJlY3F1ZS5jbHVzdGVyID0gZGYkTGFicmVjcXVlLCBTYW1wbGUgPSBkZiRTYW1wbGUpXG5tYXQgPC0gZGZbLGNvbG5hbWVzKGRmKSAlaW4lIGFyX2xuY3JuYV0gJT4lIHNjYWxlKCkgJT4lIHQoKVxubWF0IDwtIHJhbWlmeTo6Y2xpcChtYXQsIC5taW4gPSAtMiwgLm1heCA9IDIpXG5wZGYoXCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZlwiLCBoZWlnaHQgPSAxMCwgd2lkdGggPSAxMClcbkhlYXRtYXAobWF0cml4ID0gbWF0LCBzaG93X2NvbHVtbl9uYW1lcyA9IEYsIGNvbCAgPSBjb2xvclJhbXBQYWxldHRlKGMoJ25hdnknLFwid2hpdGVcIiwgXCJyZWRcIikpKDEwKSwgdG9wX2Fubm90YXRpb24gID0gcm93X2hhLCBjbHVzdGVyX2NvbHVtbnMgPSBULCBuYW1lID0gXCJaIHNjb3JlXCIsIGNvbHVtbl9uYW1lc19ncCA9IGdwYXIoZm9udHNpemUgPSAxMCksIGhlaWdodCA9IHVuaXQoNSwgJ2NtJyksIGNsdXN0ZXJfcm93cyA9IEYpXG5kZXYub2ZmKClcblxuXG5cblxuXG5cbmBgYCJ9 -->
-<pre class="r"><code>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2V0LnNlZWQoMTExKVxuI1JlYWQgaW4gTENNLVJOQS1zZXEgZGF0YVxubGNtIDwtIHJlYWRfY3N2KGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvcm5hL0xDTV9lbnphX1dDRFRfVFBNLmNzdlwiLCBjb2xfbmFtZXMgPSBUKVxuYGBgIn0= -->
+<pre class="r"><code>set.seed(111)
 #Read in LCM-RNA-seq data
-lcm &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/rna/LCM_enza_WCDT_TPM.csv&quot;, col_names = T)
-colnames(lcm)[1] &lt;- &quot;Gene&quot;
+lcm &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/rna/LCM_enza_WCDT_TPM.csv&quot;, col_names = T)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiTmV3IG5hbWVzOlJvd3M6IDU2ODMyIENvbHVtbnM6IDQz4pSA4pSAIENvbHVtbiBzcGVjaWZpY2F0aW9uIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuRGVsaW1pdGVyOiBcIixcIlxuY2hyICAoMSk6IC4uLjFcbmRibCAoNDIpOiBEVEJfMDIyX0JMLCBEVEJfMDIyX1BSTywgRFRCXzAyNF9CTCwgRFRCXzAyNF9QUk8sIERUQl8wNjBfQkwsIERUQl8wNjBfUFJPLCBEVEJfMDYzX0JMLCBEVEJfMDYzX1BSTywgRFRCXzA3M19CTCwgRFRCXzA3M19QUk8sIERULi4uXG7ihLkgVXNlIGBzcGVjKClgIHRvIHJldHJpZXZlIHRoZSBmdWxsIGNvbHVtbiBzcGVjaWZpY2F0aW9uIGZvciB0aGlzIGRhdGEuXG7ihLkgU3BlY2lmeSB0aGUgY29sdW1uIHR5cGVzIG9yIHNldCBgc2hvd19jb2xfdHlwZXMgPSBGQUxTRWAgdG8gcXVpZXQgdGhpcyBtZXNzYWdlLlxuIn0= -->
+<pre><code>New names:Rows: 56832 Columns: 43── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: &quot;,&quot;
+chr  (1): ...1
+dbl (42): DTB_022_BL, DTB_022_PRO, DTB_024_BL, DTB_024_PRO, DTB_060_BL, DTB_060_PRO, DTB_063_BL, DTB_063_PRO, DTB_073_BL, DTB_073_PRO, DT...
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMobGNtKVsxXSA8LSBcIkdlbmVcIlxuI0FkZCBtZXRhZGF0YVxubWV0YSA8LSByZWFkX2NzdihmaWxlID0gXCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vTENNX2VuemFfV0NEVF9tZXRhLmNzdlwiLCBjb2xfbmFtZXMgPSBjKFwiUGF0aWVudC5JRFwiLCBcIlRpbWVwb2ludFwiLCBcIkJpb3BzeS5zaXRlXCIsIFwiU2FtZS5sZXNpb25cIiwgXCJQU0FcIiwgXCJUT1NcIiwgXCJBUi5WSVBFUlwiLCBcIkFSLkdFWFwiLCBcIkFnZ2Fyd2FsXCIsIFwiTGFicmVjcXVlXCIgKSlcbmBgYCJ9 -->
+<pre class="r"><code>colnames(lcm)[1] &lt;- &quot;Gene&quot;
 #Add metadata
-meta &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/anno/LCM_enza_WCDT_meta.csv&quot;, col_names = c(&quot;Patient.ID&quot;, &quot;Timepoint&quot;, &quot;Biopsy.site&quot;, &quot;Same.lesion&quot;, &quot;PSA&quot;, &quot;TOS&quot;, &quot;AR.VIPER&quot;, &quot;AR.GEX&quot;, &quot;Aggarwal&quot;, &quot;Labrecque&quot; ))
-a &lt;- data.frame(lcm) %&gt;% dplyr::filter(Gene %in% c(ar_lncrna)) 
+meta &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/anno/LCM_enza_WCDT_meta.csv&quot;, col_names = c(&quot;Patient.ID&quot;, &quot;Timepoint&quot;, &quot;Biopsy.site&quot;, &quot;Same.lesion&quot;, &quot;PSA&quot;, &quot;TOS&quot;, &quot;AR.VIPER&quot;, &quot;AR.GEX&quot;, &quot;Aggarwal&quot;, &quot;Labrecque&quot; ))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiUm93czogNDMgQ29sdW1uczogMTDilIDilIAgQ29sdW1uIHNwZWNpZmljYXRpb24g4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAXG5EZWxpbWl0ZXI6IFwiLFwiXG5jaHIgKDEwKTogUGF0aWVudC5JRCwgVGltZXBvaW50LCBCaW9wc3kuc2l0ZSwgU2FtZS5sZXNpb24sIFBTQSwgVE9TLCBBUi5WSVBFUiwgQVIuR0VYLCBBZ2dhcndhbCwgTGFicmVjcXVlXG7ihLkgVXNlIGBzcGVjKClgIHRvIHJldHJpZXZlIHRoZSBmdWxsIGNvbHVtbiBzcGVjaWZpY2F0aW9uIGZvciB0aGlzIGRhdGEuXG7ihLkgU3BlY2lmeSB0aGUgY29sdW1uIHR5cGVzIG9yIHNldCBgc2hvd19jb2xfdHlwZXMgPSBGQUxTRWAgdG8gcXVpZXQgdGhpcyBtZXNzYWdlLlxuIn0= -->
+<pre><code>Rows: 43 Columns: 10── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: &quot;,&quot;
+chr (10): Patient.ID, Timepoint, Biopsy.site, Same.lesion, PSA, TOS, AR.VIPER, AR.GEX, Aggarwal, Labrecque
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuYSA8LSBkYXRhLmZyYW1lKGxjbSkgJT4lIGRwbHlyOjpmaWx0ZXIoR2VuZSAlaW4lIGMoYXJfbG5jcm5hKSkgXG5yb3cubmFtZXMoYSkgPC0gYSRHZW5lXG5hIDwtIGEgJT4lIGRwbHlyOjpzZWxlY3QoLUdlbmUpICU+JSBsb2cxcCgpIFxuZGYgPC0gZGF0YS5mcmFtZShQYXRpZW50LklEID0gY29sbmFtZXMoYSksIHQoYSkpICU+JSBtZXJnZShtZXRhKVxucm93Lm5hbWVzKGRmKSA8LSBkZiRQYXRpZW50LklEXG5kZiRBUi5HRVggPC0gYXMubnVtZXJpYyhkZiRBUi5HRVgpI0FSIGdlbmUgZXhwcmVzc2lvblxuZGYkQVIuVklQRVIgPC0gYXMubnVtZXJpYyhkZiRBUi5WSVBFUikjQVIgVklQRVIgKHJlZ3Vsb24gYWN0aXZpdHkpXG5kZiRTYW1wbGUgPC0gZ3N1YihwYXR0ZXJuID0gXCJEVEJ8X1swLTldKlwiLCByZXBsYWNlbWVudCA9IFwiXCIsIHggPSBkZiRQYXRpZW50LklEKVxuXG4jSGVhdG1hcCBwbG90dGluZ1xucm93X2hhID0gSGVhdG1hcEFubm90YXRpb24oIFBTQSA9IGRmJFBTQSwgQVIuR0VYID0gZGYkQVIuR0VYLCBBUi5WSVBFUiA9IGRmJEFSLlZJUEVSLCBBZ2dhcndhbC5jbHVzdGVyID0gZGYkQWdnYXJ3YWwsIExhYnJlY3F1ZS5jbHVzdGVyID0gZGYkTGFicmVjcXVlLCBTYW1wbGUgPSBkZiRTYW1wbGUpXG5tYXQgPC0gZGZbLGNvbG5hbWVzKGRmKSAlaW4lIGFyX2xuY3JuYV0gJT4lIHNjYWxlKCkgJT4lIHQoKVxubWF0IDwtIHJhbWlmeTo6Y2xpcChtYXQsIC5taW4gPSAtMiwgLm1heCA9IDIpXG5wZGYoXCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZlwiLCBoZWlnaHQgPSAxMCwgd2lkdGggPSAxMClcbkhlYXRtYXAobWF0cml4ID0gbWF0LCBzaG93X2NvbHVtbl9uYW1lcyA9IEYsIGNvbCAgPSBjb2xvclJhbXBQYWxldHRlKGMoJ25hdnknLFwid2hpdGVcIiwgXCJyZWRcIikpKDEwKSwgdG9wX2Fubm90YXRpb24gID0gcm93X2hhLCBjbHVzdGVyX2NvbHVtbnMgPSBULCBuYW1lID0gXCJaIHNjb3JlXCIsIGNvbHVtbl9uYW1lc19ncCA9IGdwYXIoZm9udHNpemUgPSAxMCksIGhlaWdodCA9IHVuaXQoNSwgJ2NtJyksIGNsdXN0ZXJfcm93cyA9IEYpXG5kZXYub2ZmKClcbmBgYCJ9 -->
+<pre class="r"><code>a &lt;- data.frame(lcm) %&gt;% dplyr::filter(Gene %in% c(ar_lncrna)) 
 row.names(a) &lt;- a$Gene
 a &lt;- a %&gt;% dplyr::select(-Gene) %&gt;% log1p() 
 df &lt;- data.frame(Patient.ID = colnames(a), t(a)) %&gt;% merge(meta)
@@ -1993,18 +1913,31 @@ mat &lt;- df[,colnames(df) %in% ar_lncrna] %&gt;% scale() %&gt;% t()
 mat &lt;- ramify::clip(mat, .min = -2, .max = 2)
 pdf(&quot;/Users/ds/Desktop/plot.pdf&quot;, height = 10, width = 10)
 Heatmap(matrix = mat, show_column_names = F, col  = colorRampPalette(c(&#39;navy&#39;,&quot;white&quot;, &quot;red&quot;))(10), top_annotation  = row_ha, cluster_columns = T, name = &quot;Z score&quot;, column_names_gp = gpar(fontsize = 10), height = unit(5, &#39;cm&#39;), cluster_rows = F)
-dev.off()
-</code></pre>
+dev.off()</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoibnVsbCBkZXZpY2UgXG4gICAgICAgICAgMSBcbiJ9 -->
+<pre><code>null device 
+          1 </code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>#ASSOCATION OF AR-AMP PCA-LNCRNAS, ENZA RESPONSE, AR GEX AND AR VIPER</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1JlYWQgaW4gTENNLVJOQS1zZXEgZGF0YVxubGNtIDwtIHJlYWRfY3N2KGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvcm5hL0xDTV9lbnphX1dDRFRfVFBNLmNzdlwiLCBjb2xfbmFtZXMgPSBUKVxuY29sbmFtZXMobGNtKVsxXSA8LSBcIkdlbmVcIlxubGNtIDwtIGRhdGEuZnJhbWUobGNtKVxubGNtIDwtIGxjbVshZHVwbGljYXRlZChsY20kR2VuZSksXVxucm93Lm5hbWVzKGxjbSkgPC0gbGNtJEdlbmVcbmxjbSA8LSBsY21bLC0xXVxubGNtIDwtIGFzLm1hdHJpeChsY20pICU+JSBsb2cxcCgpXG5cblxuI0FkZCBtZXRhZGF0YVxubWV0YSA8LSByZWFkX2NzdihmaWxlID0gXCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vTENNX2VuemFfV0NEVF9tZXRhLmNzdlwiLCBjb2xfbmFtZXMgPSBjKFwiUGF0aWVudC5JRFwiLCBcIlRpbWVwb2ludFwiLCBcIkJpb3BzeS5zaXRlXCIsIFwiU2FtZS5sZXNpb25cIiwgXCJQU0FcIiwgXCJUT1NcIiwgXCJBUi5WSVBFUlwiLCBcIkFSLkdFWFwiLCBcIkFnZ2Fyd2FsXCIsIFwiTGFicmVjcXVlXCIgKSlcblxuI0FSIGxuY1JOQSBhY3Rpdml0eVxuZ3N2YS5lcyA8LSBnc3ZhKGxjbSwgZ3NldC5pZHgubGlzdCA9IGxpc3QoYXJfbG5jcm5hKSwgbWV0aG9kID0gJ3pzY29yZScpXG5cblxuI1Bsb3R0aW5nIGNvcnJlbGF0aW9uIEFSIGxuY1JOQSBhbmQgQVIgR0VYIGFuZCBBUiBWSVBFUlxuZGYgPC0gZ3N2YS5lcyAlPiUgdCgpICU+JSBkYXRhLmZyYW1lKFBhdGllbnQuSUQgPSByb3cubmFtZXMoLiksIFBjYS5sbmNybmEgPSAuKSAlPiUgbWVyZ2UobWV0YSlcbnJvdy5uYW1lcyhkZikgPC0gZGYkUGF0aWVudC5JRFxuZGYkQVIuR0VYIDwtIGFzLm51bWVyaWMoZGYkQVIuR0VYKVxuZGYkQVIuVklQRVIgPC0gYXMubnVtZXJpYyhkZiRBUi5WSVBFUilcbnAxIDwtIGRmICU+JSBkcGx5cjo6c2VsZWN0KGMoUGNhLmxuY3JuYSxBUi5WSVBFUiwgQVIuR0VYKSkgJT4lIGdhdGhlcihrZXkgPSBcIlNpZ25hdHVyZVwiLCB2YWx1ZSA9IFwiR0VYXCIsIC1QY2EubG5jcm5hKSAlPiUgZ2dwbG90KGFlcyh4ID0gUGNhLmxuY3JuYSwgeSA9IEdFWCwgY29sb3IgPSBTaWduYXR1cmUpKSAlPiUgZmFjZXQoZmFjZXQuYnkgPSBcIlNpZ25hdHVyZVwiKSArIGdlb21fcG9pbnQoKSArIGdlb21fc21vb3RoKG1ldGhvZCA9IFwibG1cIikgKyBzdGF0X2NvcigpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoXCJuYXZ5XCIsIFwiZGFya3JlZFwiKSkgKyB0aGVtZV9jbGFzc2ljKCkgKyB4bGFiKFwiQVIgdXByZWd1bGF0ZWQgUGNhLWxuY1JOQXNcIilcbnBkZihcIi9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmXCIsIHdpZHRoID0gMTApXG5wMVxuZGV2Lm9mZigpXG5cbiNCb3hwbG90IGZvciBBUiBsbmNSTkFzIGF0IEJhc2VsaW5lIHYucyBQcm9ncmVzc2lvbiBvbiBFbnphIC0gc3BsaXQgYnkgUFNBIHJlc3BvbnNlICg+NTAlIGRlY2xpbmUgaW4gUFNBIGF0IDEyIG1vKVxucDIgPC0gZ2dib3hwbG90KFxuICBkcGx5cjo6ZmlsdGVyKGRmLCBQU0EgIT0gXCJVbmtub3duXCIpLCB4ID0gXCJUaW1lcG9pbnRcIiwgeSA9IFwiUGNhLmxuY3JuYVwiLCBmaWxsID0gXCJkYXJrcmVkXCIsIGFscGhhID0gMC41LFxuICBmYWNldC5ieSA9IFwiUFNBXCIsIGRyYXdfcXVhbnRpbGVzID0gMC41LCBhZGQgPSAnaml0dGVyJykrIHN0YXRfY29tcGFyZV9tZWFucyhwYWlyZWQgPSBULCBtZXRob2QgPSAndC50ZXN0JywgbGFiZWwueC5ucGMgPSAwLjUpICsgeWxhYihcIkFSIHJlZ3VsYXRlZCBQY2EtcHJvdGVpbiBjb2RpbmcgZ2VuZXNcIilcblxuXG4jQm94cGxvdCBmb3IgQVIgbG5jUk5BcyBhbmQgMyBBUisvTkUtIHRvIEFSLS9ORS0gY29udmVydGVyc1xucDMgPC0gZHBseXI6OmZpbHRlcihkZixncmVwbChwYXR0ZXJuID1cIkRUQl8wODB8RFRCXzEzNXxEVEJfMjEwXCIsIHggPSBQYXRpZW50LklEKSkgJT4lIG11dGF0ZShHcm91cCA9IFwiQ29udmVydGVyc1wiKSAlPiUgZ2dib3hwbG90KCAsIHggPSBcIlRpbWVwb2ludFwiLCB5ID0gXCJBUi5WSVBFUlwiLCBmaWxsID0gXCJkYXJrYmx1ZVwiLCBhbHBoYSA9IDAuNSwgZHJhd19xdWFudGlsZXMgPSAwLjUsYWRkID0gXCJqaXR0ZXJcIiAsIGZhY2V0LmJ5ID0gXCJHcm91cFwiLCB3aWR0aCA9IDAuNSkgKyBzdGF0X2NvbXBhcmVfbWVhbnMocGFpcmVkID0gVCwgbWV0aG9kID0gJ3QudGVzdCcsIGxhYmVsLngubnBjID0gMC41KSArIHlsYWIoXCJBUiBWSVBFUiBzY29yZVwiKVxuXG5cblxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1JlYWQgaW4gTENNLVJOQS1zZXEgZGF0YVxubGNtIDwtIHJlYWRfY3N2KGZpbGUgPSBcIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvcm5hL0xDTV9lbnphX1dDRFRfVFBNLmNzdlwiLCBjb2xfbmFtZXMgPSBUKVxuYGBgIn0= -->
 <pre class="r"><code>#Read in LCM-RNA-seq data
-lcm &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/rna/LCM_enza_WCDT_TPM.csv&quot;, col_names = T)
-colnames(lcm)[1] &lt;- &quot;Gene&quot;
+lcm &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/rna/LCM_enza_WCDT_TPM.csv&quot;, col_names = T)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiTmV3IG5hbWVzOlJvd3M6IDU2ODMyIENvbHVtbnM6IDQz4pSA4pSAIENvbHVtbiBzcGVjaWZpY2F0aW9uIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgFxuRGVsaW1pdGVyOiBcIixcIlxuY2hyICAoMSk6IC4uLjFcbmRibCAoNDIpOiBEVEJfMDIyX0JMLCBEVEJfMDIyX1BSTywgRFRCXzAyNF9CTCwgRFRCXzAyNF9QUk8sIERUQl8wNjBfQkwsIERUQl8wNjBfUFJPLCBEVEJfMDYzX0JMLCBEVEJfMDYzX1BSTywgRFRCXzA3M19CTCwgRFRCXzA3M19QUk8sIERULi4uXG7ihLkgVXNlIGBzcGVjKClgIHRvIHJldHJpZXZlIHRoZSBmdWxsIGNvbHVtbiBzcGVjaWZpY2F0aW9uIGZvciB0aGlzIGRhdGEuXG7ihLkgU3BlY2lmeSB0aGUgY29sdW1uIHR5cGVzIG9yIHNldCBgc2hvd19jb2xfdHlwZXMgPSBGQUxTRWAgdG8gcXVpZXQgdGhpcyBtZXNzYWdlLlxuIn0= -->
+<pre><code>New names:Rows: 56832 Columns: 43── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: &quot;,&quot;
+chr  (1): ...1
+dbl (42): DTB_022_BL, DTB_022_PRO, DTB_024_BL, DTB_024_PRO, DTB_060_BL, DTB_060_PRO, DTB_063_BL, DTB_063_PRO, DTB_073_BL, DTB_073_PRO, DT...
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sbmFtZXMobGNtKVsxXSA8LSBcIkdlbmVcIlxubGNtIDwtIGRhdGEuZnJhbWUobGNtKVxubGNtIDwtIGxjbVshZHVwbGljYXRlZChsY20kR2VuZSksXVxucm93Lm5hbWVzKGxjbSkgPC0gbGNtJEdlbmVcbmxjbSA8LSBsY21bLC0xXVxubGNtIDwtIGFzLm1hdHJpeChsY20pICU+JSBsb2cxcCgpXG5cblxuI0FkZCBtZXRhZGF0YVxubWV0YSA8LSByZWFkX2NzdihmaWxlID0gXCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vTENNX2VuemFfV0NEVF9tZXRhLmNzdlwiLCBjb2xfbmFtZXMgPSBjKFwiUGF0aWVudC5JRFwiLCBcIlRpbWVwb2ludFwiLCBcIkJpb3BzeS5zaXRlXCIsIFwiU2FtZS5sZXNpb25cIiwgXCJQU0FcIiwgXCJUT1NcIiwgXCJBUi5WSVBFUlwiLCBcIkFSLkdFWFwiLCBcIkFnZ2Fyd2FsXCIsIFwiTGFicmVjcXVlXCIgKSlcbmBgYCJ9 -->
+<pre class="r"><code>colnames(lcm)[1] &lt;- &quot;Gene&quot;
 lcm &lt;- data.frame(lcm)
 lcm &lt;- lcm[!duplicated(lcm$Gene),]
 row.names(lcm) &lt;- lcm$Gene
@@ -2013,37 +1946,148 @@ lcm &lt;- as.matrix(lcm) %&gt;% log1p()
 
 
 #Add metadata
-meta &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/anno/LCM_enza_WCDT_meta.csv&quot;, col_names = c(&quot;Patient.ID&quot;, &quot;Timepoint&quot;, &quot;Biopsy.site&quot;, &quot;Same.lesion&quot;, &quot;PSA&quot;, &quot;TOS&quot;, &quot;AR.VIPER&quot;, &quot;AR.GEX&quot;, &quot;Aggarwal&quot;, &quot;Labrecque&quot; ))
+meta &lt;- read_csv(file = &quot;/Users/ds/Desktop/projects/data/anno/LCM_enza_WCDT_meta.csv&quot;, col_names = c(&quot;Patient.ID&quot;, &quot;Timepoint&quot;, &quot;Biopsy.site&quot;, &quot;Same.lesion&quot;, &quot;PSA&quot;, &quot;TOS&quot;, &quot;AR.VIPER&quot;, &quot;AR.GEX&quot;, &quot;Aggarwal&quot;, &quot;Labrecque&quot; ))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiUm93czogNDMgQ29sdW1uczogMTDilIDilIAgQ29sdW1uIHNwZWNpZmljYXRpb24g4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSA4pSAXG5EZWxpbWl0ZXI6IFwiLFwiXG5jaHIgKDEwKTogUGF0aWVudC5JRCwgVGltZXBvaW50LCBCaW9wc3kuc2l0ZSwgU2FtZS5sZXNpb24sIFBTQSwgVE9TLCBBUi5WSVBFUiwgQVIuR0VYLCBBZ2dhcndhbCwgTGFicmVjcXVlXG7ihLkgVXNlIGBzcGVjKClgIHRvIHJldHJpZXZlIHRoZSBmdWxsIGNvbHVtbiBzcGVjaWZpY2F0aW9uIGZvciB0aGlzIGRhdGEuXG7ihLkgU3BlY2lmeSB0aGUgY29sdW1uIHR5cGVzIG9yIHNldCBgc2hvd19jb2xfdHlwZXMgPSBGQUxTRWAgdG8gcXVpZXQgdGhpcyBtZXNzYWdlLlxuIn0= -->
+<pre><code>Rows: 43 Columns: 10── Column specification ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Delimiter: &quot;,&quot;
+chr (10): Patient.ID, Timepoint, Biopsy.site, Same.lesion, PSA, TOS, AR.VIPER, AR.GEX, Aggarwal, Labrecque
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0FSIGxuY1JOQSBhY3Rpdml0eVxuZ3N2YS5lcyA8LSBnc3ZhKGxjbSwgZ3NldC5pZHgubGlzdCA9IGxpc3QoYXJfbG5jcm5hKSwgbWV0aG9kID0gJ3pzY29yZScpXG5gYGAifQ== -->
+<pre class="r"><code>#AR lncRNA activity
+gsva.es &lt;- gsva(lcm, gset.idx.list = list(ar_lncrna), method = &#39;zscore&#39;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiMTIyMTIgZ2VuZXMgd2l0aCBjb25zdGFudCBleHByZXNzaW9uIHZhbHVlcyB0aHJvdWhnb3V0IHRoZSBzYW1wbGVzLlNpbmNlIGFyZ3VtZW50IG1ldGhvZCE9XCJzc2dzZWFcIiwgZ2VuZXMgd2l0aCBjb25zdGFudCBleHByZXNzaW9uIHZhbHVlcyBhcmUgZGlzY2FyZGVkLlxuIn0= -->
+<pre><code>12212 genes with constant expression values throuhgout the samples.Since argument method!=&quot;ssgsea&quot;, genes with constant expression values are discarded.</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXN0aW1hdGluZyBjb21iaW5lZCB6LXNjb3JlcyBmb3IgMSBnZW5lIHNldHMuXG5cbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgICAwJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgIDIlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAgNSVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgICA3JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMTAlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAxMiVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDE0JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMTclXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAxOSVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDIxJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMjQlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAyNiVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDI5JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMzElXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAzMyVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDM2JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgMzglXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA0MCVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDQzJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNDUlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA0OCVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDUwJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNTIlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA1NSVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDU3JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNjAlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA2MiVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDY0JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNjclXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA2OSVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDcxJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgNzQlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICA3NiVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDc5JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgICAgICAgICAgfCAgODElXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgICAgICAgICAgICAgICB8ICA4MyVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgICAgICAgICAgICAgIHwgIDg2JVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICAgICAgfCAgODglXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICAgICAgICAgICB8ICA5MCVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAgICAgICAgIHwgIDkzJVxuICB8ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBcbiAgfD09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICAgICAgfCAgOTUlXG4gIHwgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIFxuICB8PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0gICB8ICA5OCVcbiAgfCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgXG4gIHw9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PXwgMTAwJVxuIn0= -->
+<pre><code>Estimating combined z-scores for 1 gene sets.
 
-#AR lncRNA activity
-gsva.es &lt;- gsva(lcm, gset.idx.list = list(ar_lncrna), method = &#39;zscore&#39;)
-
-
-#Plotting correlation AR lncRNA and AR GEX and AR VIPER
+  |                                                                                                                                         
+  |                                                                                                                                   |   0%
+  |                                                                                                                                         
+  |===                                                                                                                                |   2%
+  |                                                                                                                                         
+  |======                                                                                                                             |   5%
+  |                                                                                                                                         
+  |=========                                                                                                                          |   7%
+  |                                                                                                                                         
+  |============                                                                                                                       |  10%
+  |                                                                                                                                         
+  |================                                                                                                                   |  12%
+  |                                                                                                                                         
+  |===================                                                                                                                |  14%
+  |                                                                                                                                         
+  |======================                                                                                                             |  17%
+  |                                                                                                                                         
+  |=========================                                                                                                          |  19%
+  |                                                                                                                                         
+  |============================                                                                                                       |  21%
+  |                                                                                                                                         
+  |===============================                                                                                                    |  24%
+  |                                                                                                                                         
+  |==================================                                                                                                 |  26%
+  |                                                                                                                                         
+  |=====================================                                                                                              |  29%
+  |                                                                                                                                         
+  |=========================================                                                                                          |  31%
+  |                                                                                                                                         
+  |============================================                                                                                       |  33%
+  |                                                                                                                                         
+  |===============================================                                                                                    |  36%
+  |                                                                                                                                         
+  |==================================================                                                                                 |  38%
+  |                                                                                                                                         
+  |=====================================================                                                                              |  40%
+  |                                                                                                                                         
+  |========================================================                                                                           |  43%
+  |                                                                                                                                         
+  |===========================================================                                                                        |  45%
+  |                                                                                                                                         
+  |==============================================================                                                                     |  48%
+  |                                                                                                                                         
+  |==================================================================                                                                 |  50%
+  |                                                                                                                                         
+  |=====================================================================                                                              |  52%
+  |                                                                                                                                         
+  |========================================================================                                                           |  55%
+  |                                                                                                                                         
+  |===========================================================================                                                        |  57%
+  |                                                                                                                                         
+  |==============================================================================                                                     |  60%
+  |                                                                                                                                         
+  |=================================================================================                                                  |  62%
+  |                                                                                                                                         
+  |====================================================================================                                               |  64%
+  |                                                                                                                                         
+  |=======================================================================================                                            |  67%
+  |                                                                                                                                         
+  |==========================================================================================                                         |  69%
+  |                                                                                                                                         
+  |==============================================================================================                                     |  71%
+  |                                                                                                                                         
+  |=================================================================================================                                  |  74%
+  |                                                                                                                                         
+  |====================================================================================================                               |  76%
+  |                                                                                                                                         
+  |=======================================================================================================                            |  79%
+  |                                                                                                                                         
+  |==========================================================================================================                         |  81%
+  |                                                                                                                                         
+  |=============================================================================================================                      |  83%
+  |                                                                                                                                         
+  |================================================================================================================                   |  86%
+  |                                                                                                                                         
+  |===================================================================================================================                |  88%
+  |                                                                                                                                         
+  |=======================================================================================================================            |  90%
+  |                                                                                                                                         
+  |==========================================================================================================================         |  93%
+  |                                                                                                                                         
+  |=============================================================================================================================      |  95%
+  |                                                                                                                                         
+  |================================================================================================================================   |  98%
+  |                                                                                                                                         
+  |===================================================================================================================================| 100%</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI1Bsb3R0aW5nIGNvcnJlbGF0aW9uIEFSIGxuY1JOQSBhbmQgQVIgR0VYIGFuZCBBUiBWSVBFUlxuZGYgPC0gZ3N2YS5lcyAlPiUgdCgpICU+JSBkYXRhLmZyYW1lKFBhdGllbnQuSUQgPSByb3cubmFtZXMoLiksIFBjYS5sbmNybmEgPSAuKSAlPiUgbWVyZ2UobWV0YSlcbnJvdy5uYW1lcyhkZikgPC0gZGYkUGF0aWVudC5JRFxuZGYkQVIuR0VYIDwtIGFzLm51bWVyaWMoZGYkQVIuR0VYKVxuZGYkQVIuVklQRVIgPC0gYXMubnVtZXJpYyhkZiRBUi5WSVBFUilcbnAxIDwtIGRmICU+JSBkcGx5cjo6c2VsZWN0KGMoUGNhLmxuY3JuYSxBUi5WSVBFUiwgQVIuR0VYKSkgJT4lIGdhdGhlcihrZXkgPSBcIlNpZ25hdHVyZVwiLCB2YWx1ZSA9IFwiR0VYXCIsIC1QY2EubG5jcm5hKSAlPiUgZ2dwbG90KGFlcyh4ID0gUGNhLmxuY3JuYSwgeSA9IEdFWCwgY29sb3IgPSBTaWduYXR1cmUpKSAlPiUgZmFjZXQoZmFjZXQuYnkgPSBcIlNpZ25hdHVyZVwiLCBwYW5lbC5sYWJzLmZvbnQgPSBsaXN0KGZhY2UgPSBcImJvbGRcIiwgc2l6ZSA9IDIwKSwgc2NhbGVzID0gJ2ZyZWUnKSArIGdlb21fcG9pbnQoKSArIGdlb21fc21vb3RoKG1ldGhvZCA9IFwibG1cIikgKyBzdGF0X2NvcigpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoXCJuYXZ5XCIsIFwiZGFya3JlZFwiKSkgKyB0aGVtZV9jbGFzc2ljKCkgKyB4bGFiKFwiQVIgdXByZWd1bGF0ZWQgUGNhLWxuY1JOQXNcIikgKyB0aGVtZShheGlzLnRleHQueCA9IGVsZW1lbnRfdGV4dCggY29sb3I9XCJibGFja1wiLCBzaXplPTAsIGFuZ2xlPTQ1KSwgdGV4dCA9IGVsZW1lbnRfdGV4dChzaXplID0gMjApKVxucGRmKFwiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGZcIiwgd2lkdGggPSAxMClcbnAxXG5kZXYub2ZmKClcbmBgYCJ9 -->
+<pre class="r"><code>#Plotting correlation AR lncRNA and AR GEX and AR VIPER
 df &lt;- gsva.es %&gt;% t() %&gt;% data.frame(Patient.ID = row.names(.), Pca.lncrna = .) %&gt;% merge(meta)
 row.names(df) &lt;- df$Patient.ID
 df$AR.GEX &lt;- as.numeric(df$AR.GEX)
 df$AR.VIPER &lt;- as.numeric(df$AR.VIPER)
-p1 &lt;- df %&gt;% dplyr::select(c(Pca.lncrna,AR.VIPER, AR.GEX)) %&gt;% gather(key = &quot;Signature&quot;, value = &quot;GEX&quot;, -Pca.lncrna) %&gt;% ggplot(aes(x = Pca.lncrna, y = GEX, color = Signature)) %&gt;% facet(facet.by = &quot;Signature&quot;) + geom_point() + geom_smooth(method = &quot;lm&quot;) + stat_cor() + scale_color_manual(values = c(&quot;navy&quot;, &quot;darkred&quot;)) + theme_classic() + xlab(&quot;AR upregulated Pca-lncRNAs&quot;)
+p1 &lt;- df %&gt;% dplyr::select(c(Pca.lncrna,AR.VIPER, AR.GEX)) %&gt;% gather(key = &quot;Signature&quot;, value = &quot;GEX&quot;, -Pca.lncrna) %&gt;% ggplot(aes(x = Pca.lncrna, y = GEX, color = Signature)) %&gt;% facet(facet.by = &quot;Signature&quot;, panel.labs.font = list(face = &quot;bold&quot;, size = 20), scales = &#39;free&#39;) + geom_point() + geom_smooth(method = &quot;lm&quot;) + stat_cor() + scale_color_manual(values = c(&quot;navy&quot;, &quot;darkred&quot;)) + theme_classic() + xlab(&quot;AR upregulated Pca-lncRNAs&quot;) + theme(axis.text.x = element_text( color=&quot;black&quot;, size=0, angle=45), text = element_text(size = 20))
 pdf(&quot;/Users/ds/Desktop/plot.pdf&quot;, width = 10)
 p1
-dev.off()
-
-#Boxplot for AR lncRNAs at Baseline v.s Progression on Enza - split by PSA response (&gt;50% decline in PSA at 12 mo)
+dev.off()</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoibnVsbCBkZXZpY2UgXG4gICAgICAgICAgMSBcbiJ9 -->
+<pre><code>null device 
+          1 </code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0JveHBsb3QgZm9yIEFSIGxuY1JOQXMgYXQgQmFzZWxpbmUgdi5zIFByb2dyZXNzaW9uIG9uIEVuemEgLSBzcGxpdCBieSBQU0EgcmVzcG9uc2UgKD41MCUgZGVjbGluZSBpbiBQU0EgYXQgMTIgbW8pXG5wMiA8LSBnZ2JveHBsb3QoXG4gIGRwbHlyOjpmaWx0ZXIoZGYsIFBTQSAhPSBcIlVua25vd25cIiksIHggPSBcIlRpbWVwb2ludFwiLCB5ID0gXCJQY2EubG5jcm5hXCIsIGZpbGwgPSBcImRhcmtyZWRcIiwgYWxwaGEgPSAwLjUsXG4gIGZhY2V0LmJ5ID0gXCJQU0FcIiwgZHJhd19xdWFudGlsZXMgPSAwLjUsIGFkZCA9ICdqaXR0ZXInKSsgc3RhdF9jb21wYXJlX21lYW5zKHBhaXJlZCA9IFQsIG1ldGhvZCA9ICd0LnRlc3QnLCBsYWJlbC54Lm5wYyA9IDAuNSkgKyB5bGFiKFwiQVIgcmVndWxhdGVkIFBjYS1wcm90ZWluIGNvZGluZyBnZW5lc1wiKVxuYGBgIn0= -->
+<pre class="r"><code>#Boxplot for AR lncRNAs at Baseline v.s Progression on Enza - split by PSA response (&gt;50% decline in PSA at 12 mo)
 p2 &lt;- ggboxplot(
   dplyr::filter(df, PSA != &quot;Unknown&quot;), x = &quot;Timepoint&quot;, y = &quot;Pca.lncrna&quot;, fill = &quot;darkred&quot;, alpha = 0.5,
-  facet.by = &quot;PSA&quot;, draw_quantiles = 0.5, add = &#39;jitter&#39;)+ stat_compare_means(paired = T, method = &#39;t.test&#39;, label.x.npc = 0.5) + ylab(&quot;AR regulated Pca-protein coding genes&quot;)
-
-
-#Boxplot for AR lncRNAs and 3 AR+/NE- to AR-/NE- converters
-p3 &lt;- dplyr::filter(df,grepl(pattern =&quot;DTB_080|DTB_135|DTB_210&quot;, x = Patient.ID)) %&gt;% mutate(Group = &quot;Converters&quot;) %&gt;% ggboxplot( , x = &quot;Timepoint&quot;, y = &quot;AR.VIPER&quot;, fill = &quot;darkblue&quot;, alpha = 0.5, draw_quantiles = 0.5,add = &quot;jitter&quot; , facet.by = &quot;Group&quot;, width = 0.5) + stat_compare_means(paired = T, method = &#39;t.test&#39;, label.x.npc = 0.5) + ylab(&quot;AR VIPER score&quot;)
-</code></pre>
+  facet.by = &quot;PSA&quot;, draw_quantiles = 0.5, add = &#39;jitter&#39;)+ stat_compare_means(paired = T, method = &#39;t.test&#39;, label.x.npc = 0.5) + ylab(&quot;AR regulated Pca-protein coding genes&quot;)</code></pre>
 <!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiSWdub3JpbmcgdW5rbm93biBwYXJhbWV0ZXJzOiBkcmF3X3F1YW50aWxlc1xuIn0= -->
+<pre><code>Ignoring unknown parameters: draw_quantiles</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuI0JveHBsb3QgZm9yIEFSIGxuY1JOQXMgYW5kIDMgQVIrL05FLSB0byBBUi0vTkUtIGNvbnZlcnRlcnNcbnAzIDwtIGRwbHlyOjpmaWx0ZXIoZGYsZ3JlcGwocGF0dGVybiA9XCJEVEJfMDgwfERUQl8xMzV8RFRCXzIxMFwiLCB4ID0gUGF0aWVudC5JRCkpICU+JSBtdXRhdGUoR3JvdXAgPSBcIkNvbnZlcnRlcnNcIikgJT4lIGdnYm94cGxvdCggLCB4ID0gXCJUaW1lcG9pbnRcIiwgeSA9IFwiQVIuVklQRVJcIiwgZmlsbCA9IFwiZGFya2JsdWVcIiwgYWxwaGEgPSAwLjUsIGRyYXdfcXVhbnRpbGVzID0gMC41LGFkZCA9IFwiaml0dGVyXCIgLCBmYWNldC5ieSA9IFwiR3JvdXBcIiwgd2lkdGggPSAwLjUpICsgc3RhdF9jb21wYXJlX21lYW5zKHBhaXJlZCA9IFQsIG1ldGhvZCA9ICd0LnRlc3QnLCBsYWJlbC54Lm5wYyA9IDAuNSkgKyB5bGFiKFwiQVIgVklQRVIgc2NvcmVcIilcbmBgYCJ9 -->
+<pre class="r"><code>#Boxplot for AR lncRNAs and 3 AR+/NE- to AR-/NE- converters
+p3 &lt;- dplyr::filter(df,grepl(pattern =&quot;DTB_080|DTB_135|DTB_210&quot;, x = Patient.ID)) %&gt;% mutate(Group = &quot;Converters&quot;) %&gt;% ggboxplot( , x = &quot;Timepoint&quot;, y = &quot;AR.VIPER&quot;, fill = &quot;darkblue&quot;, alpha = 0.5, draw_quantiles = 0.5,add = &quot;jitter&quot; , facet.by = &quot;Group&quot;, width = 0.5) + stat_compare_means(paired = T, method = &#39;t.test&#39;, label.x.npc = 0.5) + ylab(&quot;AR VIPER score&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiSWdub3JpbmcgdW5rbm93biBwYXJhbWV0ZXJzOiBkcmF3X3F1YW50aWxlc1xuIn0= -->
+<pre><code>Ignoring unknown parameters: draw_quantiles</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiQW5hbHlzaXMgb2YgbG5jUk5BIGFzc29jaWF0ZWQgd2l0aCBBUiByZWdpb24gYW1wbGlmaWNhdGlvbnMgYW5kIGVuemFsdXRhbWlkZSAtIEZpZ3VyZSA0IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojTE9BRCBMSUJSQVJJRVMKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KGdncHVicikKbGlicmFyeShyc3RhdGl4KQpsaWJyYXJ5KG9yZy5Icy5lZy5kYikKbGlicmFyeShHU1ZBKQpsaWJyYXJ5KENvbXBsZXhIZWF0bWFwKQpgYGAKCgojUkVBRCBJTiBNRVRBREFUQSBGT1IgUk5BLVNFUQpgYGB7cn0KCiNNZXRhIGRhdGEgZm9yIERlZXAgUk5BLXNlcQphbm5vIDwtIHJlYWQudGFibGUoIi9Vc2Vycy9kcy9EZXNrdG9wL3Byb2plY3RzL2RhdGEvYW5uby8yMDIwMDlfZGVlcFJOQXNlcV9zYW1wbGVfZnVsbC50eHQiLCBoZWFkZXIgPVQpCmFubm8gPC0gYW5ubyAlPiUgZHBseXI6OnNlbGVjdChjKHNhbXBsZV9pZCwgd2dzX2lkLCBiaW9wc3lfc2l0ZSwgZGlzZWFzZV90eXBlX1NJR19HRVgsIElEX3BhdGllbnQsIEFSLHR1bW9yX3B1cml0eV9ybmEpKSAKY2YgPC0gcmVhZC50YWJsZSgiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvbUNSUENfbG5jUk5BX2FuYWx5c2lzL2RhdGEvQ0lCRVJTT1JUeF9Kb2IzM19BZGp1c3RlZC50eHQiLCBzZXAgPSAiXHQiLCBoZWFkZXIgPSBUKQpjZiRzYW1wbGVfaWQgPC0gZ3N1YigiXFwuIiwgIi0iLCBjZiRNaXh0dXJlKQpyb3cubmFtZXMoY2YpIDwtIGNmJE1peHR1cmUKY2YgPC0gaW5uZXJfam9pbih4ID0gY2YsIHkgPSBhbm5vLCBieSAgPSBjKCJzYW1wbGVfaWQiID0gInNhbXBsZV9pZCIpKQpyb3cubmFtZXMoY2YpIDwtIGNmJHNhbXBsZV9pZAojT21pdCBzYW1wbGVzIHdpdGhvdXQgV0dTIGRhdGEKY2YgPC0gbmEub21pdChjZikKI0Zvcm1hdCBBUiByZWdpb24gYW1wbGlmaWNhdGlvbnMgdi5zIFdUCmNmJEFSIDwtIGlmZWxzZShjZiRBUiA9PSAzLCAiR2FpbiIsICJXVCIpCgpgYGAKCgojRURHRVIgRElGRkVSRU5USUFMIEdFTkUgRVhQUkVTU0lPTiBBTkFMWVNJUyBPRiBMTkNSTkFTIEFORCBBUiBTVEFUVVMKYGBge3J9CiNSZWFkIGluIHJhdyBjb3VudHMsIGNvbnZlcnQgdG8gbWF0cml4IHdpdGggcm93cyBhcyBnZW5lIHN5bWJvbHMsIGNvbHVtbnMgYXMgc2FtcGxlcwpjb3VudHMgPC0gcmVhZC50YWJsZSgiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvbUNSUENfUk5BX2NvdW50c19nZW5lbmFtZS50eHQiLCBoZWFkZXIgPSBUKQpjb3VudHMgPC0gY291bnRzWyFkdXBsaWNhdGVkKGNvdW50cyRHZW5lbmFtZSksXQpyb3cubmFtZXMoY291bnRzKSA8LSBjb3VudHMkR2VuZW5hbWUKY291bnRzIDwtIGNvdW50c1ssLTFdICU+JSBhcy5tYXRyaXgoKQpjb2xuYW1lcyhjb3VudHMpIDwtIGdzdWIoIlxcLiIsICItIiwgY29sbmFtZXMoY291bnRzKSkgIAoKCiNLZWVwIG1hdGNoaW5nIHNhbXBsZSBpZHMgb2YgUk5BLXNlcSBhbmQgV0dTIGZvciBjbXAgYW5ub3RhdGlvbgppZHMgPC0gaW50ZXJzZWN0KGNvbG5hbWVzKGNvdW50cykscm93Lm5hbWVzKGNmKSkKY291bnRzIDwtIGNvdW50c1ssaWRzXQpjZiA8LSBjZltpZHMsXQoKCiNDcmVhdGUgZGdlIG9iamVjdCAtIGNyZWF0ZSBjb3VudHMgbWF0cml4IGFuZCBzYW1wbGUgYW5ubyBkZiB3aXRoIGxpYnJhcnkgc2l6ZXMKeCA8LSBER0VMaXN0KGNvdW50cyA9IGNvdW50cykKCiNBZGQgY2x1c3RlciB2YXJpYWJsZSB0byBkZXNpZ25hdGUgZ3JvdXAgbWVtYmVyc2hpcCB0byBzYW1wbGUgZGYKeCRzYW1wbGVzIDwtIGNiaW5kKHgkc2FtcGxlcywgZHBseXI6OnNlbGVjdChjZiwgYyggYmlvcHN5X3NpdGUsIGRpc2Vhc2VfdHlwZV9TSUdfR0VYLCBBUix0dW1vcl9wdXJpdHlfcm5hICkpKQoKI1JlbW92ZSBnZW5lcyB3aXRoIGxvdyBleHByZXNzaW9uIGFjcm9zcyBzYW1wbGVzCmtlZXAuZXhwcnMgPC0gZmlsdGVyQnlFeHByKHgsIG1pbi5jb3VudCA9IDUpI01pbiBjb3VudCBvZiA1CnggPC0geFtrZWVwLmV4cHJzLCwga2VlcC5saWIuc2l6ZSA9IEZdCgojQ2FsY3VsYXRlIGVmZmVjdGl2ZSBsaWJyYXJ5IHNpemUgdXNpbmcgRWRnZVIgVE1NIG1ldGhvZAp4IDwtIGNhbGNOb3JtRmFjdG9ycyh4LCBtZXRob2QgPSAiVE1NIikKCiNDcmVhdGUgZGVzaWduIG1hdHJpeCAody9vIGludGVyY2VwdCkgc3BlY2lmeWluZyBncm91cCBtZW1iZXJzaGlwIC0gdHVtb3IgcHVyaXR5IGFzIGNvdmFyaWF0ZQpkZXNpZ24gPC0gbW9kZWwubWF0cml4KH4gMCArIEFSICsgdHVtb3JfcHVyaXR5X3JuYSwgZGF0YSA9IGNmKSAKY29sbmFtZXMoZGVzaWduKSA8LSBjKCJHYWluIiwgIldUIiwgIlB1cml0eSIpIAoKIyAjQ3JlYXRlIGNvbnRyYXN0cyB0byBjYWxjdWxhdGUKY29udHIubWF0cml4IDwtIG1ha2VDb250cmFzdHMoR2FpbiAtIFdULCBsZXZlbHMgPSBjb2xuYW1lcyhkZXNpZ24pKQoKCiNOb3JtYWxpemUgY291bnRzIHRvIGxvZyBDUE0gdXNpbmcgdm9vbQp2IDwtIHZvb20oeCwgZGVzaWduID0gZGVzaWduKQoKI0ZpdCBMTSBhY2NvcmRpbmcgdG8gZGVzaWduCnZmaXQgPC0gbG1GaXQodiwgZGVzaWduKQoKI0NhbGN1bGF0ZSBjb250cmFzdHMgaS5lIGxvZ0ZDIGZvciBnZW5lcyBhY3Jvc3MgZ3JvdXBzCnZmaXQgPC0gY29udHJhc3RzLmZpdCh2Zml0LCBjb250cmFzdHM9Y29udHIubWF0cml4KQoKI0NhbGN1bGF0ZSB0LXN0YXRzIGFuZCBwIHZhbHMgdXNpbmcgRW1wIGJheWVzIG1ldGhvZAplZml0IDwtIGVCYXllcyh2Zml0KQoKCiNHZXQgbGlzdCBvZiBhbGwgZ2VuZXMsIGFycmFuZ2UgaW4gZGVjcmVhc2luZyBvcmRlcgpidWxrX2RlZyA8LSB0b3BUYWJsZShlZml0LCBudW1iZXIgPSBJbmYsIGNvZWYgPSAxKSAlPiUgZGF0YS5mcmFtZShHZW5lcyA9IHJvdy5uYW1lcyguKSkgICU+JSBhcnJhbmdlKC1sb2dGQykgCgojREUgbG5jUk5BcyAtIEZEUiAyNSUgYW5kIGFicyBsb2dGQyA+IDEKYnVsa19kZWcgPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoYWRqLlAuVmFsIDwgMC4yNSAmIGFicyhsb2dGQykgPiAxKSAlPiUgbGVmdF9qb2luKCB5ID0gZmluYWxfbWFya2VycywgYnkgPSBjKCJHZW5lcyIgPSAiZ2VuZSIpKQojREUgcHJvdGVpbiBjb2RpbmcgZ2VuZXMgLSBGRFIgMjUlIGFuZCBhYnMgbG9nRkMgPiAxCiNidWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSBsZWZ0X2pvaW4oIHkgPSBwY2dfbWFya2VycywgYnkgPSBjKCJHZW5lcyIgPSAiZ2VuZSIpKQpgYGAKCgojVk9MQ0FOTyBQTE9UIE9GIERFIExOQ1JOQVMgQVNTT0NJQVRFRCBXSVRIIEFSIFNUQVRVUwpgYGB7cn0KI0Zvcm1hdCBERSByZXN1bHRzCmJ1bGtfZGVnJGNsdXN0ZXIgPC0gYnVsa19kZWckY2x1c3RlciAlPiUgYXMuY2hhcmFjdGVyKCkKYnVsa19kZWcgPC0gYnVsa19kZWcgJT4lIG11dGF0ZShDbHVzdGVyID0gaWZlbHNlKGlzLm5hKGNsdXN0ZXIpLCAiVW5rbm93biIsIGNsdXN0ZXIpKSAlPiUgbXV0YXRlKEFscGhhID0gaWZlbHNlKENsdXN0ZXIgPT0gIlVua25vd24iLCAwLjgsIDEpKQoKI1Bsb3QKcGxvdCA8LSBnZ3Bsb3QoYnVsa19kZWcsIGFlcyh4ID0gbG9nRkMsIHkgPSAtbG9nMTAoYWRqLlAuVmFsKSwgY29sb3IgPSBDbHVzdGVyLCBhbHBoYSA9IEFscGhhLCBsYWJlbCA9IEdlbmVzKSApICsgZ2VvbV9wb2ludCgpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoInB1cnBsZSIsICJvcmFuZ2UiLCAicmVkIiwgImJsYWNrIiwgIm5hdnkiLCJncmV5IiAsICJuYXZ5IikpICsgZ2VvbV9obGluZSh5aW50ZXJjZXB0ID0gLWxvZzEwKDAuMjUpLCBsaW5ldHlwZT0gJ2Rhc2hlZCcpICsgZ2VvbV92bGluZSh4aW50ZXJjZXB0ID0gYygtMSwxKSwgbGluZXR5cGUgPSAnZGFzaGVkJykgKyBnZW9tX3RleHRfcmVwZWwoZGF0YSA9IGRwbHlyOjpmaWx0ZXIoYnVsa19kZWcsIGFicyhsb2dGQykgPiAxICZhZGouUC5WYWwgPCAwLjI1ICYgQ2x1c3RlciAhPSJVbmtub3duIiApLCBmb3JjZSA9IDAuOCwgc2l6ZSA9IDIuNSkgKyBnZ3RpdGxlKGxhYmVsID0gImxuY1JOQXMgYXNzb2NpYXRlZCB3aXRoIEFSIGdhaW4iKSArIHRoZW1lX2NsYXNzaWMoKQpnZ3NhdmUocGxvdCA9IHBsb3QsIGZpbGVuYW1lID0gIi9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmIiwgd2lkdGggPSAxMCkKCiNXcml0ZSB0byBkaXNrCndyaXRlLmNzdih4ID0gYnVsa19kZWcsIGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvU3VwcGxlbWVudGFyeS5UYWJsZTQuY3N2IixxdW90ZSA9IEYsIHJvdy5uYW1lcyA9IEYpCgojQVItdXByZWd1bGF0ZWQgcGNhLWxuY1JOQXMKYXJfbG5jcm5hIDwtIGJ1bGtfZGVnICU+JSBkcGx5cjo6ZmlsdGVyKCAobG9nRkMgPjApICYgY2x1c3RlciA9PSAndHVtb3InKSAlPiUgLiRHZW5lcwoKYGBgCgoKCiNMQ00tUk5BLVNFUSBGUk9NIFdFU1RCUk9PSyBFVCBBTC4gMjAyMiBOQVQgQ09NTQpgYGB7cn0KCiNSZWFkIGluIExDTS1STkEtc2VxIGRhdGEKbGNtIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvTENNX2VuemFfV0NEVF9UUE0uY3N2IiwgY29sX25hbWVzID0gVCkKY29sbmFtZXMobGNtKVsxXSA8LSAiR2VuZSIKI0FkZCBtZXRhZGF0YQptZXRhIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9hbm5vL0xDTV9lbnphX1dDRFRfbWV0YS5jc3YiLCBjb2xfbmFtZXMgPSBjKCJQYXRpZW50LklEIiwgIlRpbWVwb2ludCIsICJCaW9wc3kuc2l0ZSIsICJTYW1lLmxlc2lvbiIsICJQU0EiLCAiVE9TIiwgIkFSLlZJUEVSIiwgIkFSLkdFWCIsICJBZ2dhcndhbCIsICJMYWJyZWNxdWUiICkpCmEgPC0gZGF0YS5mcmFtZShsY20pICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBjKGFyX2xuY3JuYSkpIApyb3cubmFtZXMoYSkgPC0gYSRHZW5lCmEgPC0gYSAlPiUgZHBseXI6OnNlbGVjdCgtR2VuZSkgJT4lIGxvZzFwKCkgCmRmIDwtIGRhdGEuZnJhbWUoUGF0aWVudC5JRCA9IGNvbG5hbWVzKGEpLCB0KGEpKSAlPiUgbWVyZ2UobWV0YSkKcm93Lm5hbWVzKGRmKSA8LSBkZiRQYXRpZW50LklECmRmJEFSLkdFWCA8LSBhcy5udW1lcmljKGRmJEFSLkdFWCkjQVIgZ2VuZSBleHByZXNzaW9uCmRmJEFSLlZJUEVSIDwtIGFzLm51bWVyaWMoZGYkQVIuVklQRVIpI0FSIFZJUEVSIChyZWd1bG9uIGFjdGl2aXR5KQpkZiRTYW1wbGUgPC0gZ3N1YihwYXR0ZXJuID0gIkRUQnxfWzAtOV0qIiwgcmVwbGFjZW1lbnQgPSAiIiwgeCA9IGRmJFBhdGllbnQuSUQpCgojSGVhdG1hcCBwbG90dGluZwpyb3dfaGEgPSBIZWF0bWFwQW5ub3RhdGlvbiggUFNBID0gZGYkUFNBLCBBUi5HRVggPSBkZiRBUi5HRVgsIEFSLlZJUEVSID0gZGYkQVIuVklQRVIsIEFnZ2Fyd2FsLmNsdXN0ZXIgPSBkZiRBZ2dhcndhbCwgTGFicmVjcXVlLmNsdXN0ZXIgPSBkZiRMYWJyZWNxdWUsIFNhbXBsZSA9IGRmJFNhbXBsZSkKbWF0IDwtIGRmWyxjb2xuYW1lcyhkZikgJWluJSBhcl9sbmNybmFdICU+JSBzY2FsZSgpICU+JSB0KCkKbWF0IDwtIHJhbWlmeTo6Y2xpcChtYXQsIC5taW4gPSAtMiwgLm1heCA9IDIpCnBkZigiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGYiLCBoZWlnaHQgPSAxMCwgd2lkdGggPSAxMCkKSGVhdG1hcChtYXRyaXggPSBtYXQsIHNob3dfY29sdW1uX25hbWVzID0gRiwgY29sICA9IGNvbG9yUmFtcFBhbGV0dGUoYygnbmF2eScsIndoaXRlIiwgInJlZCIpKSgxMCksIHRvcF9hbm5vdGF0aW9uICA9IHJvd19oYSwgY2x1c3Rlcl9jb2x1bW5zID0gVCwgbmFtZSA9ICJaIHNjb3JlIiwgY29sdW1uX25hbWVzX2dwID0gZ3Bhcihmb250c2l6ZSA9IDEwKSwgaGVpZ2h0ID0gdW5pdCg1LCAnY20nKSwgY2x1c3Rlcl9yb3dzID0gRikKZGV2Lm9mZigpCgoKCgoKCmBgYAoKCgojQVNTT0NBVElPTiBPRiBBUi1BTVAgUENBLUxOQ1JOQVMsIEVOWkEgUkVTUE9OU0UsIEFSIEdFWCBBTkQgQVIgVklQRVIKYGBge3J9CiNSZWFkIGluIExDTS1STkEtc2VxIGRhdGEKbGNtIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvTENNX2VuemFfV0NEVF9UUE0uY3N2IiwgY29sX25hbWVzID0gVCkKY29sbmFtZXMobGNtKVsxXSA8LSAiR2VuZSIKbGNtIDwtIGRhdGEuZnJhbWUobGNtKQpsY20gPC0gbGNtWyFkdXBsaWNhdGVkKGxjbSRHZW5lKSxdCnJvdy5uYW1lcyhsY20pIDwtIGxjbSRHZW5lCmxjbSA8LSBsY21bLC0xXQpsY20gPC0gYXMubWF0cml4KGxjbSkgJT4lIGxvZzFwKCkKCgojQWRkIG1ldGFkYXRhCm1ldGEgPC0gcmVhZF9jc3YoZmlsZSA9ICIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vTENNX2VuemFfV0NEVF9tZXRhLmNzdiIsIGNvbF9uYW1lcyA9IGMoIlBhdGllbnQuSUQiLCAiVGltZXBvaW50IiwgIkJpb3BzeS5zaXRlIiwgIlNhbWUubGVzaW9uIiwgIlBTQSIsICJUT1MiLCAiQVIuVklQRVIiLCAiQVIuR0VYIiwgIkFnZ2Fyd2FsIiwgIkxhYnJlY3F1ZSIgKSkKCiNBUiBsbmNSTkEgYWN0aXZpdHkKZ3N2YS5lcyA8LSBnc3ZhKGxjbSwgZ3NldC5pZHgubGlzdCA9IGxpc3QoYXJfbG5jcm5hKSwgbWV0aG9kID0gJ3pzY29yZScpCgoKI1Bsb3R0aW5nIGNvcnJlbGF0aW9uIEFSIGxuY1JOQSBhbmQgQVIgR0VYIGFuZCBBUiBWSVBFUgpkZiA8LSBnc3ZhLmVzICU+JSB0KCkgJT4lIGRhdGEuZnJhbWUoUGF0aWVudC5JRCA9IHJvdy5uYW1lcyguKSwgUGNhLmxuY3JuYSA9IC4pICU+JSBtZXJnZShtZXRhKQpyb3cubmFtZXMoZGYpIDwtIGRmJFBhdGllbnQuSUQKZGYkQVIuR0VYIDwtIGFzLm51bWVyaWMoZGYkQVIuR0VYKQpkZiRBUi5WSVBFUiA8LSBhcy5udW1lcmljKGRmJEFSLlZJUEVSKQpwMSA8LSBkZiAlPiUgZHBseXI6OnNlbGVjdChjKFBjYS5sbmNybmEsQVIuVklQRVIsIEFSLkdFWCkpICU+JSBnYXRoZXIoa2V5ID0gIlNpZ25hdHVyZSIsIHZhbHVlID0gIkdFWCIsIC1QY2EubG5jcm5hKSAlPiUgZ2dwbG90KGFlcyh4ID0gUGNhLmxuY3JuYSwgeSA9IEdFWCwgY29sb3IgPSBTaWduYXR1cmUpKSAlPiUgZmFjZXQoZmFjZXQuYnkgPSAiU2lnbmF0dXJlIikgKyBnZW9tX3BvaW50KCkgKyBnZW9tX3Ntb290aChtZXRob2QgPSAibG0iKSArIHN0YXRfY29yKCkgKyBzY2FsZV9jb2xvcl9tYW51YWwodmFsdWVzID0gYygibmF2eSIsICJkYXJrcmVkIikpICsgdGhlbWVfY2xhc3NpYygpICsgeGxhYigiQVIgdXByZWd1bGF0ZWQgUGNhLWxuY1JOQXMiKQpwZGYoIi9Vc2Vycy9kcy9EZXNrdG9wL3Bsb3QucGRmIiwgd2lkdGggPSAxMCkKcDEKZGV2Lm9mZigpCgojQm94cGxvdCBmb3IgQVIgbG5jUk5BcyBhdCBCYXNlbGluZSB2LnMgUHJvZ3Jlc3Npb24gb24gRW56YSAtIHNwbGl0IGJ5IFBTQSByZXNwb25zZSAoPjUwJSBkZWNsaW5lIGluIFBTQSBhdCAxMiBtbykKcDIgPC0gZ2dib3hwbG90KAogIGRwbHlyOjpmaWx0ZXIoZGYsIFBTQSAhPSAiVW5rbm93biIpLCB4ID0gIlRpbWVwb2ludCIsIHkgPSAiUGNhLmxuY3JuYSIsIGZpbGwgPSAiZGFya3JlZCIsIGFscGhhID0gMC41LAogIGZhY2V0LmJ5ID0gIlBTQSIsIGRyYXdfcXVhbnRpbGVzID0gMC41LCBhZGQgPSAnaml0dGVyJykrIHN0YXRfY29tcGFyZV9tZWFucyhwYWlyZWQgPSBULCBtZXRob2QgPSAndC50ZXN0JywgbGFiZWwueC5ucGMgPSAwLjUpICsgeWxhYigiQVIgcmVndWxhdGVkIFBjYS1wcm90ZWluIGNvZGluZyBnZW5lcyIpCgoKI0JveHBsb3QgZm9yIEFSIGxuY1JOQXMgYW5kIDMgQVIrL05FLSB0byBBUi0vTkUtIGNvbnZlcnRlcnMKcDMgPC0gZHBseXI6OmZpbHRlcihkZixncmVwbChwYXR0ZXJuID0iRFRCXzA4MHxEVEJfMTM1fERUQl8yMTAiLCB4ID0gUGF0aWVudC5JRCkpICU+JSBtdXRhdGUoR3JvdXAgPSAiQ29udmVydGVycyIpICU+JSBnZ2JveHBsb3QoICwgeCA9ICJUaW1lcG9pbnQiLCB5ID0gIkFSLlZJUEVSIiwgZmlsbCA9ICJkYXJrYmx1ZSIsIGFscGhhID0gMC41LCBkcmF3X3F1YW50aWxlcyA9IDAuNSxhZGQgPSAiaml0dGVyIiAsIGZhY2V0LmJ5ID0gIkdyb3VwIiwgd2lkdGggPSAwLjUpICsgc3RhdF9jb21wYXJlX21lYW5zKHBhaXJlZCA9IFQsIG1ldGhvZCA9ICd0LnRlc3QnLCBsYWJlbC54Lm5wYyA9IDAuNSkgKyB5bGFiKCJBUiBWSVBFUiBzY29yZSIpCgoKCmBgYAoKCgoKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiQW5hbHlzaXMgb2YgbG5jUk5BIGFzc29jaWF0ZWQgd2l0aCBBUiByZWdpb24gYW1wbGlmaWNhdGlvbnMgYW5kIGVuemFsdXRhbWlkZSAtIEZpZ3VyZSA0IgpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sKLS0tCgojTE9BRCBMSUJSQVJJRVMKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KGdncHVicikKbGlicmFyeShyc3RhdGl4KQpsaWJyYXJ5KG9yZy5Icy5lZy5kYikKbGlicmFyeShHU1ZBKQpsaWJyYXJ5KENvbXBsZXhIZWF0bWFwKQpsaWJyYXJ5KGdncmVwZWwpCmBgYAoKCiNSRUFEIElOIE1FVEFEQVRBIEZPUiBSTkEtU0VRCmBgYHtyfQoKI01ldGEgZGF0YSBmb3IgRGVlcCBSTkEtc2VxCmFubm8gPC0gcmVhZC50YWJsZSgiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9hbm5vLzIwMjAwOV9kZWVwUk5Bc2VxX3NhbXBsZV9mdWxsLnR4dCIsIGhlYWRlciA9VCkKYW5ubyA8LSBhbm5vICU+JSBkcGx5cjo6c2VsZWN0KGMoc2FtcGxlX2lkLCB3Z3NfaWQsIGJpb3BzeV9zaXRlLCBkaXNlYXNlX3R5cGVfU0lHX0dFWCwgSURfcGF0aWVudCwgQVIsdHVtb3JfcHVyaXR5X3JuYSkpIApjZiA8LSByZWFkLnRhYmxlKCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9tQ1JQQ19sbmNSTkFfYW5hbHlzaXMvZGF0YS9DSUJFUlNPUlR4X0pvYjMzX0FkanVzdGVkLnR4dCIsIHNlcCA9ICJcdCIsIGhlYWRlciA9IFQpCmNmJHNhbXBsZV9pZCA8LSBnc3ViKCJcXC4iLCAiLSIsIGNmJE1peHR1cmUpCnJvdy5uYW1lcyhjZikgPC0gY2YkTWl4dHVyZQpjZiA8LSBpbm5lcl9qb2luKHggPSBjZiwgeSA9IGFubm8sIGJ5ICA9IGMoInNhbXBsZV9pZCIgPSAic2FtcGxlX2lkIikpCnJvdy5uYW1lcyhjZikgPC0gY2Ykc2FtcGxlX2lkCiNPbWl0IHNhbXBsZXMgd2l0aG91dCBXR1MgZGF0YQpjZiA8LSBuYS5vbWl0KGNmKQojRm9ybWF0IEFSIHJlZ2lvbiBhbXBsaWZpY2F0aW9ucyB2LnMgV1QKY2YkQVIgPC0gaWZlbHNlKGNmJEFSID09IDMsICJHYWluIiwgIldUIikKCmBgYAoKCiNFREdFUiBESUZGRVJFTlRJQUwgR0VORSBFWFBSRVNTSU9OIEFOQUxZU0lTIE9GIExOQ1JOQVMgQU5EIEFSIFNUQVRVUwpgYGB7cn0KI1JlYWQgaW4gcmF3IGNvdW50cywgY29udmVydCB0byBtYXRyaXggd2l0aCByb3dzIGFzIGdlbmUgc3ltYm9scywgY29sdW1ucyBhcyBzYW1wbGVzCmNvdW50cyA8LSByZWFkLnRhYmxlKCIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL3JuYS9tQ1JQQ19STkFfY291bnRzX2dlbmVuYW1lLnR4dCIsIGhlYWRlciA9IFQpCmNvdW50cyA8LSBjb3VudHNbIWR1cGxpY2F0ZWQoY291bnRzJEdlbmVuYW1lKSxdCnJvdy5uYW1lcyhjb3VudHMpIDwtIGNvdW50cyRHZW5lbmFtZQpjb3VudHMgPC0gY291bnRzWywtMV0gJT4lIGFzLm1hdHJpeCgpCmNvbG5hbWVzKGNvdW50cykgPC0gZ3N1YigiXFwuIiwgIi0iLCBjb2xuYW1lcyhjb3VudHMpKSAgCgoKI0tlZXAgbWF0Y2hpbmcgc2FtcGxlIGlkcyBvZiBSTkEtc2VxIGFuZCBXR1MgZm9yIGNtcCBhbm5vdGF0aW9uCmlkcyA8LSBpbnRlcnNlY3QoY29sbmFtZXMoY291bnRzKSxyb3cubmFtZXMoY2YpKQpjb3VudHMgPC0gY291bnRzWyxpZHNdCmNmIDwtIGNmW2lkcyxdCgoKI0NyZWF0ZSBkZ2Ugb2JqZWN0IC0gY3JlYXRlIGNvdW50cyBtYXRyaXggYW5kIHNhbXBsZSBhbm5vIGRmIHdpdGggbGlicmFyeSBzaXplcwp4IDwtIERHRUxpc3QoY291bnRzID0gY291bnRzKQoKI0FkZCBjbHVzdGVyIHZhcmlhYmxlIHRvIGRlc2lnbmF0ZSBncm91cCBtZW1iZXJzaGlwIHRvIHNhbXBsZSBkZgp4JHNhbXBsZXMgPC0gY2JpbmQoeCRzYW1wbGVzLCBkcGx5cjo6c2VsZWN0KGNmLCBjKCBiaW9wc3lfc2l0ZSwgZGlzZWFzZV90eXBlX1NJR19HRVgsIEFSLHR1bW9yX3B1cml0eV9ybmEgKSkpCgojUmVtb3ZlIGdlbmVzIHdpdGggbG93IGV4cHJlc3Npb24gYWNyb3NzIHNhbXBsZXMKa2VlcC5leHBycyA8LSBmaWx0ZXJCeUV4cHIoeCwgbWluLmNvdW50ID0gNSkjTWluIGNvdW50IG9mIDUKeCA8LSB4W2tlZXAuZXhwcnMsLCBrZWVwLmxpYi5zaXplID0gRl0KCiNDYWxjdWxhdGUgZWZmZWN0aXZlIGxpYnJhcnkgc2l6ZSB1c2luZyBFZGdlUiBUTU0gbWV0aG9kCnggPC0gY2FsY05vcm1GYWN0b3JzKHgsIG1ldGhvZCA9ICJUTU0iKQoKI0NyZWF0ZSBkZXNpZ24gbWF0cml4ICh3L28gaW50ZXJjZXB0KSBzcGVjaWZ5aW5nIGdyb3VwIG1lbWJlcnNoaXAgLSB0dW1vciBwdXJpdHkgYXMgY292YXJpYXRlCmRlc2lnbiA8LSBtb2RlbC5tYXRyaXgofiAwICsgQVIgKyB0dW1vcl9wdXJpdHlfcm5hLCBkYXRhID0gY2YpIApjb2xuYW1lcyhkZXNpZ24pIDwtIGMoIkdhaW4iLCAiV1QiLCAiUHVyaXR5IikgCgojICNDcmVhdGUgY29udHJhc3RzIHRvIGNhbGN1bGF0ZQpjb250ci5tYXRyaXggPC0gbWFrZUNvbnRyYXN0cyhHYWluIC0gV1QsIGxldmVscyA9IGNvbG5hbWVzKGRlc2lnbikpCgoKI05vcm1hbGl6ZSBjb3VudHMgdG8gbG9nIENQTSB1c2luZyB2b29tCnYgPC0gdm9vbSh4LCBkZXNpZ24gPSBkZXNpZ24pCgojRml0IExNIGFjY29yZGluZyB0byBkZXNpZ24KdmZpdCA8LSBsbUZpdCh2LCBkZXNpZ24pCgojQ2FsY3VsYXRlIGNvbnRyYXN0cyBpLmUgbG9nRkMgZm9yIGdlbmVzIGFjcm9zcyBncm91cHMKdmZpdCA8LSBjb250cmFzdHMuZml0KHZmaXQsIGNvbnRyYXN0cz1jb250ci5tYXRyaXgpCgojQ2FsY3VsYXRlIHQtc3RhdHMgYW5kIHAgdmFscyB1c2luZyBFbXAgYmF5ZXMgbWV0aG9kCmVmaXQgPC0gZUJheWVzKHZmaXQpCgoKI0dldCBsaXN0IG9mIGFsbCBnZW5lcywgYXJyYW5nZSBpbiBkZWNyZWFzaW5nIG9yZGVyCmJ1bGtfZGVnIDwtIHRvcFRhYmxlKGVmaXQsIG51bWJlciA9IEluZiwgY29lZiA9IDEpICU+JSBkYXRhLmZyYW1lKEdlbmVzID0gcm93Lm5hbWVzKC4pKSAgJT4lIGFycmFuZ2UoLWxvZ0ZDKSAKCiNERSBsbmNSTkFzIC0gRkRSIDI1JSBhbmQgYWJzIGxvZ0ZDID4gMQpidWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgZHBseXI6OmZpbHRlcihhZGouUC5WYWwgPCAwLjI1ICYgYWJzKGxvZ0ZDKSA+IDEpICU+JSBsZWZ0X2pvaW4oIHkgPSBmaW5hbF9tYXJrZXJzLCBieSA9IGMoIkdlbmVzIiA9ICJnZW5lIikpCiNERSBwcm90ZWluIGNvZGluZyBnZW5lcyAtIEZEUiAyNSUgYW5kIGFicyBsb2dGQyA+IDEKI2J1bGtfZGVnIDwtIGJ1bGtfZGVnICU+JSBkcGx5cjo6ZmlsdGVyKGFkai5QLlZhbCA8IDAuMjUgJiBhYnMobG9nRkMpID4gMSkgJT4lIGxlZnRfam9pbiggeSA9IHBjZ19tYXJrZXJzLCBieSA9IGMoIkdlbmVzIiA9ICJnZW5lIikpCmBgYAoKCiNWT0xDQU5PIFBMT1QgT0YgREUgTE5DUk5BUyBBU1NPQ0lBVEVEIFdJVEggQVIgU1RBVFVTCmBgYHtyfQojRm9ybWF0IERFIHJlc3VsdHMKYnVsa19kZWckY2x1c3RlciA8LSBidWxrX2RlZyRjbHVzdGVyICU+JSBhcy5jaGFyYWN0ZXIoKQpidWxrX2RlZyA8LSBidWxrX2RlZyAlPiUgbXV0YXRlKENsdXN0ZXIgPSBpZmVsc2UoaXMubmEoY2x1c3RlciksICJVbmtub3duIiwgY2x1c3RlcikpICU+JSBtdXRhdGUoQWxwaGEgPSBpZmVsc2UoQ2x1c3RlciA9PSAiVW5rbm93biIsIDAuOCwgMSkpCgojUGxvdApwbG90IDwtIGdncGxvdChidWxrX2RlZywgYWVzKHggPSBsb2dGQywgeSA9IC1sb2cxMChhZGouUC5WYWwpLCBjb2xvciA9IENsdXN0ZXIsIGFscGhhID0gQWxwaGEsIGxhYmVsID0gR2VuZXMpICkgKyBnZW9tX3BvaW50KCkgKyBzY2FsZV9jb2xvcl9tYW51YWwodmFsdWVzID0gYygicHVycGxlIiwgIm9yYW5nZSIsICJyZWQiLCAiYmxhY2siLCAibmF2eSIsImdyZXkiICwgIm5hdnkiKSkgKyBnZW9tX2hsaW5lKHlpbnRlcmNlcHQgPSAtbG9nMTAoMC4yNSksIGxpbmV0eXBlPSAnZGFzaGVkJykgKyBnZW9tX3ZsaW5lKHhpbnRlcmNlcHQgPSBjKC0xLDEpLCBsaW5ldHlwZSA9ICdkYXNoZWQnKSArIGdlb21fdGV4dF9yZXBlbChkYXRhID0gZHBseXI6OmZpbHRlcihidWxrX2RlZywgYWJzKGxvZ0ZDKSA+IDEgJmFkai5QLlZhbCA8IDAuMjUgJiBDbHVzdGVyICE9IlVua25vd24iICksIGZvcmNlID0gMC44LCBzaXplID0gMi41KSArIGdndGl0bGUobGFiZWwgPSAibG5jUk5BcyBhc3NvY2lhdGVkIHdpdGggQVIgcmVnaW9uIGFtcGxpZmljYXRpb25zIikgKyB0aGVtZV9jbGFzc2ljKCkKZ2dzYXZlKHBsb3QgPSBwbG90LCBmaWxlbmFtZSA9ICIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZiIsIGhlaWdodCA9IDUpCgojV3JpdGUgdG8gZGlzawojd3JpdGUuY3N2KHggPSBidWxrX2RlZywgZmlsZSA9ICIvVXNlcnMvZHMvRGVza3RvcC9TdXBwbGVtZW50YXJ5LlRhYmxlNC5jc3YiLHF1b3RlID0gRiwgcm93Lm5hbWVzID0gRikKCiNBUi11cHJlZ3VsYXRlZCBwY2EtbG5jUk5Bcwphcl9sbmNybmEgPC0gYnVsa19kZWcgJT4lIGRwbHlyOjpmaWx0ZXIoIChsb2dGQyA+MCkgJiBjbHVzdGVyID09ICd0dW1vcicpICU+JSAuJEdlbmVzCgpgYGAKCgoKI0xDTS1STkEtU0VRIEZST00gV0VTVEJST09LIEVUIEFMLiAyMDIyIE5BVCBDT01NCmBgYHtyfQpzZXQuc2VlZCgxMTEpCiNSZWFkIGluIExDTS1STkEtc2VxIGRhdGEKbGNtIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvTENNX2VuemFfV0NEVF9UUE0uY3N2IiwgY29sX25hbWVzID0gVCkKY29sbmFtZXMobGNtKVsxXSA8LSAiR2VuZSIKI0FkZCBtZXRhZGF0YQptZXRhIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9hbm5vL0xDTV9lbnphX1dDRFRfbWV0YS5jc3YiLCBjb2xfbmFtZXMgPSBjKCJQYXRpZW50LklEIiwgIlRpbWVwb2ludCIsICJCaW9wc3kuc2l0ZSIsICJTYW1lLmxlc2lvbiIsICJQU0EiLCAiVE9TIiwgIkFSLlZJUEVSIiwgIkFSLkdFWCIsICJBZ2dhcndhbCIsICJMYWJyZWNxdWUiICkpCmEgPC0gZGF0YS5mcmFtZShsY20pICU+JSBkcGx5cjo6ZmlsdGVyKEdlbmUgJWluJSBjKGFyX2xuY3JuYSkpIApyb3cubmFtZXMoYSkgPC0gYSRHZW5lCmEgPC0gYSAlPiUgZHBseXI6OnNlbGVjdCgtR2VuZSkgJT4lIGxvZzFwKCkgCmRmIDwtIGRhdGEuZnJhbWUoUGF0aWVudC5JRCA9IGNvbG5hbWVzKGEpLCB0KGEpKSAlPiUgbWVyZ2UobWV0YSkKcm93Lm5hbWVzKGRmKSA8LSBkZiRQYXRpZW50LklECmRmJEFSLkdFWCA8LSBhcy5udW1lcmljKGRmJEFSLkdFWCkjQVIgZ2VuZSBleHByZXNzaW9uCmRmJEFSLlZJUEVSIDwtIGFzLm51bWVyaWMoZGYkQVIuVklQRVIpI0FSIFZJUEVSIChyZWd1bG9uIGFjdGl2aXR5KQpkZiRTYW1wbGUgPC0gZ3N1YihwYXR0ZXJuID0gIkRUQnxfWzAtOV0qIiwgcmVwbGFjZW1lbnQgPSAiIiwgeCA9IGRmJFBhdGllbnQuSUQpCgojSGVhdG1hcCBwbG90dGluZwpyb3dfaGEgPSBIZWF0bWFwQW5ub3RhdGlvbiggUFNBID0gZGYkUFNBLCBBUi5HRVggPSBkZiRBUi5HRVgsIEFSLlZJUEVSID0gZGYkQVIuVklQRVIsIEFnZ2Fyd2FsLmNsdXN0ZXIgPSBkZiRBZ2dhcndhbCwgTGFicmVjcXVlLmNsdXN0ZXIgPSBkZiRMYWJyZWNxdWUsIFNhbXBsZSA9IGRmJFNhbXBsZSkKbWF0IDwtIGRmWyxjb2xuYW1lcyhkZikgJWluJSBhcl9sbmNybmFdICU+JSBzY2FsZSgpICU+JSB0KCkKbWF0IDwtIHJhbWlmeTo6Y2xpcChtYXQsIC5taW4gPSAtMiwgLm1heCA9IDIpCnBkZigiL1VzZXJzL2RzL0Rlc2t0b3AvcGxvdC5wZGYiLCBoZWlnaHQgPSAxMCwgd2lkdGggPSAxMCkKSGVhdG1hcChtYXRyaXggPSBtYXQsIHNob3dfY29sdW1uX25hbWVzID0gRiwgY29sICA9IGNvbG9yUmFtcFBhbGV0dGUoYygnbmF2eScsIndoaXRlIiwgInJlZCIpKSgxMCksIHRvcF9hbm5vdGF0aW9uICA9IHJvd19oYSwgY2x1c3Rlcl9jb2x1bW5zID0gVCwgbmFtZSA9ICJaIHNjb3JlIiwgY29sdW1uX25hbWVzX2dwID0gZ3Bhcihmb250c2l6ZSA9IDEwKSwgaGVpZ2h0ID0gdW5pdCg1LCAnY20nKSwgY2x1c3Rlcl9yb3dzID0gRikKZGV2Lm9mZigpCgoKCgoKCmBgYAoKCgojQVNTT0NBVElPTiBPRiBBUi1BTVAgUENBLUxOQ1JOQVMsIEVOWkEgUkVTUE9OU0UsIEFSIEdFWCBBTkQgQVIgVklQRVIKYGBge3J9CiNSZWFkIGluIExDTS1STkEtc2VxIGRhdGEKbGNtIDwtIHJlYWRfY3N2KGZpbGUgPSAiL1VzZXJzL2RzL0Rlc2t0b3AvcHJvamVjdHMvZGF0YS9ybmEvTENNX2VuemFfV0NEVF9UUE0uY3N2IiwgY29sX25hbWVzID0gVCkKY29sbmFtZXMobGNtKVsxXSA8LSAiR2VuZSIKbGNtIDwtIGRhdGEuZnJhbWUobGNtKQpsY20gPC0gbGNtWyFkdXBsaWNhdGVkKGxjbSRHZW5lKSxdCnJvdy5uYW1lcyhsY20pIDwtIGxjbSRHZW5lCmxjbSA8LSBsY21bLC0xXQpsY20gPC0gYXMubWF0cml4KGxjbSkgJT4lIGxvZzFwKCkKCgojQWRkIG1ldGFkYXRhCm1ldGEgPC0gcmVhZF9jc3YoZmlsZSA9ICIvVXNlcnMvZHMvRGVza3RvcC9wcm9qZWN0cy9kYXRhL2Fubm8vTENNX2VuemFfV0NEVF9tZXRhLmNzdiIsIGNvbF9uYW1lcyA9IGMoIlBhdGllbnQuSUQiLCAiVGltZXBvaW50IiwgIkJpb3BzeS5zaXRlIiwgIlNhbWUubGVzaW9uIiwgIlBTQSIsICJUT1MiLCAiQVIuVklQRVIiLCAiQVIuR0VYIiwgIkFnZ2Fyd2FsIiwgIkxhYnJlY3F1ZSIgKSkKCiNBUiBsbmNSTkEgYWN0aXZpdHkKZ3N2YS5lcyA8LSBnc3ZhKGxjbSwgZ3NldC5pZHgubGlzdCA9IGxpc3QoYXJfbG5jcm5hKSwgbWV0aG9kID0gJ3pzY29yZScpCgoKI1Bsb3R0aW5nIGNvcnJlbGF0aW9uIEFSIGxuY1JOQSBhbmQgQVIgR0VYIGFuZCBBUiBWSVBFUgpkZiA8LSBnc3ZhLmVzICU+JSB0KCkgJT4lIGRhdGEuZnJhbWUoUGF0aWVudC5JRCA9IHJvdy5uYW1lcyguKSwgUGNhLmxuY3JuYSA9IC4pICU+JSBtZXJnZShtZXRhKQpyb3cubmFtZXMoZGYpIDwtIGRmJFBhdGllbnQuSUQKZGYkQVIuR0VYIDwtIGFzLm51bWVyaWMoZGYkQVIuR0VYKQpkZiRBUi5WSVBFUiA8LSBhcy5udW1lcmljKGRmJEFSLlZJUEVSKQpwMSA8LSBkZiAlPiUgZHBseXI6OnNlbGVjdChjKFBjYS5sbmNybmEsQVIuVklQRVIsIEFSLkdFWCkpICU+JSBnYXRoZXIoa2V5ID0gIlNpZ25hdHVyZSIsIHZhbHVlID0gIkdFWCIsIC1QY2EubG5jcm5hKSAlPiUgZ2dwbG90KGFlcyh4ID0gUGNhLmxuY3JuYSwgeSA9IEdFWCwgY29sb3IgPSBTaWduYXR1cmUpKSAlPiUgZmFjZXQoZmFjZXQuYnkgPSAiU2lnbmF0dXJlIiwgcGFuZWwubGFicy5mb250ID0gbGlzdChmYWNlID0gImJvbGQiLCBzaXplID0gMjApLCBzY2FsZXMgPSAnZnJlZScpICsgZ2VvbV9wb2ludCgpICsgZ2VvbV9zbW9vdGgobWV0aG9kID0gImxtIikgKyBzdGF0X2NvcigpICsgc2NhbGVfY29sb3JfbWFudWFsKHZhbHVlcyA9IGMoIm5hdnkiLCAiZGFya3JlZCIpKSArIHRoZW1lX2NsYXNzaWMoKSArIHhsYWIoIkFSIHVwcmVndWxhdGVkIFBjYS1sbmNSTkFzIikgKyB0aGVtZShheGlzLnRleHQueCA9IGVsZW1lbnRfdGV4dCggY29sb3I9ImJsYWNrIiwgc2l6ZT0wLCBhbmdsZT00NSksIHRleHQgPSBlbGVtZW50X3RleHQoc2l6ZSA9IDIwKSkKcGRmKCIvVXNlcnMvZHMvRGVza3RvcC9wbG90LnBkZiIsIHdpZHRoID0gMTApCnAxCmRldi5vZmYoKQoKI0JveHBsb3QgZm9yIEFSIGxuY1JOQXMgYXQgQmFzZWxpbmUgdi5zIFByb2dyZXNzaW9uIG9uIEVuemEgLSBzcGxpdCBieSBQU0EgcmVzcG9uc2UgKD41MCUgZGVjbGluZSBpbiBQU0EgYXQgMTIgbW8pCnAyIDwtIGdnYm94cGxvdCgKICBkcGx5cjo6ZmlsdGVyKGRmLCBQU0EgIT0gIlVua25vd24iKSwgeCA9ICJUaW1lcG9pbnQiLCB5ID0gIlBjYS5sbmNybmEiLCBmaWxsID0gImRhcmtyZWQiLCBhbHBoYSA9IDAuNSwKICBmYWNldC5ieSA9ICJQU0EiLCBkcmF3X3F1YW50aWxlcyA9IDAuNSwgYWRkID0gJ2ppdHRlcicpKyBzdGF0X2NvbXBhcmVfbWVhbnMocGFpcmVkID0gVCwgbWV0aG9kID0gJ3QudGVzdCcsIGxhYmVsLngubnBjID0gMC41KSArIHlsYWIoIkFSIHJlZ3VsYXRlZCBQY2EtcHJvdGVpbiBjb2RpbmcgZ2VuZXMiKQoKCiNCb3hwbG90IGZvciBBUiBsbmNSTkFzIGFuZCAzIEFSKy9ORS0gdG8gQVItL05FLSBjb252ZXJ0ZXJzCnAzIDwtIGRwbHlyOjpmaWx0ZXIoZGYsZ3JlcGwocGF0dGVybiA9IkRUQl8wODB8RFRCXzEzNXxEVEJfMjEwIiwgeCA9IFBhdGllbnQuSUQpKSAlPiUgbXV0YXRlKEdyb3VwID0gIkNvbnZlcnRlcnMiKSAlPiUgZ2dib3hwbG90KCAsIHggPSAiVGltZXBvaW50IiwgeSA9ICJBUi5WSVBFUiIsIGZpbGwgPSAiZGFya2JsdWUiLCBhbHBoYSA9IDAuNSwgZHJhd19xdWFudGlsZXMgPSAwLjUsYWRkID0gImppdHRlciIgLCBmYWNldC5ieSA9ICJHcm91cCIsIHdpZHRoID0gMC41KSArIHN0YXRfY29tcGFyZV9tZWFucyhwYWlyZWQgPSBULCBtZXRob2QgPSAndC50ZXN0JywgbGFiZWwueC5ucGMgPSAwLjUpICsgeWxhYigiQVIgVklQRVIgc2NvcmUiKQoKCgpgYGAKCgoKCgo=</div>
 
 
 

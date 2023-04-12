@@ -18,6 +18,7 @@ library(glmnet)
 library(vip)
 library(ggfortify)
 library(msigdbr)
+
 ```
 
 
@@ -103,12 +104,12 @@ bulk_deg <- bulk_deg %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", clus
 #DEG PLOT
 ```{r}
 #Plotting
-plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "orange", "red", "pink", "darkgreen","navy" , "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.1 & Cluster != "Unknown"), force = 0.8, size = 2.5) + ggtitle(label = "Protein coding genes associated with bi-allelic RB1 loss") + theme_classic()
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "black", "red", "navy", "darkgreen","grey" , "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.1 & Cluster != "Unknown"), force = 0.8, size = 2.5) + ggtitle(label = "lncRNAs associated with bi-allelic RB1 loss") + theme_classic() + ylim(c(1,4))
 plot
-ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 10)
+ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 5, height = 5)
 
 #Write to disk
-write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table5.csv",quote = F, row.names = F)
+#write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table5.csv",quote = F, row.names = F)
 
 ```
 
@@ -169,28 +170,31 @@ tumor.down <- bulk_deg %>% dplyr::filter(logFC < 0 & (Cluster %in% c("tumor")) )
 ```{r}
 #Score lncrna signatures using combined z-score method
 gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(tme.up), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.pcg = .)
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.lncRNA.activity = .)
 gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(c(sig.up)), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.pcg = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.lncRNA = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
 
 
 #Add metadata to dataframe
 df$RB1 <- as.factor(ifelse(df$RB1 == 0, "Deletion", "WT/Mono"))
-df$Enzalutamide.resistant <- ifelse(df$Enzalutamide.resistant == TRUE, "Enzalutamide.resistant", "Enzalutamide.naive")
-#df <- df %>% mutate(Group = as.factor(ntile(TME.pcg, 2)))
+df$Enzalutamide.resistant <- ifelse(df$Enzalutamide.resistant == TRUE, "Resistant", "Naive")
+df <- df %>% mutate(Group = as.factor(ntile(TME.lncRNA.activity, 2)))
 
 #Univariate analysis of OS with signature activity
 p1 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Group, data = df) %>% ggforest(fontsize = 1)
-p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg, data = df) %>% ggforest(fontsize = 1)
+p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ TME.lncRNA.activity, data = df) %>% ggforest(fontsize = 1.2)
 
 #Multivariate analysis of OS with signature activity
 p3 <-coxph(Surv(time =OS.mCRPC , event = Event)~ Group  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1) 
-p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1) 
+p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ TME.lncRNA.activity  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1.2) 
 
 #Forrest plots
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
-grid.arrange(p1, p3, ncol = 1)
+pdf("/Users/ds/Desktop/plot.pdf", width = 20, height = 7)
+grid.arrange(p2, p4, ncol = 2)
 dev.off()
+
+
+df
 ```
 
 
@@ -233,7 +237,7 @@ res_cf %>% dplyr::filter(Sig == "*") %>% dplyr::filter(Cell %in% celltypes) %>% 
 ```{r}
 
 #Score activity of signatures
-a <- gsva(t(mcrpc_rna), gset.idx.list = list(tumor.down), method = 'zscore') %>% t()
+a <- gsva(t(mcrpc_rna), gset.idx.list = list(tme.up), method = 'zscore') %>% t()
 b <- gsva(t(mcrpc_rna), gset.idx.list = list(sig.up), method = 'zscore') %>% t()
 c <- gsva(t(mcrpc_rna), gset.idx.list = list(dplyr::filter(gs, gs_name == "HALLMARK_TNFA_SIGNALING_VIA_NFKB")$gene_symbol), method = 'zscore') %>% t()
 
@@ -241,9 +245,11 @@ c <- gsva(t(mcrpc_rna), gset.idx.list = list(dplyr::filter(gs, gs_name == "HALLM
 
 #Plot
 p <- data.frame(RBS.high.lncRNA = a,RBS.upregulated.genes = b,Hallmark.TNFA.Signaling.Via.NFKB = c) %>% gather(key = "Signature", value = "GEX", -RBS.high.lncRNA) %>% ggplot(aes(x = RBS.high.lncRNA
-, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("darkred", "darkblue")) + theme_classic() + ylab("Expression") + xlab("RB1 loss upregulated TME-lncRNAs")
+, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("darkred", "darkblue")) + theme_classic() + ylab("Expression") + xlab("RB1 loss upregulated TME-lncRNAs")+ theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 15))
 
-
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+p
+dev.off()
 
 ```
 

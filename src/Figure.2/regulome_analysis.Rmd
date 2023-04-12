@@ -98,9 +98,12 @@ return(df)
 
 #PLOTTING PCA AND TME LNCRNA OVERLAPS
 ```{r}
+
+
   
 #FDR correction for fischer p values
 df <- res %>% mutate(Region = rep(c("AR", "FOXA1", "H3K27ac", "HMR"), each = 6))  %>% mutate(Adj.Pval = rep(p.adjust(unique(Pval)), each = 2)) %>% mutate(Sig = ifelse(Adj.Pval< 0.1, 1, 0.1)) %>% mutate(Group = paste0(Group, "\n n=", Total))
+
 
 #Formatting 
 df$Order <- rep(c(1,1,2,2,3,3), by = 4)
@@ -203,7 +206,7 @@ df %>% group_by(type, Group) %>% summarise(mean(cor))
 
 #Plot
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-df %>% ggplot(aes(x = cor, fill = Group)) +facet_grid(~ type) + geom_density(alpha = 0.5) + xlab("Correlation between methylation v.s gene expression") + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + theme_classic()
+df %>% ggplot(aes(x = cor, fill = Group)) +facet_grid(~ type, scales = 'free') + geom_density(alpha = 0.5) + xlab("Correlation between methylation v.s gene expression") + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + theme_classic() + theme(axis.text.x = element_text( color="black", size=10, angle=0), text = element_text(size = 20))
 dev.off()
 
 

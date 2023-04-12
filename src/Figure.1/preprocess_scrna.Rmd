@@ -95,7 +95,7 @@ markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% linc$gene.name,], o
 markers <- markers  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) #Filter percent diff, logFC, and adj P value
 markers <- markers[!duplicated(markers$gene),]#Filter duplicates
 
-
+View(markers)
 
 #Find cell-type enriched pcgs in He et al. 
 pcg_markers <- FindAllMarkers(object = bmet[row.names(bmet) %in% pcg$gene.name], only.pos = T, verbose = T)
@@ -156,11 +156,11 @@ filt_markers <- rbind(a,b,c,d,e,f)
 #Read in scRNA-seq data from Kfoury et al. 
 bmcrpc <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/seurat/Kfoury_bmCRPC_scRNA.rds")
 Idents(bmcrpc) <- "cells"
-#valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
+valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% linc$gene.name,], only.pos = T, verbose = T)
 #valid_kfoury <-FindAllMarkers(object = bmcrpc[row.names(bmcrpc) %in% pcg$gene.name,], only.pos = T, verbose = T)
 
 #Identify cell-specific lncRNAs/pcgs
-valid_kfoury <-FindAllMarkers(object = bmcrpc, only.pos = T, verbose = T)
+#valid_kfoury <-FindAllMarkers(object = bmcrpc, only.pos = T, verbose = T)
 valid_kfoury <- valid_kfoury  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1) %>%  arrange(-avg_log2FC) 
 valid_kfoury <- valid_kfoury[!duplicated(valid_kfoury$gene),]#Filter duplicates
 
@@ -254,7 +254,7 @@ names(top) <- compare_markers  %>% arrange(-avg_log2FC) %>% group_by(cluster)  %
 
 #Dotplot
 pdf("/Users/ds/Desktop/plot.pdf", width = 15, height = 10)
-DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue'), 5)))
+DotPlot(object = bmet, features = top, group.by = "supercluster.for.LDSC.SEG") + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 20), text = element_text(size = 20), axis.text.y = element_text(size = 20)) + coord_flip() + theme(axis.text.y.left  = element_text(color = rep(c('red', 'red', 'blue', 'blue'), 5)))
 dev.off()
 ```
 
@@ -262,8 +262,8 @@ dev.off()
 ```{r}
 # write.table(x = final_markers, file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_mCRPC_He.txt", quote = F, sep = "\t", row.names = F, col.names = T)
 # write.table(x = final_markers, file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_pcg_mCRPC_He.txt", quote = F, sep = "\t", row.names = F, col.names = T)
-# final_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
-# pcg_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_pcg_mCRPC_He.txt", header = T, sep = "\t")
+final_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
+pcg_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_pcg_mCRPC_He.txt", header = T, sep = "\t")
 
 #Write lncrna markers to Sup Table 1
 write.csv(x = final_markers, file = "/Users/ds/Desktop/Supplementary.Table1.csv",quote = F, row.names = F)
