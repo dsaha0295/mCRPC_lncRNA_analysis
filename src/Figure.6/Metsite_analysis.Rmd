@@ -29,11 +29,13 @@ sc_deg <- FindMarkers(object = bmet, ident.1 = c("bone tissue", 'lymph node'), i
 sc_deg <-  sc_deg %>% dplyr::filter(abs(avg_log2FC) > 1 & p_val_adj < 0.1)  %>% mutate(Genes = row.names(.)) %>%  left_join( y = final_markers, by = c("Genes" = "gene")) %>% arrange(avg_log2FC.x)
 
 #Write results to disk
-write.csv(x = sc_deg, file = "/Users/ds/Desktop/Supplementary.Table6.csv",quote = F, row.names = F)
+#write.csv(x = sc_deg, file = "/Users/ds/Desktop/Supplementary.Table6.csv",quote = F, row.names = F)
 
 #Subst DE lncrnas/pcg
 sc_pcg_deg <- sc_deg %>% dplyr::filter(Genes %in% pcg$gene.name)
 sc_deg <- sc_deg %>% dplyr::filter(Genes %in% linc$gene.name)
+
+
 ```
 
 
@@ -64,7 +66,7 @@ anno <- anno %>% dplyr::select(c(sample_id, wgs_id, biopsy_site, disease_type_SI
 ```{r}
 
 #Plot volcano plot
-plot <- ggplot(sc_pcg_deg, aes(x = avg_log2FC.x, y = -log10(p_val_adj.x), label = Genes, color = cluster) ) + geom_point(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1), aes(color = cluster)) + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1 ), force = 0.8, size = 2.5) + xlab("avg_log2FC") + ylab("-log10(p_val_adj)") + ggtitle("lncRNAs associated with Adeno/SC histology") + theme_classic()
+plot <- ggplot(sc_pcg_deg, aes(x = avg_log2FC.x, y = -log10(p_val_adj.x), label = Genes, color = cluster) ) + geom_point(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1), aes(color = cluster)) + scale_color_manual(values = c("purple", "orange", "red", "black", "darkgreen", "navy", "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(sc_deg, abs(avg_log2FC.x) > 1 & p_val_adj.x < 0.1 ), force = 1, size = 3) + xlab("avg_log2FC") + ylab("-log10(p_val_adj)") + theme_classic() + theme(text = element_text(size = 20))
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = plot, width = 10)
 
 
@@ -84,9 +86,11 @@ order <- order%>% group_by(cluster) %>% arrange(-avg_log2FC, .by_group = T)
 
 #Plot heatmap
 liver <- ScaleData(object = liver, features =dplyr::filter(sc_deg,avg_log2FC.x<0 )$Genes )
-pdf("/Users/ds/Desktop/plot.pdf")
-DoHeatmap(object =liver,features = c(order$gene[-1], order$gene[1],sc_sig[! sc_sig %in% order$gene]) ) + coord_flip()
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 12)
+DoHeatmap(object = liver, features = order$gene) + theme(text = element_text(size = 20))
 dev.off()
+
+
 ```
 
 #PATHWAY ANALYSIS OF LNCRNAS ASSOCIATED WITH HISTOLOGY
@@ -124,9 +128,9 @@ colnames(res.up) <- c("Pathway", "PCC")
 res.down <- arrange(res, -PCC.down)[1:10,c("Pathway", "PCC.down")]
 colnames(res.down) <- c("Pathway", "PCC")
 
-p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Small cell", "Adeno")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
+p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Small cell", "Adeno")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic() + theme( text = element_text(size = 20),)# legend.position = 'none')
 
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 13, height = 10)
 
 
 ```
@@ -171,8 +175,9 @@ df <- hmr %>% gsva( gset.idx.list = list(SCNC.lncRNAs = sc_coord, Adeno.lncRNAs 
 df <- df %>% mutate(  Sample = gsub("\\.", replacement = "-", row.names(.)) )
 
 #Merge with meta data and plot assocation with methylation and histology
-p <- df %>% merge(meta) %>% mutate(Type = ifelse(Type == "tSCNC", "SCNC", "Adeno")) %>% dplyr::select(c(Sample, SCNC.lncRNAs, Adeno.lncRNAs, Type)) %>% gather(key = "Group", value = "Dnam", -c(Sample, Type)) %>% ggboxplot(x = "Type", y = "Dnam", fill = "darkblue", alpha = 0.5, draw_quantiles = 0.5,add = "jitter",width = 0.5, facet.by = "Group") + stat_compare_means(paired = F, method = 't.test', label.x.npc = 0.5) + ylab("Prostate lncRNAs")
+p <- df %>% merge(meta) %>% mutate(Type = ifelse(Type == "tSCNC", "SCNC", "Adeno")) %>% dplyr::select(c(Sample, SCNC.lncRNAs, Adeno.lncRNAs, Type)) %>% gather(key = "Group", value = "Dnam", -c(Sample, Type)) %>% ggboxplot(x = "Type", y = "Dnam", fill = "darkblue", alpha = 0.5, draw_quantiles = 0.5,add = "jitter",width = 0.5, facet.by = "Group") + stat_compare_means(paired = F, method = 't.test', label.x.npc = 0.5) + ylab("Methylation") + theme( text = element_text(size = 20))
 
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, )
 
 ```
 
@@ -198,7 +203,7 @@ df <- data.frame(sample_id = colnames(Beltran), Beltran.et.al = t(Beltran), Ramn
 mets <- df  %>% mutate(Histology = disease_type_SIG_GEX) %>% dplyr::select(c(sample_id, Beltran.et.al,Ramnarine.et.al, Single.cell, Histology )) 
 
 #Plot correlation
-p <- mets %>% dplyr::select(c(Beltran.et.al, Ramnarine.et.al, Single.cell)) %>% gather(key = "Signature" , value = "GEX", -Beltran.et.al ) %>% ggplot(aes(x = GEX, y = Beltran.et.al, color = Signature))  %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("navy", 'darkred')) + theme_classic()
+p <- mets %>% dplyr::select(c(Beltran.et.al, Ramnarine.et.al, Single.cell)) %>% gather(key = "Signature" , value = "GEX", -Beltran.et.al ) %>% ggplot(aes(x = GEX, y = Beltran.et.al, color = Signature))  %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor(size = 7) + scale_color_manual(values = c("navy", 'darkred')) + theme_classic() + theme( text = element_text(size = 20),)
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 p
@@ -229,7 +234,7 @@ auc3 <- round(auc(labels, predictions, direction = ">"),2)
 
 
 #Plot ROC curves
-p <- ggroc(list(Ramnarine.et.al = rocobj1, Single.cell = rocobj2 ), size = 1)+ scale_color_manual(values = c("navy", "darkred", "darkgreen"), name = "Signature", labels = c(paste0("Ramnarine AUC= ", auc1), paste0("Single cell AUC=", auc2), paste0("Beltran AUC=", auc3)) ) + theme_classic() + ggtitle('AUC analysis of 71 CRPC-adeno and 3 CRPC-small cell')
+p <- ggroc(list(Ramnarine.et.al = rocobj1, Single.cell = rocobj2 ), size = 1)+ scale_color_manual(values = c("navy", "darkred", "darkgreen"), name = "Signature", labels = c(paste0("Ramnarine AUC= ", auc1), paste0("Single cell AUC=", auc2), paste0("Beltran AUC=", auc3)) ) + theme_classic() + ggtitle('AUC analysis of 71 CRPC-adeno and 3 CRPC-small cell') + theme( text = element_text(size = 20),)
 
 
 ```

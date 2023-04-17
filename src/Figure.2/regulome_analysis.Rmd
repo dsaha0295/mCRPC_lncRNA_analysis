@@ -110,7 +110,7 @@ df$Order <- rep(c(1,1,2,2,3,3), by = 4)
 
 
 #Plotting
-p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 ) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 20))
+p <- dplyr::filter(df, Category == "Overlap") %>% ggplot(aes(x =reorder(Group, -Order), y = Percent, fill = Group)) +facet_grid(~ Region) + geom_col(width = 0.5)  + scale_fill_manual(values = c("darkgreen", "darkred", "navy")) + scale_alpha(range = c(0.5,1)) + ggsignif::geom_signif(y_position = c(0.8,0.8,0.8), annotation = c("ns" ,"*","*"),tip_length = 0.04, xmin = c(1,2,3), xmax = c(1,2,3), step_increase = 5 , textsize = 5) + xlab("Group") + theme_classic() + theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 20))
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
 
 
@@ -241,21 +241,27 @@ writeXStringSet(seq, filepath = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysi
 #Differential motif enrichment of pca-lncrna v.s tme.lncrna
 motif <- read_tsv(file = "/Users/ds/Desktop//projects/mCRPC_lncRNA_analysis/data/Motif/centrimo (5).tsv", col_names = T)#Read in results
 filter <- pcg_markers %>% dplyr::filter(cluster == 'tumor') %>% .$gene#Select prostate pcg
-pca_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(TF %in% c("ANDR","NKX31", filter)) %>% head(n=20) #Top 20 motifs for TF enriched in prostate cells
+pca_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(TF %in% c("ANDR","NKX31", filter)) %>% head(n=10) #Top 20 motifs for TF enriched in prostate cells
 
-#Differential motif enrichment of tme-lncrn v.s pca-lncrna
+#Differential motif enrichment of tme-lncrna v.s pca-lncrna
 motif <- read_tsv(file = "/Users/ds/Desktop//projects/mCRPC_lncRNA_analysis/data/Motif/centrimo (6).tsv", col_names = T)
 filter <- pcg_markers %>% dplyr::filter(cluster != 'tumor') %>% .$gene
-tme_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(TF %in% c( filter))%>% head(n=20) #Top 20 motifs for TF enriched in TME cells
+tme_motif <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(TF %in% c( filter))%>% head(n=10) #Top 20 motifs for TF enriched in TME cells
 
 
 #Plotting
-p <- rbind(pca_motif, mutate(tme_motif, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "PCa lncRNA", "TME lncRNA")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() + xlab("-log10(Adj Pvalue)")
+p <- rbind(pca_motif, mutate(tme_motif, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "PCa lncRNA", "TME lncRNA")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() + xlab("-log10(Adj Pvalue)") + theme( text = element_text(size = 20))
 
 # Example motif analysis
 # https://meme-suite.org/meme/tools/centrimo
 # Settings: Anywhere enrichment, Absolute and differential, Human dataset (HOCOMOCO HUMAN V11 CORE)
 
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
+p
+dev.off()
+
+
+p
 ```
 
 

@@ -21,7 +21,6 @@ library(circlize)
 library(harmony)
 options(ggrepel.max.overlaps = Inf)
 
-
 ```
 
 
@@ -29,12 +28,13 @@ options(ggrepel.max.overlaps = Inf)
 ```{r}
 #Read in scRNA-seq data frm He et al. 
 bmet <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/He_scRNA/He_mCRPC.rds")
+Idents(bmet) <- "supercluster.for.LDSC.SEG"
 final_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_mCRPC_He.txt", header = T, sep = "\t")
 #Read in scRNA-seq data from Kfoury et al. 
 bmcrpc <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/seurat/Kfoury_bmCRPC_scRNA.rds")
 Idents(bmcrpc) <- "cells"
 #Read in scRNA-seq data from Song et al. 
-scrna <- readRDS(file = "/Users/ds/Desktop/dge_pca.rds")
+scrna <- readRDS(file = "/Users/ds/Desktop/scRNA_datasets/dge_pca.rds")
 Idents(scrna) <- "ID_coarse"
 
 ```
@@ -81,13 +81,12 @@ names(anno_col) <- unique(anno$Cluster)
 row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 
-
 #Plot heatmap
 pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 1),rep("C",1),rep("D", 1), "E" , "F")),row_names_gp = grid::gpar(fontsize = 10) , column_names_gp = gpar(fontsize = 10) ,row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
 
-
+mat
 
 ```
 
@@ -121,7 +120,7 @@ row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 
 #plot heatmap
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+pdf("/Users/ds/Desktop/plot1.pdf", width = 10, height = 10)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 4),rep("C",9),rep("D", 7), "E" )), row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
 
@@ -159,7 +158,7 @@ names(anno_col) <- unique(anno$Cluster)
 row_ha = rowAnnotation(Cluster = anno$Cluster, col = list(Cluster = anno_col))
 
 #Plot heatmap
-pdf("/Users/ds/Desktop/plot.pdf",  height = 10, width = 7.5)
+pdf("/Users/ds/Desktop/plot2.pdf",  height = 10, width = 7.5)
 Heatmap(matrix = mat, right_annotation = row_ha, col = colorRampPalette(c("purple","black", "yellow"))(3), show_column_names = T, cluster_columns = F, na_col = 'black', cluster_rows = F, column_split =as.character(c("A", rep("B", 2),rep("C",1),rep("D", 1))),row_split = c(rep("A",17 ), rep("B", 5), rep("C", 16), rep("D",11 ), rep("E", 8), rep("F", 4)))
 dev.off()
 

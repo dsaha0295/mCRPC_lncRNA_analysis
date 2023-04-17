@@ -74,7 +74,7 @@ id <- intersect(row.names(mat), linc$gene.name)
 a <- dim(mat[id,])[1] / dim(linc)[1]
 id <- intersect(row.names(mat), pcg$gene.name)
 b <- dim(mat[id,])[1] / dim(pcg)[1]
-p <- rbind(LncRNA.annotated = a, LncRNA.unannotated = 1-a, Pc.annotated = b, Pc.unnanotated = 1-b) %>% data.frame(Fraction = .) %>% mutate(Type = c("lncRNA", "lncRNA", "Protein.coding", "Protein.coding")) %>% mutate(Group= c("Annotated", "Unannotated", 'Annotated', "Unannotated")) %>% ggplot(aes(x = Type, y = Fraction, fill = Group)) + geom_col(width = 0.5) + scale_fill_manual(values = c("navy", "darkred")) + theme_classic()
+p <- rbind(LncRNA.annotated = a, LncRNA.unannotated = 1-a, Pc.annotated = b, Pc.unnanotated = 1-b) %>% data.frame(Fraction = .) %>% mutate(Type = c("lncRNA", "lncRNA", "Protein.coding", "Protein.coding")) %>% mutate(Group= c("Annotated", "Unannotated", 'Annotated', "Unannotated")) %>% ggplot(aes(x = Type, y = Fraction, fill = Group)) + geom_col(width = 0.5) + scale_fill_manual(values = c("navy", "darkred")) + theme_classic() + theme(text = element_text(size = 20))
 ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
 
 
@@ -82,8 +82,10 @@ ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
 Idents(bmet) <- "supercluster.for.LDSC.SEG"
 a <- bmet[linc$gene.name,] %>% GetAssayData() %>% colMeans() 
 b <- bmet[pcg$gene.name,] %>% GetAssayData() %>% colMeans() 
-p <- data.frame(LncRNA = a, Protein.coding = b) %>% gather(key = "Type", value = "Average.expression") %>% ggplot(aes(x = Average.expression, color = Type)) + stat_ecdf() + scale_color_manual(values  = c("navy", "darkred")) + theme_classic()
+p <- data.frame(LncRNA = a, Protein.coding = b) %>% gather(key = "Type", value = "Average.expression") %>% ggplot(aes(x = Average.expression, color = Type)) + stat_ecdf(size = 2) + scale_color_manual(values  = c("navy", "darkred")) + theme_classic() + theme(text = element_text(size = 20))
 
+
+p
 ```
 
 
@@ -236,12 +238,14 @@ other_lncrna_ds <- sample(other_lncrna, length(pca_lncrna))#Downsampled version
 ```{r}
 #Scale data for lncrnas/pcg markers in seurat object
 bmet <- ScaleData(object = bmet, features = final_markers$gene)
-bmet <- ScaleData(object = bmet, features = pcg_markers$gene)
+#bmet <- ScaleData(object = bmet, features = pcg_markers$gene)
 
 #Plot
 pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
-DoHeatmap(object = bmet, features = pcg_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0)) 
+DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0))
 dev.off()
+
+
 
 ```
 
@@ -266,7 +270,7 @@ final_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_anal
 pcg_markers <- read.table(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/results/final_markers_pcg_mCRPC_He.txt", header = T, sep = "\t")
 
 #Write lncrna markers to Sup Table 1
-write.csv(x = final_markers, file = "/Users/ds/Desktop/Supplementary.Table1.csv",quote = F, row.names = F)
+#write.csv(x = final_markers, file = "/Users/ds/Desktop/Supplementary.Table1.csv",quote = F, row.names = F)
 
 
 ```
@@ -283,7 +287,7 @@ Idents(bmet) <- "supercluster.for.LDSC.SEG"
 
 #UMAP Plot
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
-FeaturePlot(object = bmet, features =c("SCHLAP1", "SMIM25"), label = T, repel = T, label.size = 3)
+FeaturePlot(object = bmet, features =c("SCHLAP1", "SMIM25"), label = T, repel = T, label.size = 5)
 dev.off()
 
 

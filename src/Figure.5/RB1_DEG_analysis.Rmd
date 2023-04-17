@@ -89,8 +89,8 @@ efit <- eBayes(vfit)
 
 #Get list of all genes, arrange in decreasing order - FDR 10% , abs logFC > 1, merge with lncRNA markers
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC)
-bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
-# bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = pcg_markers, by = c("Genes" = "gene"))
+#bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = pcg_markers, by = c("Genes" = "gene"))
 
 #Format deg list
 bulk_deg$cluster <- bulk_deg$cluster %>% as.character()
@@ -104,9 +104,9 @@ bulk_deg <- bulk_deg %>% mutate(Cluster = ifelse(is.na(cluster), "Unknown", clus
 #DEG PLOT
 ```{r}
 #Plotting
-plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("purple", "black", "red", "navy", "darkgreen","grey" , "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.1 & Cluster != "Unknown"), force = 0.8, size = 2.5) + ggtitle(label = "lncRNAs associated with bi-allelic RB1 loss") + theme_classic() + ylim(c(1,4))
+plot <- ggplot(bulk_deg, aes(x = logFC, y = -log10(adj.P.Val), color = Cluster, alpha = Alpha, label = Genes) ) + geom_point() + scale_color_manual(values = c("orange", "black", "red", "navy", "darkgreen","purple" , "grey")) + geom_hline(yintercept = -log10(0.1), linetype= 'dashed') + geom_vline(xintercept = c(-1,1), linetype = 'dashed') + geom_text_repel(data = dplyr::filter(bulk_deg, abs(logFC) > 1 &adj.P.Val < 0.1 & Cluster != "Unknown"), force = 0.8, size = 5) + ggtitle(label = "lncRNAs associated with bi-allelic RB1 loss") + theme_classic() + ylim(c(1,4)) + theme( text = element_text(size = 20))
 plot
-ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 5, height = 5)
+ggsave(plot = plot, filename = "/Users/ds/Desktop/plot.pdf", width = 15, height = 10)
 
 #Write to disk
 #write.csv(x = bulk_deg, file = "/Users/ds/Desktop/Supplementary.Table5.csv",quote = F, row.names = F)
@@ -157,12 +157,12 @@ sig.down <- rbs$`Low-expressed in RB1-loss:` %>% na.omit()
 #Identify RB1 loss TME-lncRNAs - remove tumor, unknown and erythroid genes (highly proliferative)
 tme.up <- bulk_deg %>% dplyr::filter(logFC > 0 & (!Cluster %in% c("tumor", "Unknown", "erythroid")) ) %>% .$Genes
 #All RB1 loss lncRNAs
-up <- bulk_deg %>% dplyr::filter(logFC > 0 & Genes %in% linc$gene.name) %>% .$Genes
-#up <- bulk_deg %>% dplyr::filter(logFC > 0 & Genes %in% pcg$gene.name) %>% .$Genes
+#up <- bulk_deg %>% dplyr::filter(logFC > 0 & Genes %in% linc$gene.name) %>% .$Genes
+up <- bulk_deg %>% dplyr::filter(logFC > 0 & Genes %in% pcg$gene.name) %>% .$Genes
 #Identify RB1 loss Pca-lncRNAs 
 tumor.down <- bulk_deg %>% dplyr::filter(logFC < 0 & (Cluster %in% c("tumor")) ) %>% .$Genes
 
-
+paste0(pca_lncrna, collapse = " ")
 ```
 
 
@@ -170,31 +170,31 @@ tumor.down <- bulk_deg %>% dplyr::filter(logFC < 0 & (Cluster %in% c("tumor")) )
 ```{r}
 #Score lncrna signatures using combined z-score method
 gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(tme.up), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.lncRNA.activity = .)
-gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(c(sig.up)), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.lncRNA = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.pcg.activity = .)
+gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(c(tumor.down)), method = 'zscore')
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.pcg.activity = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
 
 
 #Add metadata to dataframe
 df$RB1 <- as.factor(ifelse(df$RB1 == 0, "Deletion", "WT/Mono"))
 df$Enzalutamide.resistant <- ifelse(df$Enzalutamide.resistant == TRUE, "Resistant", "Naive")
-df <- df %>% mutate(Group = as.factor(ntile(TME.lncRNA.activity, 2)))
+df <- df %>% mutate(Group = as.factor(ntile(TME.pcg.activity, 2)))
 
 #Univariate analysis of OS with signature activity
-p1 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Group, data = df) %>% ggforest(fontsize = 1)
-p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ TME.lncRNA.activity, data = df) %>% ggforest(fontsize = 1.2)
+#p1 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Group, data = df) %>% ggforest(fontsize = 1)
+p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg.activity, data = df) %>% ggforest(fontsize = 2)
 
 #Multivariate analysis of OS with signature activity
-p3 <-coxph(Surv(time =OS.mCRPC , event = Event)~ Group  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1) 
-p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ TME.lncRNA.activity  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1.2) 
+#p3 <-coxph(Surv(time =OS.mCRPC , event = Event)~ Group  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1) 
+p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg.activity  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 2)
+
+
 
 #Forrest plots
-pdf("/Users/ds/Desktop/plot.pdf", width = 20, height = 7)
-grid.arrange(p2, p4, ncol = 2)
+pdf("/Users/ds/Desktop/plot.pdf", width = 20, height = 20)
+grid.arrange(p2, p4, ncol = 1)
 dev.off()
 
-
-df
 ```
 
 
@@ -245,7 +245,7 @@ c <- gsva(t(mcrpc_rna), gset.idx.list = list(dplyr::filter(gs, gs_name == "HALLM
 
 #Plot
 p <- data.frame(RBS.high.lncRNA = a,RBS.upregulated.genes = b,Hallmark.TNFA.Signaling.Via.NFKB = c) %>% gather(key = "Signature", value = "GEX", -RBS.high.lncRNA) %>% ggplot(aes(x = RBS.high.lncRNA
-, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor() + scale_color_manual(values = c("darkred", "darkblue")) + theme_classic() + ylab("Expression") + xlab("RB1 loss upregulated TME-lncRNAs")+ theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 15))
+, y = GEX, color = Signature)) %>% facet(facet.by = "Signature") + geom_point() + geom_smooth(method = 'lm') + stat_cor(size= 7) + scale_color_manual(values = c("darkred", "darkblue")) + theme_classic() + ylab("Expression") + xlab("RB1 loss upregulated TME-lncRNAs")+ theme(axis.text.x = element_text( color="black", size=0, angle=45), text = element_text(size = 20), legend.position = 'none')
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 p
@@ -281,7 +281,7 @@ res <- do.call(rbind, lapply(pathways, FUN = function(p){
   df <- data.frame(Pathway = p, PCC.up = cor.test(df$A,df$C)$estimate, Pval.up = cor.test(df$A,df$C)$p.value, PCC.down = cor.test(df$B,df$C)$estimate, Pval.down = cor.test(df$B, df$C)$p.value)
   return(df)
 }))
-
+up
 #Plot top 10 most correlated Hallmark pathways
 res.up <- arrange(res, -PCC.up)[1:10,c("Pathway", "PCC.up")]
 colnames(res.up) <- c("Pathway", "PCC")
@@ -289,8 +289,12 @@ colnames(res.up) <- c("Pathway", "PCC")
 res.down <- arrange(res, -PCC.down)[1:10,c("Pathway", "PCC.down")]
 colnames(res.down) <- c("Pathway", "PCC")
 
-p <- rbind(res.down, mutate(res.up, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "All RB1-loss upregulated protein coding genes", "RB1-loss upregulated TME-protein coding genes")) %>% mutate(Pathway = paste0(Pathway,"_", c(1:20))) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() 
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 10)
+p <- rbind(res.down, mutate(res.up, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "All RB1-loss upregulated\n lncRNAs", "RB1-loss upregulated\n TME-lncRNAs")) %>% mutate(Pathway = paste0(Pathway,"_", c(1:20))) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic()  + theme( text = element_text(size = 20),)# legend.position = 'none')
+
+
+pdf("/Users/ds/Desktop/plot.pdf", width = 13, height = 10)
+p
+dev.off()
 
 
 ```
@@ -334,19 +338,22 @@ writeXStringSet(seq, filepath = "/Users/ds/Desktop/rb1.tme.up.fa")
 # Settings: Anywhere enrichment, Absolute and differential, Human dataset (HOCOMOCO HUMAN V11 CORE)
 
 #Read in Motif results
-motif <- read_tsv(file = "/Users/ds/Desktop/RB1.all.up.tsv", col_names = T)
+motif <- read_tsv(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/data/Motif/RB1.all.up.tsv", col_names = T)
 #Subset top 10 enriched motifs
 motif.up <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(db_index == "1") %>% head(n=20) 
 
 #Read in motif results
-motif <- read_tsv(file = "/Users/ds/Desktop/RB1.tme.up.tsv", col_names = T)
+motif <- read_tsv(file = "/Users/ds/Desktop/projects/mCRPC_lncRNA_analysis/data/Motif//RB1.tme.up.tsv", col_names = T)
 #Subset top 10 enriched motifs
 motif.tme.up <- motif %>% mutate(Sig = -`log_adj_p-value`) %>% arrange(-Sig) %>% mutate(TF = gsub(pattern = "_HUMAN.*", replacement = "", x = motif_id)) %>% dplyr::filter(db_index == "1") %>% head(n=20) 
 
 #Plot
-p <- rbind(motif.up, mutate(motif.tme.up, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "All RB1-loss upregulated lncRNAs", "RB1-loss upregulated TME-lncRNAs")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() + xlab("-log10(Adj Pvalue)")
+p <- rbind(motif.up, mutate(motif.tme.up, Sig = Sig * -1)) %>% mutate(Group = ifelse(Sig > 0, "All RB1-loss upregulated\n lncRNAs", "RB1-loss upregulated\n TME-lncRNAs")) %>% ggplot(aes(y = reorder(TF, Sig), x = Sig, fill = Group)) + geom_col() + xlim(c(-100,100)) + scale_x_continuous(breaks = seq(-100,100,10),labels = seq(-100,100,10) %>% abs()) + ylab("TF Motif") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic() + xlab("-log10(Adj Pvalue)") + theme(text = element_text(size = 20),)# legend.position = 'none')
 
 
+pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 10)
+p
+dev.off()
 
 
 
