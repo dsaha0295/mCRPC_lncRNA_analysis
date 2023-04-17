@@ -2,7 +2,7 @@
 
 Citation: in progress
 
-This project characterizes the lncRNA landscape in mCRPC through an integrative genomics approach. All of the scripts used for analysis are available here and organized according to figures in the manuscript. Datasets used for this study can be obtained from the following studies:
+This project characterizes the lncRNA landscape in mCRPC through an integrative genomics approach. All of the scripts used for analysis are available here in the "src" directory as R notebooks and organized according to figures in the manuscript. Datasets used for this study can be obtained from the following studies:
 
 **scRNA-seq:**
 
