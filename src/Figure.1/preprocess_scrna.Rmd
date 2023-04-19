@@ -241,8 +241,8 @@ bmet <- ScaleData(object = bmet, features = final_markers$gene)
 #bmet <- ScaleData(object = bmet, features = pcg_markers$gene)
 
 #Plot
-pdf("/Users/ds/Desktop/plot.pdf", height = 15, width = 10)
-DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0))
+pdf("/Users/ds/Desktop/plot.pdf", height = 10, width = 8)
+DoHeatmap(object = bmet, features = final_markers$gene, assay = "RNA", slot = "scale.data",   )+ theme(axis.text.y = element_text(size = 0), axis.text.x = element_text(size = 0))
 dev.off()
 
 

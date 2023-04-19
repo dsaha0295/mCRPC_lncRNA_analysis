@@ -227,7 +227,7 @@ nk.t.markers  %>% dplyr::filter(pct.1 > 0.1 & p_val_adj < 0.1 & avg_log2FC> 1)  
 
 #Dotplot of NK/T lncRNAs upregulated in mCRPC
 query <- up %>% dplyr::filter(Cluster == "NK/T") %>% .$Genes
-p1 <- DotPlot(object = nk.t, features = query, group.by ="cluster.dominant.cell.type" ) + coord_flip() + theme(axis.text.x = element_text(size = 15, angle = 90))+ theme( text = element_text(size = 20))
+p1 <- DotPlot(object = nk.t, features = query, group.by ="cluster.dominant.cell.type" ) + coord_flip() + theme(axis.text.x = element_text(size = 15, angle = 90))+ theme( text = element_text(size = 20), axis.text.x = element_text(angle = 45, vjust = 0.5))
 #Exhausted T cell markers from He et al. 
 ex <- c("PDCD1", "HAVCR2", "TOX", "TIGIT", "ICOS", "FASLG", "LAG3", "ENTPD1","ITGAE")
 #Scoring exhausted markers in mCRPC deep RNA-seq data
@@ -240,7 +240,7 @@ gex = gsva(t(mat), gset.idx.list = list(c("CYTOR", "MIAT")), method = 'zscore')
 #Correlation plot of MIAT and CYTOR with exhausted T cell markers
 p2 <- data.frame(GEX= t(gex),Exhausted.markers=t(exhaust) ) %>% ggplot(aes(x = GEX, y = Exhausted.markers)) + geom_point() + geom_smooth(method = 'lm') + stat_cor(size = 7) + xlab("CYTOR + MIAT") + theme_classic() + theme( text = element_text(size = 20))
 #Plotting
-pdf("/Users/ds/Desktop/plot.pdf")
+pdf("/Users/ds/Desktop/plot.pdf", width = 10)
 p2
 dev.off()
 

@@ -89,8 +89,8 @@ efit <- eBayes(vfit)
 
 #Get list of all genes, arrange in decreasing order - FDR 10% , abs logFC > 1, merge with lncRNA markers
 bulk_deg <- topTable(efit, number = Inf, coef = 1) %>% data.frame(Genes = row.names(.))  %>% arrange(-logFC)
-#bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
-bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = pcg_markers, by = c("Genes" = "gene"))
+bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = final_markers, by = c("Genes" = "gene"))
+#bulk_deg <- bulk_deg %>% dplyr::filter(adj.P.Val < 0.1 & abs(logFC) > 1) %>% left_join( y = pcg_markers, by = c("Genes" = "gene"))
 
 #Format deg list
 bulk_deg$cluster <- bulk_deg$cluster %>% as.character()
@@ -161,8 +161,6 @@ tme.up <- bulk_deg %>% dplyr::filter(logFC > 0 & (!Cluster %in% c("tumor", "Unkn
 up <- bulk_deg %>% dplyr::filter(logFC > 0 & Genes %in% pcg$gene.name) %>% .$Genes
 #Identify RB1 loss Pca-lncRNAs 
 tumor.down <- bulk_deg %>% dplyr::filter(logFC < 0 & (Cluster %in% c("tumor")) ) %>% .$Genes
-
-paste0(pca_lncrna, collapse = " ")
 ```
 
 
@@ -170,23 +168,23 @@ paste0(pca_lncrna, collapse = " ")
 ```{r}
 #Score lncrna signatures using combined z-score method
 gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(tme.up), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.pcg.activity = .)
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), TME.lncRNA.activity = .)
 gsva.es <- gsva(t(mcrpc_rna), gset.idx.list = list(c(tumor.down)), method = 'zscore')
-df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.pcg.activity = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
+df <- t(gsva.es) %>% data.frame(sample_id = row.names(.), Pca.lncRNA.activity = .) %>% merge(df) %>% merge(anno) %>% inner_join(y = clin, by = c("ID_patient" = "Patient.ID"))
 
 
 #Add metadata to dataframe
 df$RB1 <- as.factor(ifelse(df$RB1 == 0, "Deletion", "WT/Mono"))
 df$Enzalutamide.resistant <- ifelse(df$Enzalutamide.resistant == TRUE, "Resistant", "Naive")
-df <- df %>% mutate(Group = as.factor(ntile(TME.pcg.activity, 2)))
+df <- df %>% mutate(Group = as.factor(ntile(Pca.lncRNA.activity, 2)))
 
 #Univariate analysis of OS with signature activity
 #p1 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Group, data = df) %>% ggforest(fontsize = 1)
-p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg.activity, data = df) %>% ggforest(fontsize = 2)
+p2 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.lncRNA.activity, data = df) %>% ggforest(fontsize = 2)
 
 #Multivariate analysis of OS with signature activity
 #p3 <-coxph(Surv(time =OS.mCRPC , event = Event)~ Group  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 1) 
-p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.pcg.activity  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 2)
+p4 <- coxph(Surv(time =OS.mCRPC , event = Event)~ Pca.lncRNA.activity  +ECOG.PS + PSA.At.Biopsy+ LDH.at.biopsy + ALP + Hemoglobin.at.biopsy + Disease.Site + Enzalutamide.resistant  , data = df) %>% ggforest(fontsize = 2)
 
 
 
@@ -195,6 +193,8 @@ pdf("/Users/ds/Desktop/plot.pdf", width = 20, height = 20)
 grid.arrange(p2, p4, ncol = 1)
 dev.off()
 
+
+df
 ```
 
 
@@ -289,8 +289,9 @@ colnames(res.up) <- c("Pathway", "PCC")
 res.down <- arrange(res, -PCC.down)[1:10,c("Pathway", "PCC.down")]
 colnames(res.down) <- c("Pathway", "PCC")
 
-p <- rbind(res.down, mutate(res.up, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "All RB1-loss upregulated\n lncRNAs", "RB1-loss upregulated\n TME-lncRNAs")) %>% mutate(Pathway = paste0(Pathway,"_", c(1:20))) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic()  + theme( text = element_text(size = 20),)# legend.position = 'none')
+p <- rbind(res.down, mutate(res.up, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "All RB1-loss upregulated\n lncRNAs", "RB1-loss upregulated\n TME-lncRNAs")) %>% mutate(Pathway = paste0(Pathway,"_", c(1:20))) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic()  + theme( text = element_text(size = 20))#, legend.position = 'none')
 
+p <- rbind(res.down, mutate(res.up, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "All RB1-loss upregulated\n protein coding genes", "RB1-loss upregulated\n TME-protein coding genes")) %>% mutate(Pathway = paste0(Pathway,"_", c(1:20))) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("darkred", "navy")) + theme_classic()  + theme( text = element_text(size = 20))#, legend.position = 'none')
 
 pdf("/Users/ds/Desktop/plot.pdf", width = 13, height = 10)
 p

@@ -86,8 +86,8 @@ order <- order%>% group_by(cluster) %>% arrange(-avg_log2FC, .by_group = T)
 
 #Plot heatmap
 liver <- ScaleData(object = liver, features =dplyr::filter(sc_deg,avg_log2FC.x<0 )$Genes )
-pdf("/Users/ds/Desktop/plot.pdf", width = 10, height = 12)
-DoHeatmap(object = liver, features = order$gene) + theme(text = element_text(size = 20))
+pdf("/Users/ds/Desktop/plot.pdf", width = 12, height = 10)
+DoHeatmap(object = liver, features = order$gene) + theme(text = element_text(size = 15))
 dev.off()
 
 
@@ -121,6 +121,7 @@ res <- do.call(rbind, lapply(pathways, FUN = function(p){
 }))
 
 
+
 #Plot top 10 most correlated Hallmark pathways
 res.up <- arrange(res, -PCC.up)[1:10,c("Pathway", "PCC.up")]
 colnames(res.up) <- c("Pathway", "PCC")
@@ -128,9 +129,9 @@ colnames(res.up) <- c("Pathway", "PCC")
 res.down <- arrange(res, -PCC.down)[1:10,c("Pathway", "PCC.down")]
 colnames(res.down) <- c("Pathway", "PCC")
 
-p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Small cell", "Adeno")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic() + theme( text = element_text(size = 20),)# legend.position = 'none')
+p <- rbind(res.up, mutate(res.down, PCC = PCC * -1)) %>% mutate(Group = ifelse(PCC > 0, "Small cell", "Adeno")) %>% ggplot(aes(y = reorder(Pathway, PCC), x = PCC, fill = Group)) + geom_col() + xlim(c(-1,1)) + scale_x_continuous(breaks = seq(-1,1,0.1),labels = seq(-1,1,0.1) %>% abs()) + ylab("Pathway") + scale_fill_manual(values = c("navy", "darkred")) + theme_classic() + theme( text = element_text(size = 20))#,legend.position = 'none')
 
-ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 13, height = 10)
+ggsave(filename = "/Users/ds/Desktop/plot.pdf", plot = p, width = 13)
 
 
 ```
