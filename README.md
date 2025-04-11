@@ -1,6 +1,6 @@
 # mCRPC lncRNA analysis
 
-Citation: in progress
+Citation: Saha D, Dang HX, Zhang M, Quigley DA, Feng FY, Maher CA. Single cell-transcriptomic analysis informs the lncRNA landscape in metastatic castration resistant prostate cancer. NPJ Genom Med. 2024;9(1):14. Published 2024 Feb 23. doi:10.1038/s41525-024-00401-3
 
 This project characterizes the lncRNA landscape in mCRPC through an integrative genomics approach. All of the scripts used for analysis are available here in the "src" directory as R notebooks and organized according to figures in the manuscript. Datasets used for this study can be obtained from the following studies:
 
